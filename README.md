@@ -1,6 +1,6 @@
-# GTA Connected Server Website
+# BGF Revival IV
 
-A modern, responsive website for the GTA Connected gaming server.
+A modern, responsive website for the BGF Revival IV gaming server.
 
 ## Features
 
