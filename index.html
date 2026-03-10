@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTA Connected Server</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gaming-font {
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .status-online {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+    <!-- Navigation -->
+    <nav class="glass-effect sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-gamepad text-2xl"></i>
+                    <h1 class="gaming-font text-2xl font-bold">GTA Connected</h1>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="#home" class="hover:text-purple-200 transition">Home</a>
+                    <a href="#status" class="hover:text-purple-200 transition">Server Status</a>
+                    <a href="#players" class="hover:text-purple-200 transition">Players</a>
+                    <a href="#connect" class="hover:text-purple-200 transition">Connect</a>
+                </div>
+                <button id="mobileMenuBtn" class="md:hidden">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="container mx-auto px-6 py-16">
+        <div class="text-center">
+            <h1 class="gaming-font text-5xl md:text-7xl font-bold mb-6">
+                Welcome to GTA Connected
+            </h1>
+            <p class="text-xl md:text-2xl mb-8 text-purple-100">
+                The Ultimate GTA Multiplayer Experience
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="scrollToSection('connect')" class="bg-purple-600 hover:bg-purple-700 px-8 py-3 rounded-lg font-semibold hover-scale">
+                    <i class="fas fa-play mr-2"></i>Join Now
+                </button>
+                <button onclick="scrollToSection('status')" class="glass-effect px-8 py-3 rounded-lg font-semibold hover-scale">
+                    <i class="fas fa-chart-line mr-2"></i>Server Status
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Server Status Section -->
+    <section id="status" class="container mx-auto px-6 py-16">
+        <div class="glass-effect rounded-2xl p-8">
+            <h2 class="gaming-font text-3xl font-bold mb-8 text-center">Server Status</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="text-center p-6 glass-effect rounded-lg">
+                    <div class="text-4xl mb-4">
+                        <i class="fas fa-server text-green-400 status-online"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Server Status</h3>
+                    <p id="serverStatus" class="text-green-400">Online</p>
+                </div>
+                <div class="text-center p-6 glass-effect rounded-lg">
+                    <div class="text-4xl mb-4">
+                        <i class="fas fa-users text-blue-400"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Players Online</h3>
+                    <p id="playerCount" class="text-2xl font-bold">24/100</p>
+                </div>
+                <div class="text-center p-6 glass-effect rounded-lg">
+                    <div class="text-4xl mb-4">
+                        <i class="fas fa-clock text-yellow-400"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Uptime</h3>
+                    <p id="uptime" class="text-2xl font-bold">99.9%</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Players Section -->
+    <section id="players" class="container mx-auto px-6 py-16">
+        <div class="glass-effect rounded-2xl p-8">
+            <h2 class="gaming-font text-3xl font-bold mb-8 text-center">Top Players</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-purple-300">
+                            <th class="text-left py-3 px-4">Rank</th>
+                            <th class="text-left py-3 px-4">Player</th>
+                            <th class="text-left py-3 px-4">Level</th>
+                            <th class="text-left py-3 px-4">Score</th>
+                            <th class="text-left py-3 px-4">Play Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playerTable">
+                        <tr class="border-b border-purple-200 hover:bg-purple-800 hover:bg-opacity-30 transition">
+                            <td class="py-3 px-4">1</td>
+                            <td class="py-3 px-4">
+                                <div class="flex items-center">
+                                    <i class="fas fa-crown text-yellow-400 mr-2"></i>
+                                    ProGamer123
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">85</td>
+                            <td class="py-3 px-4">125,420</td>
+                            <td class="py-3 px-4">342h</td>
+                        </tr>
+                        <tr class="border-b border-purple-200 hover:bg-purple-800 hover:bg-opacity-30 transition">
+                            <td class="py-3 px-4">2</td>
+                            <td class="py-3 px-4">NinjaWarrior</td>
+                            <td class="py-3 px-4">82</td>
+                            <td class="py-3 px-4">118,900</td>
+                            <td class="py-3 px-4">298h</td>
+                        </tr>
+                        <tr class="border-b border-purple-200 hover:bg-purple-800 hover:bg-opacity-30 transition">
+                            <td class="py-3 px-4">3</td>
+                            <td class="py-3 px-4">DragonSlayer</td>
+                            <td class="py-3 px-4">79</td>
+                            <td class="py-3 px-4">105,670</td>
+                            <td class="py-3 px-4">276h</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Connect Section -->
+    <section id="connect" class="container mx-auto px-6 py-16">
+        <div class="glass-effect rounded-2xl p-8">
+            <h2 class="gaming-font text-3xl font-bold mb-8 text-center">Connect to Server</h2>
+            <div class="max-w-2xl mx-auto">
+                <div class="bg-purple-800 bg-opacity-50 rounded-lg p-6 mb-6">
+                    <h3 class="text-xl font-semibold mb-4">Server Information</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span>Server IP:</span>
+                            <span class="font-mono">play.gtconnected.com</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Port:</span>
+                            <span class="font-mono">25565</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Version:</span>
+                            <span>Latest</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button onclick="copyServerIP()" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-semibold hover-scale">
+                        <i class="fas fa-copy mr-2"></i>Copy Server IP
+                    </button>
+                </div>
+                
+                <div id="copyNotification" class="hidden mt-4 text-center text-green-400">
+                    <i class="fas fa-check-circle mr-2"></i>Server IP copied to clipboard!
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="glass-effect mt-16">
+        <div class="container mx-auto px-6 py-8">
+            <div class="text-center">
+                <div class="flex justify-center space-x-6 mb-4">
+                    <a href="https://discord.gg/5V7rY9YJ" target="_blank" class="hover:text-purple-200 transition">
+                        <i class="fab fa-discord text-2xl"></i>
+                    </a>
+                    <a href="#" class="hover:text-purple-200 transition">
+                        <i class="fab fa-twitter text-2xl"></i>
+                    </a>
+                    <a href="#" class="hover:text-purple-200 transition">
+                        <i class="fab fa-youtube text-2xl"></i>
+                    </a>
+                </div>
+                <p>&copy; 2024 GTA Connected Server. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

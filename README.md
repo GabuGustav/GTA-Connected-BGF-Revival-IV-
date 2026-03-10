@@ -1,6 +1,6 @@
-# GT Connected Server Website
+# GTA Connected Server Website
 
-A modern, responsive website for the GT Connected gaming server.
+A modern, responsive website for the GTA Connected gaming server.
 
 ## Features
 
