@@ -4,42 +4,495 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BGF Revival IV</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             margin: 0;
             padding: 0;
-            height: 100vh;
             overflow: hidden;
+            background: #000;
+            font-family: 'Courier New', monospace;
         }
         
         .video-background {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             object-fit: cover;
             z-index: -1;
         }
         
-        .content-overlay {
+        .title-section {
             position: relative;
             z-index: 1;
-            height: 100vh;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
+        
+        .glitch-title {
+            color: white;
+            font-size: 5rem;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            position: relative;
+            text-shadow: 
+                0.05em 0 0 rgba(255, 0, 0, 0.75),
+                -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+                0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+            animation: glitch 500ms infinite;
+        }
+        
+        .glitch-title::before,
+        .glitch-title::after {
+            content: "BGF Revival IV";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .glitch-title::before {
+            animation: glitch-1 0.5s infinite;
+            color: #00ffff;
+            z-index: -1;
+        }
+        
+        .glitch-title::after {
+            animation: glitch-2 0.5s infinite;
+            color: #ff00ff;
+            z-index: -2;
+        }
+        
+        @keyframes glitch {
+            0%, 100% {
+                text-shadow: 
+                    0.05em 0 0 rgba(255, 0, 0, 0.75),
+                    -0.05em -0.025em 0 rgba(0, 255, 0, 0.75),
+                    0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+            }
+            14% {
+                text-shadow: 
+                    0.05em 0 0 rgba(255, 0, 0, 0.75),
+                    -0.05em -0.025em 0 rgba(0, 255, 0, 0.75),
+                    0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+            }
+            15% {
+                text-shadow: 
+                    -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+                    0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+                    -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+            }
+            49% {
+                text-shadow: 
+                    -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+                    0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+                    -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+            }
+            50% {
+                text-shadow: 
+                    0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+                    0.05em 0 0 rgba(0, 255, 0, 0.75),
+                    0 -0.05em 0 rgba(0, 0, 255, 0.75);
+            }
+            99% {
+                text-shadow: 
+                    0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+                    0.05em 0 0 rgba(0, 255, 0, 0.75),
+                    0 -0.05em 0 rgba(0, 0, 255, 0.75);
+            }
+        }
+        
+        @keyframes glitch-1 {
+            0%, 100% {
+                clip: rect(132px, 350px, 101px, 30px);
+                transform: translate(0);
+            }
+            20% {
+                clip: rect(20px, 350px, 60px, 30px);
+                transform: translate(-2px, 2px);
+            }
+            40% {
+                clip: rect(80px, 350px, 40px, 30px);
+                transform: translate(-2px, -2px);
+            }
+            60% {
+                clip: rect(50px, 350px, 90px, 30px);
+                transform: translate(2px, 2px);
+            }
+            80% {
+                clip: rect(10px, 350px, 70px, 30px);
+                transform: translate(2px, -2px);
+            }
+        }
+        
+        @keyframes glitch-2 {
+            0%, 100% {
+                clip: rect(65px, 350px, 100px, 30px);
+                transform: translate(0);
+            }
+            20% {
+                clip: rect(30px, 350px, 80px, 30px);
+                transform: translate(2px, -2px);
+            }
+            40% {
+                clip: rect(90px, 350px, 20px, 30px);
+                transform: translate(2px, 2px);
+            }
+            60% {
+                clip: rect(40px, 350px, 60px, 30px);
+                transform: translate(-2px, 2px);
+            }
+            80% {
+                clip: rect(70px, 350px, 50px, 30px);
+                transform: translate(-2px, -2px);
+            }
+        }
+        
+        .discord-button {
+            display: inline-block;
+            background: #5865F2;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(88, 101, 242, 0.3);
+        }
+        
+        .discord-button:hover {
+            background: #4752C4;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(88, 101, 242, 0.4);
+        }
+        
+        .discord-button i {
+            margin-right: 8px;
+        }
+        
+        .discord-float {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #5865F2, #4752C4);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            text-decoration: none;
+            font-size: 24px;
+            z-index: 1000;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 8px 32px rgba(88, 101, 242, 0.4),
+                0 4px 16px rgba(0, 0, 0, 0.3),
+                inset 0 2px 4px rgba(255, 255, 255, 0.2),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .discord-float:hover {
+            width: 180px;
+            border-radius: 30px;
+            background: linear-gradient(145deg, #4752C4, #3c429e);
+            box-shadow: 
+                0 12px 40px rgba(88, 101, 242, 0.6),
+                0 6px 20px rgba(0, 0, 0, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .discord-float .icon {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+        }
+        
+        .discord-float .text {
+            opacity: 0;
+            max-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: bold;
+            font-size: 16px;
+            margin-left: 0;
+        }
+        
+        .discord-float:hover .icon {
+            transform: scale(1.1);
+        }
+        
+        .discord-float:hover .text {
+            opacity: 1;
+            max-width: 100px;
+            margin-left: 10px;
+        }
+        
+        .rules-tab {
+            position: fixed;
+            bottom: 20px;
+            right: 90px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #ff4444, #cc3333);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            font-size: 24px;
+            z-index: 1000;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 8px 32px rgba(255, 68, 68, 0.4),
+                0 4px 16px rgba(0, 0, 0, 0.3),
+                inset 0 2px 4px rgba(255, 255, 255, 0.2),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+        
+        .rules-tab.shifted {
+            right: 200px;
+        }
+        
+        .rules-tab:hover {
+            width: 140px;
+            border-radius: 30px;
+            background: linear-gradient(145deg, #cc3333, #aa2222);
+            box-shadow: 
+                0 12px 40px rgba(255, 68, 68, 0.6),
+                0 6px 20px rgba(0, 0, 0, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .rules-tab .tab-icon {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+        }
+        
+        .rules-tab .tab-text {
+            opacity: 0;
+            max-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: bold;
+            font-size: 16px;
+            margin-left: 0;
+        }
+        
+        .rules-tab:hover .tab-text {
+            opacity: 1;
+            max-width: 80px;
+            margin-left: 10px;
+        }
+        
+        .rules-popup {
+            position: fixed;
+            bottom: 90px;
+            right: 90px;
+            width: 400px;
+            max-height: 0;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 68, 68, 0.5);
+            z-index: 999;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+        }
+        
+        .rules-popup.show {
+            max-height: 500px;
+            padding: 20px;
+        }
+        
+        .rules-popup h3 {
+            color: #ff4444;
+            margin: 0 0 15px 0;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+        
+        .rules-popup ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .rules-popup li {
+            color: white;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(255, 68, 68, 0.1);
+            border-left: 3px solid #ff4444;
+            border-radius: 0 5px 5px 0;
+            font-size: 0.9rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotateX(0deg); }
+            100% { transform: rotateX(360deg); }
+        }
+        
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            10% { transform: scale(1.1); }
+            20% { transform: scale(1); }
+            30% { transform: scale(1.15); }
+            40% { transform: scale(1); }
+            100% { transform: scale(1); }
+        }
+        
+        .discord-float {
+            animation: spin 2s ease-in-out, heartbeat 0.8s ease-in-out 2.1s;
+            animation-fill-mode: forwards;
+        }
+        
+        .discord-float.spinning {
+            animation: spin 2s ease-in-out;
+        }
+        
+        .discord-float.heartbeat {
+            animation: heartbeat 0.8s ease-in-out;
         }
     </style>
 </head>
 <body>
-    <video class="video-background" autoplay muted loop>
-        <source src="D:\Personal Videos\#general _ BGF Revival (IV) - Discord 2026-03-11 02-50-02.mp4" type="video/mp4">
-    </video>
+    <!-- YouTube iframe as background -->
+    <iframe 
+        class="video-background"
+        src="https://www.youtube.com/embed/Vycc_S8pi00?autoplay=1&mute=1&loop=1&playlist=Vycc_S8pi00&controls=0&showinfo=0&autohide=1&modestbranding=1&disablekb=1&fs=0&iv_load_policy=3&rel=0"
+        frameborder="0"
+        allow="autoplay; encrypted-media"
+        style="pointer-events: none;"
+        allowfullscreen>
+    </iframe>
     
-    <div class="content-overlay">
-        <!-- Content can go here -->
+    <!-- Title Section at Top -->
+    <div class="title-section">
+        <h1 class="glitch-title">BGF Revival IV</h1>
     </div>
+    
+    <!-- Rules Tab -->
+    <div class="rules-tab" id="rulesTab" onclick="toggleRules()">
+        <i class="fas fa-gavel tab-icon"></i>
+        <span class="tab-text">Rules</span>
+    </div>
+    
+    <!-- Rules Popup -->
+    <div class="rules-popup" id="rulesPopup">
+        <h3>Server Rules</h3>
+        <ul>
+            <li><i class="fas fa-ban"></i> No hacking, glitching the server or be permanent ban!</li>
+            <li><i class="fas fa-hand-paper"></i> No harassing, bullying anyone! (Some jokes & kindling there but not too much)</li>
+            <li><i class="fas fa-ad"></i> No spam or self-promotion (server invites, advertisements, etc) without permission from a staff member. This includes DMing fellow members.</li>
+            <li><i class="fas fa-exclamation-triangle"></i> No age-restricted or obscene content. This includes text, images, or links featuring nudity, sex, hard violence, or other graphically disturbing content.</li>
+        </ul>
+    </div>
+    
+    <!-- Floating Discord Button -->
+    <a href="https://discord.gg/5V7rY9YJ" target="_blank" class="discord-float" id="discordFloat">
+        <i class="fab fa-discord icon"></i>
+        <span class="text">Join Discord</span>
+    </a>
+
+    <script>
+        // Random heartbeat animation
+        function randomHeartbeat() {
+            const discordFloat = document.getElementById('discordFloat');
+            
+            // Remove all animation classes
+            discordFloat.classList.remove('spinning', 'heartbeat');
+            
+            // Add heartbeat animation
+            setTimeout(() => {
+                discordFloat.classList.add('heartbeat');
+            }, 10);
+            
+            // Remove heartbeat class after animation completes
+            setTimeout(() => {
+                discordFloat.classList.remove('heartbeat');
+            }, 810);
+        }
+        
+        // Set random intervals for heartbeat (between 3-8 seconds)
+        function scheduleNextHeartbeat() {
+            const randomDelay = Math.random() * 5000 + 3000; // 3000-8000ms
+            setTimeout(() => {
+                randomHeartbeat();
+                scheduleNextHeartbeat(); // Schedule next one
+            }, randomDelay);
+        }
+        
+        // Start heartbeat animations after initial spin completes
+        setTimeout(() => {
+            scheduleNextHeartbeat();
+        }, 3000);
+        
+        // Mouse following 3D tilt effect
+        const discordFloat = document.getElementById('discordFloat');
+        const rulesTab = document.getElementById('rulesTab');
+        const icon = discordFloat.querySelector('.icon');
+        
+        // Move rules when Discord expands
+        discordFloat.addEventListener('mouseenter', () => {
+            rulesTab.classList.add('shifted');
+        });
+        
+        discordFloat.addEventListener('mouseleave', () => {
+            rulesTab.classList.remove('shifted');
+        });
+        
+        discordFloat.addEventListener('mousemove', (e) => {
+            const rect = discordFloat.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            const mouseX = e.clientX - centerX;
+            const mouseY = e.clientY - centerY;
+            
+            // Calculate rotation (max 15 degrees)
+            const rotateX = (mouseY / (rect.height / 2)) * -15;
+            const rotateY = (mouseX / (rect.width / 2)) * 15;
+            
+            // Apply tilt to icon only so it doesn't conflict with button expansion
+            icon.style.transform = `perspective(500px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.2)`;
+        });
+        
+        discordFloat.addEventListener('mouseleave', () => {
+            // Reset icon tilt
+            icon.style.transform = 'perspective(500px) rotateX(0deg) rotateY(0deg) scale(1)';
+        });
+        // Toggle rules popup
+        let rulesVisible = false;
+        function toggleRules() {
+            const popup = document.getElementById('rulesPopup');
+            rulesVisible = !rulesVisible;
+            if (rulesVisible) {
+                popup.classList.add('show');
+            } else {
+                popup.classList.remove('show');
+            }
+        }
+    </script>
 </body>
 </html>
