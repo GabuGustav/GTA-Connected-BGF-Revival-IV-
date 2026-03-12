@@ -348,6 +348,230 @@
             font-size: 0.9rem;
         }
         
+        .gamemodes-section {
+            position: relative;
+            z-index: 1;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px 30px;
+            margin: 30px auto;
+            max-width: 900px;
+            border-radius: 20px;
+            border: 2px solid rgba(88, 101, 242, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+        
+        .gamemodes-title {
+            color: #5865F2;
+            font-size: 2.5rem;
+            text-align: center;
+            margin: 0 0 30px 0;
+            text-transform: uppercase;
+            text-shadow: 0 0 15px rgba(88, 101, 242, 0.5);
+            font-weight: bold;
+        }
+        
+        .gamemodes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .gamemode-card {
+            background: rgba(88, 101, 242, 0.1);
+            border: 2px solid rgba(88, 101, 242, 0.3);
+            border-radius: 15px;
+            padding: 25px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .gamemode-card:hover {
+            background: rgba(88, 101, 242, 0.2);
+            border-color: rgba(88, 101, 242, 0.6);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(88, 101, 242, 0.3);
+        }
+        
+        .gamemode-card i {
+            color: #5865F2;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .gamemode-card h3 {
+            color: white;
+            font-size: 1.3rem;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+        }
+        
+        .gamemode-card p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin: 0;
+            line-height: 1.4;
+        }
+        
+        .join-section {
+            position: relative;
+            z-index: 1;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px 30px;
+            margin: 30px auto;
+            max-width: 900px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 68, 68, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+        
+        .join-title {
+            color: #ff4444;
+            font-size: 2.5rem;
+            text-align: center;
+            margin: 0 0 40px 0;
+            text-transform: uppercase;
+            text-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+            font-weight: bold;
+        }
+        
+        .join-steps {
+            display: grid;
+            gap: 25px;
+        }
+        
+        .step-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            background: rgba(255, 68, 68, 0.05);
+            border: 2px solid rgba(255, 68, 68, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .step-card:hover {
+            background: rgba(255, 68, 68, 0.1);
+            border-color: rgba(255, 68, 68, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 68, 68, 0.2);
+        }
+        
+        .step-number {
+            background: linear-gradient(145deg, #ff4444, #cc3333);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+        }
+        
+        .step-content h3 {
+            color: white;
+            font-size: 1.4rem;
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+        }
+        
+        .step-content p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            margin: 0 0 15px 0;
+            line-height: 1.5;
+        }
+        
+        .download-btn, .invite-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(145deg, #5865F2, #4752C4);
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(88, 101, 242, 0.3);
+        }
+        
+        .download-btn:hover, .invite-btn:hover {
+            background: linear-gradient(145deg, #4752C4, #3c429e);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(88, 101, 242, 0.4);
+        }
+        
+        .invite-btn {
+            background: linear-gradient(145deg, #ff4444, #cc3333);
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+        }
+        
+        .invite-btn:hover {
+            background: linear-gradient(145deg, #cc3333, #aa2222);
+            box-shadow: 0 6px 20px rgba(255, 68, 68, 0.4);
+        }
+        
+        .server-info {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(88, 101, 242, 0.1);
+            border: 2px solid rgba(88, 101, 242, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .server-info i {
+            color: #5865F2;
+        }
+        
+        .requirements {
+            margin-top: 40px;
+            background: rgba(88, 101, 242, 0.05);
+            border: 2px solid rgba(88, 101, 242, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+        }
+        
+        .requirements h3 {
+            color: #5865F2;
+            font-size: 1.4rem;
+            margin: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .requirements ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .requirements li {
+            color: rgba(255, 255, 255, 0.9);
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .requirements li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #5865F2;
+            font-weight: bold;
+        }
+        
         @keyframes spin {
             0% { transform: rotateX(0deg); }
             100% { transform: rotateX(360deg); }
@@ -390,6 +614,94 @@
     <!-- Title Section at Top -->
     <div class="title-section">
         <h1 class="glitch-title">BGF Revival IV</h1>
+    </div>
+    
+    <!-- Gamemodes Section -->
+    <div class="gamemodes-section">
+        <h2 class="gamemodes-title">Gamemodes</h2>
+        <div class="gamemodes-grid">
+            <div class="gamemode-card">
+                <i class="fas fa-flag"></i>
+                <h3>Deathmatch</h3>
+                <p>Classic free-for-all combat</p>
+            </div>
+            <div class="gamemode-card">
+                <i class="fas fa-users"></i>
+                <h3>Team Deathmatch</h3>
+                <p>Cooperative team battles</p>
+            </div>
+            <div class="gamemode-card">
+                <i class="fas fa-crosshairs"></i>
+                <h3>Capture the Flag</h3>
+                <p>Strategic flag capture gameplay</p>
+            </div>
+            <div class="gamemode-card">
+                <i class="fas fa-trophy"></i>
+                <h3>Race Mode</h3>
+                <p>High-speed racing challenges</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- How to Join Section -->
+    <div class="join-section">
+        <h2 class="join-title">How to Join</h2>
+        <div class="join-steps">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Install Tailscale</h3>
+                    <p>Download and install Tailscale to join our private network</p>
+                    <a href="https://tailscale.com/download/" target="_blank" class="download-btn">
+                        <i class="fas fa-download"></i> Download Tailscale
+                    </a>
+                </div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Join Our Network</h3>
+                    <p>Accept the invite to join BGF Revival IV's private network</p>
+                    <a href="https://login.tailscale.com/admin/invite/eSS2j6Qj6w89bSCbT5r111" target="_blank" class="invite-btn">
+                        <i class="fas fa-link"></i> Join Network
+                    </a>
+                </div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Install GTA Connected</h3>
+                    <p>Download the GTA Connected client to connect to our server</p>
+                    <a href="#" class="download-btn">
+                        <i class="fas fa-download"></i> Download GTA Connected
+                    </a>
+                </div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h3>Connect & Play</h3>
+                    <p>Launch GTA Connected and join our private server via Tailscale IP</p>
+                    <div class="server-info">
+                        <i class="fas fa-server"></i>
+                        <span>Server IP: [Your Tailscale IP]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="requirements">
+            <h3><i class="fas fa-list-check"></i> Requirements</h3>
+            <ul>
+                <li>Grand Theft Auto IV (Complete Edition)</li>
+                <li>Windows 7 or higher</li>
+                <li>Tailscale account</li>
+                <li>Stable internet connection</li>
+            </ul>
+        </div>
     </div>
     
     <!-- Rules Tab -->
