@@ -9,7 +9,7 @@
         body {
             margin: 0;
             padding: 0;
-            overflow: hidden;
+            overflow-y: auto;
             background: #000;
             font-family: 'Courier New', monospace;
         }
@@ -488,6 +488,24 @@
             line-height: 1.5;
         }
         
+        .invite-reminder {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 193, 7, 0.1);
+            border: 2px solid rgba(255, 193, 7, 0.3);
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: #ffc107;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .invite-reminder i {
+            color: #ffc107;
+        }
+        
         .download-btn, .invite-btn {
             display: inline-flex;
             align-items: center;
@@ -601,15 +619,10 @@
     </style>
 </head>
 <body>
-    <!-- YouTube iframe as background -->
-    <iframe 
-        class="video-background"
-        src="https://www.youtube.com/embed/Vycc_S8pi00?autoplay=1&mute=1&loop=1&playlist=Vycc_S8pi00&controls=0&showinfo=0&autohide=1&modestbranding=1&disablekb=1&fs=0&iv_load_policy=3&rel=0"
-        frameborder="0"
-        allow="autoplay; encrypted-media"
-        style="pointer-events: none;"
-        allowfullscreen>
-    </iframe>
+    <!-- Local Video Background for Testing -->
+    <video class="video-background" autoplay loop>
+        <source src="background.mp4" type="video/mp4">
+    </video>
     
     <!-- Title Section at Top -->
     <div class="title-section">
@@ -663,7 +676,11 @@
                 <div class="step-content">
                     <h3>Join Our Network</h3>
                     <p>Accept the invite to join BGF Revival IV's private network</p>
-                    <a href="https://login.tailscale.com/admin/invite/eSS2j6Qj6w89bSCbT5r111" target="_blank" class="invite-btn">
+                    <div class="invite-reminder" id="countdown">
+                        <i class="fas fa-clock"></i>
+                        <span id="countdown-text">Loading...</span>
+                    </div>
+                    <a href="https://login.tailscale.com/admin/invite/wvzsDYMiKeZ9bSCbT5r111" target="_blank" class="invite-btn">
                         <i class="fas fa-link"></i> Join Network
                     </a>
                 </div>
@@ -674,7 +691,7 @@
                 <div class="step-content">
                     <h3>Install GTA Connected</h3>
                     <p>Download the GTA Connected client to connect to our server</p>
-                    <a href="#" class="download-btn">
+                    <a href="https://gtaconnected.com/downloads/client/GTAC-1.7.18.zip" target="_blank" class="download-btn">
                         <i class="fas fa-download"></i> Download GTA Connected
                     </a>
                 </div>
@@ -687,7 +704,7 @@
                     <p>Launch GTA Connected and join our private server via Tailscale IP</p>
                     <div class="server-info">
                         <i class="fas fa-server"></i>
-                        <span>Server IP: [Your Tailscale IP]</span>
+                        <span>Server IP: 100.98.96.7:22000</span>
                     </div>
                 </div>
             </div>
@@ -805,6 +822,150 @@
                 popup.classList.remove('show');
             }
         }
+        
+        // Discord webhook notification system
+        let notificationSent = { weekWarning: false, expired: false };
+        
+        async function sendDiscordNotification(title, description, color = 16711680) {
+            // Discord webhook URL for BGF Revival IV notifications
+            const webhookUrl = 'https://discord.com/api/webhooks/1481596318110715904/wpwoFymsQcwVcq7RPoAMSkQSSMmt8uUhuSME3bp2Wd_LMu7jZrBNafBd6diPKknXbDk_';
+            
+            if (webhookUrl === 'YOUR_DISCORD_WEBHOOK_URL_HERE') {
+                console.log('Discord webhook not configured - Set your webhook URL in the code');
+                return;
+            }
+            
+            const payload = {
+                embeds: [{
+                    title: title,
+                    description: description,
+                    color: color,
+                    timestamp: new Date().toISOString(),
+                    footer: {
+                        text: 'BGF Revival IV - Automated Alert'
+                    }
+                }]
+            };
+            
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    console.error('Discord notification failed:', response.statusText);
+                } else {
+                    console.log('Discord notification sent successfully');
+                }
+            } catch (error) {
+                console.error('Error sending Discord notification:', error);
+            }
+        }
+        
+        // Countdown with persistent timer (no restart on reload)
+        function restartCountdown() {
+            // Clear any existing interval
+            if (window.countdownInterval) {
+                clearInterval(window.countdownInterval);
+            }
+            
+            // Get the stored start date (don't reset it)
+            let startDate = localStorage.getItem('tailscaleInviteStartDate');
+            if (!startDate) {
+                // Only set if it doesn't exist (first time with new invite)
+                startDate = new Date().toISOString();
+                localStorage.setItem('tailscaleInviteStartDate', startDate);
+                console.log('New timer started for invite:', startDate);
+            } else {
+                console.log('Continuing existing timer from:', startDate);
+            }
+            
+            // Set expiration date to 180 days from the ORIGINAL start date
+            const originalStartDate = new Date(startDate);
+            const expirationDate = new Date(originalStartDate.getTime() + (180 * 24 * 60 * 60 * 1000));
+            
+            function updateCountdown() {
+                const now = new Date();
+                const timeLeft = expirationDate - now;
+                
+                const countdownElement = document.getElementById('countdown-text');
+                const countdownContainer = document.getElementById('countdown');
+                
+                if (timeLeft > 0) {
+                    const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                    
+                    let countdownText = `Invite expires in `;
+                    
+                    if (days > 0) {
+                        countdownText += `${days} day${days !== 1 ? 's' : ''}, `;
+                    }
+                    if (hours > 0 || days > 0) {
+                        countdownText += `${hours}h ${minutes}m ${seconds}s`;
+                    } else {
+                        countdownText += `${minutes}m ${seconds}s`;
+                    }
+                    
+                    countdownText += ` - Join soon!`;
+                    countdownElement.textContent = countdownText;
+                    
+                    // Change color based on urgency
+                    if (days <= 7) {
+                        countdownContainer.style.background = 'rgba(220, 53, 69, 0.1)';
+                        countdownContainer.style.borderColor = 'rgba(220, 53, 69, 0.3)';
+                        countdownContainer.style.color = '#dc3545';
+                        
+                        // Send Discord notification at 7 days (only once)
+                        if (days === 7 && !notificationSent.weekWarning) {
+                            sendDiscordNotification(
+                                '🚨 Tailscale Invite Expiring Soon!',
+                                `The BGF Revival IV Tailscale invite expires in **7 days**!\n\nCurrent invite: https://login.tailscale.com/admin/invite/wvzsDYMiKeZ9bSCbT5r111\n\nPlease generate a new invite link and update the website.`,
+                                16711680 // Red color
+                            );
+                            notificationSent.weekWarning = true;
+                        }
+                    } else if (days <= 30) {
+                        countdownContainer.style.background = 'rgba(255, 193, 7, 0.1)';
+                        countdownContainer.style.borderColor = 'rgba(255, 193, 7, 0.3)';
+                        countdownContainer.style.color = '#ffc107';
+                    } else {
+                        countdownContainer.style.background = 'rgba(40, 167, 69, 0.1)';
+                        countdownContainer.style.borderColor = 'rgba(40, 167, 69, 0.3)';
+                        countdownContainer.style.color = '#28a745';
+                    }
+                } else {
+                    countdownElement.textContent = 'Invite EXPIRED - Contact admin for new link';
+                    countdownContainer.style.background = 'rgba(220, 53, 69, 0.2)';
+                    countdownContainer.style.borderColor = 'rgba(220, 53, 69, 0.5)';
+                    countdownContainer.style.color = '#dc3545';
+                    
+                    // Send Discord notification when expired (only once)
+                    if (!notificationSent.expired) {
+                        sendDiscordNotification(
+                            '❌ Tailscale Invite EXPIRED!',
+                            `The BGF Revival IV Tailscale invite has **EXPIRED**!\n\nPlayers cannot join the server until you update the invite link.\n\nPlease generate a new invite immediately and update the website.`,
+                            16711680 // Red color
+                        );
+                        notificationSent.expired = true;
+                    }
+                }
+            }
+            
+            // Update immediately
+            updateCountdown();
+            
+            // Store interval reference and update every second
+            window.countdownInterval = setInterval(updateCountdown, 1000);
+        }
+        
+        // Start countdown when page loads
+        restartCountdown();
     </script>
 </body>
 </html>
