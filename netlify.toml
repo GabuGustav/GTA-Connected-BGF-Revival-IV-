@@ -1,0 +1,15 @@
+{
+  "name": "bgf-revival-iv",
+  "version": "1.0.0",
+  "description": "BGF Revival IV - GTA Connected Server Website",
+  "scripts": {
+    "build": "echo 'No build needed'",
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  }
+}
