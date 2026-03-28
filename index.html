@@ -937,6 +937,326 @@
             }
         }
         
+        .mail-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .mail-popup {
+            background: linear-gradient(135deg, 
+                rgba(0, 255, 150, 0.1),
+                rgba(0, 255, 200, 0.05),
+                rgba(76, 175, 80, 0.1)
+            );
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 
+                0 0 50px rgba(0, 255, 150, 0.2),
+                0 0 100px rgba(0, 255, 200, 0.1),
+                0 0 150px rgba(76, 175, 80, 0.2),
+                inset 0 0 20px rgba(255, 255, 255, 0.1);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            animation: hologramFloat 4s ease-in-out infinite;
+        }
+        
+        .mail-popup::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, 
+                rgba(76, 175, 80, 0.1) 0%,
+                rgba(0, 255, 150, 0.05) 50%,
+                rgba(0, 255, 200, 0.02) 100%
+            );
+            opacity: 0.6;
+            animation: hologramRotate 8s linear infinite;
+        }
+        
+        .mail-popup::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.05) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            z-index: -1;
+        }
+        
+        .mail-popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .mail-popup-from {
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        
+        .mail-popup-date {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        
+        .mail-popup-close {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid rgba(255, 68, 68, 0.4);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .mail-popup-close:hover {
+            background: rgba(220, 53, 69, 0.3);
+            border-color: rgba(220, 53, 69, 0.6);
+        }
+        
+        .mail-popup-subject {
+            color: white;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        
+        .mail-popup-message {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            line-height: 1.5;
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        @keyframes hologramFloat {
+            0%, 100% {
+                transform: translateY(0) rotateX(0deg);
+            }
+            25% {
+                transform: translateY(-10px) rotateX(2deg);
+            }
+            75% {
+                transform: translateY(5px) rotateX(-1deg);
+            }
+        }
+        
+        @keyframes hologramRotate {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                transform: rotate(180deg) scale(1.1);
+            }
+            100% {
+                transform: rotate(360deg) scale(1);
+            }
+        }
+        
+        .recovery-section {
+            position: relative;
+            z-index: 1;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 40px 30px;
+            margin: 30px auto;
+            max-width: 900px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 152, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+        
+        .recovery-title {
+            color: #ff9800;
+            font-size: 2.5rem;
+            text-align: center;
+            margin: 0 0 40px 0;
+            text-transform: uppercase;
+            text-shadow: 0 0 15px rgba(255, 152, 0, 0.5);
+            font-weight: bold;
+        }
+        
+        .recovery-container {
+            background: rgba(255, 152, 0, 0.05);
+            border: 2px solid rgba(255, 152, 0, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+        }
+        
+        .recovery-step h3 {
+            color: white;
+            font-size: 1.8rem;
+            margin: 0 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .recovery-step p {
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0 0 25px 0;
+            font-size: 1.1rem;
+        }
+        
+        .recovery-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .recovery-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 152, 0, 0.3);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .recovery-input:focus {
+            outline: none;
+            border-color: rgba(255, 152, 0, 0.6);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .recovery-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .recovery-btn {
+            background: linear-gradient(145deg, #ff9800, #f57c00);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .recovery-btn:hover {
+            background: linear-gradient(145deg, #f57c00, #e65100);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+        }
+        
+        .recovery-login {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .recovery-login p {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .recovery-login a {
+            color: #ff9800;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .recovery-login a:hover {
+            text-decoration: underline;
+        }
+        
+        .otp-info {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255, 152, 0, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+        
+        .otp-timer {
+            font-size: 2rem;
+            color: #ff9800;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+        }
+        
+        .otp-code {
+            font-size: 2.5rem;
+            color: #4CAF50;
+            font-weight: bold;
+            letter-spacing: 10px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        
+        .recovery-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .resend-btn, .cancel-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .resend-btn {
+            background: linear-gradient(145deg, #2196F3, #1976D2);
+            color: white;
+            border: none;
+        }
+        
+        .cancel-btn {
+            background: linear-gradient(145deg, #9e9e9e, #757575);
+            color: white;
+            border: none;
+        }
+        
+        .resend-btn:hover, .cancel-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
         @keyframes spin {
             0% { transform: rotateX(0deg); }
             100% { transform: rotateX(360deg); }
@@ -1016,6 +1336,61 @@
         </div>
     </div>
     
+    <!-- Password Recovery Section -->
+    <div class="recovery-section" id="recoverySection" style="display: none;">
+        <h2 class="recovery-title">Password Recovery</h2>
+        <div class="recovery-container">
+            <div class="recovery-step" id="recoveryStep1">
+                <h3><i class="fas fa-key"></i> Forgot Password</h3>
+                <p>Enter your username to receive a recovery code</p>
+                <div class="recovery-form">
+                    <input type="text" id="recoveryUsername" placeholder="Username" class="recovery-input">
+                    <button onclick="generateOTP()" class="recovery-btn">
+                        <i class="fas fa-paper-plane"></i> Send Recovery Code
+                    </button>
+                </div>
+                <div class="recovery-login">
+                    <p>Remember your password? <a href="#" onclick="showMailLogin()">Back to Mail</a></p>
+                </div>
+            </div>
+            
+            <div class="recovery-step" id="recoveryStep2" style="display: none;">
+                <h3><i class="fas fa-clock"></i> Recovery Code Sent</h3>
+                <p>Check your BGF Mail for the 6-digit recovery code</p>
+                <div class="otp-info">
+                    <div class="otp-timer" id="otpTimer">15:00</div>
+                    <div class="otp-code" id="otpCode">------</div>
+                </div>
+                <div class="recovery-form">
+                    <input type="text" id="otpInput" placeholder="Enter 6-digit code" maxlength="6" class="recovery-input">
+                    <button onclick="verifyOTP()" class="recovery-btn">
+                        <i class="fas fa-check"></i> Verify Code
+                    </button>
+                </div>
+                <div class="recovery-actions">
+                    <button onclick="resendOTP()" class="resend-btn">
+                        <i class="fas fa-redo"></i> Resend Code
+                    </button>
+                    <button onclick="cancelRecovery()" class="cancel-btn">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+            
+            <div class="recovery-step" id="recoveryStep3" style="display: none;">
+                <h3><i class="fas fa-lock"></i> Reset Password</h3>
+                <p>Enter your new password</p>
+                <div class="recovery-form">
+                    <input type="password" id="newPassword" placeholder="New Password" class="recovery-input">
+                    <input type="password" id="confirmPassword" placeholder="Confirm Password" class="recovery-input">
+                    <button onclick="resetPassword()" class="recovery-btn">
+                        <i class="fas fa-save"></i> Reset Password
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- BGF Mail Section -->
     <div class="mail-section">
         <h2 class="mail-title">BGF Mail</h2>
@@ -1039,6 +1414,7 @@
                 </div>
                 <div class="mail-register">
                     <p>New to BGF Mail? <a href="#" onclick="showRegister()">Register here</a></p>
+                    <p>Forgot your password? <a href="#" onclick="showRecovery()">Reset password</a></p>
                 </div>
             </div>
             
@@ -1367,7 +1743,7 @@
             mail.read = true;
             saveMailData();
             
-            alert(`From: ${mail.from}@bgf.connected\nSubject: ${mail.subject}\n\n${mail.message}`);
+            showMailPopup(mail);
             loadInbox(); // Refresh to show as read
         }
         
@@ -1516,6 +1892,41 @@
             }, 5000);
         }
         
+        function showMailPopup(mail) {
+            // Create hologram-style popup
+            const popup = document.createElement('div');
+            popup.className = 'mail-popup-overlay';
+            popup.innerHTML = `
+                <div class="mail-popup">
+                    <div class="mail-popup-header">
+                        <div class="mail-popup-from">${mail.from}@bgf.connected</div>
+                        <div class="mail-popup-date">${new Date(mail.date).toLocaleString()}</div>
+                        <button class="mail-popup-close" onclick="this.closest('.mail-popup-overlay').remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="mail-popup-subject">${mail.subject}</div>
+                    <div class="mail-popup-message">${mail.message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(popup);
+            
+            // Close on background click
+            popup.addEventListener('click', function(e) {
+                if (e.target === popup) {
+                    popup.remove();
+                }
+            });
+            
+            // Auto-close after 10 seconds
+            setTimeout(() => {
+                if (popup.parentElement) {
+                    popup.remove();
+                }
+            }, 10000);
+        }
+        
         function triggerRecipientNotification(recipient, sender, subject) {
             // Store notification for recipient (they'll see it when they check)
             const notificationKey = `notification_${recipient}`;
@@ -1546,6 +1957,301 @@
         
         // Initialize mail system on page load
         initMailSystem();
+        
+        // Password Recovery System
+        let currentOTP = null;
+        let otpTimer = null;
+        let otpExpiry = null;
+        let recoveryUsername = null;
+        
+        // API System
+        const API = {
+            baseURL: 'https://bgfr-gta-connected.netlify.app/.netlify/functions',
+            
+            // Generate OTP for password recovery
+            generateOTP: async function(username) {
+                try {
+                    const response = await fetch(`${this.baseURL}/forgot-password`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ username: username.toLowerCase() })
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to generate OTP');
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('OTP Generation Error:', error);
+                    throw error;
+                }
+            },
+            
+            // Verify OTP
+            verifyOTP: async function(otpId, otp) {
+                try {
+                    const response = await fetch(`${this.baseURL}/verify-otp`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ otp_id: otpId, otp: otp })
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to verify OTP');
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('OTP Verification Error:', error);
+                    throw error;
+                }
+            },
+            
+            // Reset password
+            resetPassword: async function(username, newPassword) {
+                try {
+                    const response = await fetch(`${this.baseURL}/reset-password`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            token: 'reset_token', // In production, use actual token
+                            new_password: newPassword 
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to reset password');
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('Password Reset Error:', error);
+                    throw error;
+                }
+            }
+        };
+        
+        // Recovery UI Functions
+        function showRecovery() {
+            document.querySelector('.mail-section').style.display = 'none';
+            document.getElementById('recoverySection').style.display = 'block';
+            resetRecoveryForm();
+        }
+        
+        function showMailLogin() {
+            document.getElementById('recoverySection').style.display = 'none';
+            document.querySelector('.mail-section').style.display = 'block';
+        }
+        
+        function resetRecoveryForm() {
+            // Hide all steps
+            document.getElementById('recoveryStep1').style.display = 'block';
+            document.getElementById('recoveryStep2').style.display = 'none';
+            document.getElementById('recoveryStep3').style.display = 'none';
+            
+            // Clear form
+            document.getElementById('recoveryUsername').value = '';
+            document.getElementById('otpInput').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            
+            // Clear timer
+            if (otpTimer) {
+                clearInterval(otpTimer);
+                otpTimer = null;
+            }
+            
+            currentOTP = null;
+            recoveryUsername = null;
+        }
+        
+        async function generateOTP() {
+            const username = document.getElementById('recoveryUsername').value.trim().toLowerCase();
+            
+            if (!username) {
+                alert('Please enter your username');
+                return;
+            }
+            
+            if (!mailData[username]) {
+                alert('User not found');
+                return;
+            }
+            
+            try {
+                // Generate OTP via API
+                const otpData = await API.generateOTP(username);
+                currentOTP = otpData;
+                recoveryUsername = username;
+                
+                // Send OTP via BGF Mail
+                mailData[username].inbox.unshift({
+                    from: 'system',
+                    subject: 'Password Recovery Code',
+                    message: `Your password recovery code is: ${otpData.otp_id}\n\nGo to https://bgfr-gta-connected.netlify.app/recovery?otp_id=${otpData.otp_id}\n\nThis code will expire in 15 minutes.\n\nIf you didn't request this, please ignore this message.`,
+                    date: new Date().toISOString(),
+                    read: false
+                });
+                saveMailData();
+                
+                // Show OTP step
+                document.getElementById('recoveryStep1').style.display = 'none';
+                document.getElementById('recoveryStep2').style.display = 'block';
+                
+                // Show OTP ID for demo (in production, this would be hidden)
+                document.getElementById('otpCode').textContent = otpData.otp_id;
+                
+                // Start timer
+                startOTPTimer(new Date(Date.now() + 15 * 60 * 1000));
+                
+                alert('Recovery code sent to your BGF Mail!');
+            } catch (error) {
+                alert('Failed to generate recovery code: ' + error.message);
+            }
+        }
+        
+        function startOTPTimer(expiresAt) {
+            if (otpTimer) {
+                clearInterval(otpTimer);
+            }
+            
+            otpTimer = setInterval(() => {
+                const now = new Date();
+                const expiry = new Date(expiresAt);
+                const timeLeft = expiry - now;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(otpTimer);
+                    document.getElementById('otpTimer').textContent = '00:00';
+                    document.getElementById('otpCode').textContent = 'EXPIRED';
+                    return;
+                }
+                
+                const minutes = Math.floor(timeLeft / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                
+                document.getElementById('otpTimer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        async function verifyOTP() {
+            const otpInput = document.getElementById('otpInput').value.trim();
+            
+            if (!otpInput) {
+                alert('Please enter OTP code');
+                return;
+            }
+            
+            if (!currentOTP) {
+                alert('OTP session expired. Please try again.');
+                resetRecoveryForm();
+                return;
+            }
+            
+            try {
+                // Verify OTP via API
+                const result = await API.verifyOTP(currentOTP.otp_id, otpInput);
+                
+                if (result.valid) {
+                    // Show password reset step
+                    document.getElementById('recoveryStep2').style.display = 'none';
+                    document.getElementById('recoveryStep3').style.display = 'block';
+                    
+                    // Clear timer
+                    if (otpTimer) {
+                        clearInterval(otpTimer);
+                        otpTimer = null;
+                    }
+                } else {
+                    alert(result.error);
+                }
+            } catch (error) {
+                alert('Failed to verify OTP: ' + error.message);
+            }
+        }
+        
+        function resetPassword() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!newPassword || !confirmPassword) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+            
+            const result = API.resetPassword(recoveryUsername, newPassword);
+            
+            if (result.success) {
+                alert('Password reset successfully! You can now login with your new password.');
+                showMailLogin();
+            } else {
+                alert(result.error);
+            }
+        }
+        
+        function resendOTP() {
+            if (recoveryUsername) {
+                generateOTP();
+            }
+        }
+        
+        function cancelRecovery() {
+            showMailLogin();
+        }
+        
+        // Handle URL parameters for game integration
+        function handleRecoveryURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const otpId = urlParams.get('otp_id');
+            
+            if (otpId) {
+                // Auto-show recovery if coming from game
+                showRecovery();
+                document.getElementById('recoveryUsername').focus();
+            }
+        }
+        
+        // Initialize recovery system
+        handleRecoveryURL();
+        
+        // Clean up expired OTPs
+        setInterval(() => {
+            const otps = JSON.parse(localStorage.getItem('bgfOTPs') || '{}');
+            const now = new Date();
+            let cleaned = false;
+            
+            for (const [id, otp] of Object.entries(otps)) {
+                if (now > new Date(otp.expiresAt)) {
+                    delete otps[id];
+                    cleaned = true;
+                }
+            }
+            
+            if (cleaned) {
+                localStorage.setItem('bgfOTPs', JSON.stringify(otps));
+            }
+        }, 60000); // Clean up every minute
     </script>
 </body>
 </html>

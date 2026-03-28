@@ -1,0 +1,17 @@
+{
+  "name": "bgf-mail-api",
+  "version": "1.0.0",
+  "description": "BGF Revival IV Mail API Server",
+  "main": "api-server.js",
+  "scripts": {
+    "start": "node api-server.js",
+    "dev": "nodemon api-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
