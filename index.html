@@ -2173,6 +2173,41 @@
             startNotificationCheck();
         }
         
+        function startNotificationCheck() {
+            // Check for pending notifications
+            const notificationKey = `notification_${currentUser}`;
+            const notificationData = localStorage.getItem(notificationKey);
+            
+            if (notificationData) {
+                try {
+                    const notification = JSON.parse(notificationData);
+                    showNotification(`New message from ${notification.from}: ${notification.subject}`, 'info');
+                    // Clear the notification after showing
+                    localStorage.removeItem(notificationKey);
+                } catch (error) {
+                    console.error('Error parsing notification:', error);
+                }
+            }
+            
+            // Set up periodic check for new notifications
+            if (notificationCheckInterval) {
+                clearInterval(notificationCheckInterval);
+            }
+            
+            notificationCheckInterval = setInterval(() => {
+                const latestNotification = localStorage.getItem(notificationKey);
+                if (latestNotification) {
+                    try {
+                        const notification = JSON.parse(latestNotification);
+                        showNotification(`New message from ${notification.from}: ${notification.subject}`, 'info');
+                        localStorage.removeItem(notificationKey);
+                    } catch (error) {
+                        console.error('Error parsing notification:', error);
+                    }
+                }
+            }, 5000); // Check every 5 seconds
+        }
+        
         function showInbox() {
             document.getElementById('mailUsername').value = '';
             document.getElementById('mailPassword').value = '';
@@ -2242,14 +2277,40 @@
                 return;
             }
             
-            // Remove @bgf.connected if present
-            const toUsername = to.replace('@bgf.connected', '');
+            // Remove @bgf.connected if present and normalize
+            let toUsername = to.replace('@bgf.connected', '');
             
+            // Try exact match first
             console.log('Looking for user:', toUsername);
             console.log('User exists:', mailData[toUsername] ? 'YES' : 'NO');
             
             if (!mailData[toUsername]) {
-                alert('User not found');
+                // Try without underscores (noob_player -> noobplayer)
+                const normalizedUsername = toUsername.replace(/_/g, '');
+                console.log('Trying normalized user:', normalizedUsername);
+                console.log('Normalized user exists:', mailData[normalizedUsername] ? 'YES' : 'NO');
+                
+                if (mailData[normalizedUsername]) {
+                    toUsername = normalizedUsername;
+                }
+            }
+            
+            if (!mailData[toUsername]) {
+                // Try with underscores (noobplayer -> noob_player)
+                const underscoreUsername = toUsername.replace(/([a-z])([a-z])/g, '$1_$2');
+                console.log('Trying underscore user:', underscoreUsername);
+                console.log('Underscore user exists:', mailData[underscoreUsername] ? 'YES' : 'NO');
+                
+                if (mailData[underscoreUsername]) {
+                    toUsername = underscoreUsername;
+                }
+            }
+            
+            console.log('Final username:', toUsername);
+            console.log('Final user exists:', mailData[toUsername] ? 'YES' : 'NO');
+            
+            if (!mailData[toUsername]) {
+                alert(`User not found: ${to}. Available users: ${Object.keys(mailData).map(u => u + '@bgf.connected').join(', ')}`);
                 return;
             }
             
