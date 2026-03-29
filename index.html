@@ -2767,67 +2767,29 @@
                     transitionContainer.innerHTML = `
                         <style>
                             @keyframes collapseCube {
-                                0% {
-                                    transform: scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-                                    opacity: 1;
-                                }
-                                50% {
-                                    transform: scale(0.5) rotateX(180deg) rotateY(180deg) rotateZ(90deg);
-                                    opacity: 0.5;
-                                }
-                                100% {
-                                    transform: scale(0) rotateX(360deg) rotateY(360deg) rotateZ(180deg);
-                                    opacity: 0;
-                                }
+                                0% { transform: scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg); opacity: 1; }
+                                50% { transform: scale(0.5) rotateX(180deg) rotateY(180deg) rotateZ(90deg); opacity: 0.5; }
+                                100% { transform: scale(0) rotateX(360deg) rotateY(360deg) rotateZ(180deg); opacity: 0; }
                             }
-                            
                             @keyframes successExplosion {
-                                0% {
-                                    transform: scale(0);
-                                    opacity: 0;
-                                }
-                                50% {
-                                    transform: scale(1.5);
-                                    opacity: 1;
-                                }
-                                100% {
-                                    transform: scale(2);
-                                    opacity: 0;
-                                }
+                                0% { transform: scale(0); opacity: 0; }
+                                50% { transform: scale(1.5); opacity: 1; }
+                                100% { transform: scale(2); opacity: 0; }
                             }
-                            
                             @keyframes confettiFall {
-                                0% {
-                                    transform: translateY(-100vh) rotate(0deg);
-                                    opacity: 1;
-                                }
-                                100% {
-                                    transform: translateY(100vh) rotate(720deg);
-                                    opacity: 0;
-                                }
+                                0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+                                100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
                             }
-                            
                             @keyframes connectionEstablished {
-                                0% {
-                                    transform: scale(0) rotate(0deg);
-                                    opacity: 0;
-                                }
-                                50% {
-                                    transform: scale(1.2) rotate(180deg);
-                                    opacity: 1;
-                                }
-                                100% {
-                                    transform: scale(1) rotate(360deg);
-                                    opacity: 1;
-                                }
+                                0% { transform: scale(0) rotate(0deg); opacity: 0; }
+                                50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+                                100% { transform: scale(1) rotate(360deg); opacity: 1; }
                             }
-                            
                             @keyframes rainbowGlow {
                                 0% { filter: brightness(1); }
                                 50% { filter: brightness(1.3); }
                                 100% { filter: brightness(1); }
                             }
-                            
                             .success-cube {
                                 width: 200px;
                                 height: 200px;
@@ -2843,7 +2805,6 @@
                                 animation: collapseCube 1s ease-in forwards;
                                 box-shadow: 0 0 50px rgba(76, 175, 80, 0.8);
                             }
-                            
                             .success-explosion {
                                 position: absolute;
                                 width: 300px;
@@ -2852,14 +2813,12 @@
                                 border-radius: 50%;
                                 animation: successExplosion 1.5s ease-out forwards;
                             }
-                            
                             .confetti {
                                 position: absolute;
                                 width: 10px;
                                 height: 10px;
                                 animation: confettiFall 2s linear forwards;
                             }
-                            
                             .connection-established {
                                 font-size: 2rem;
                                 font-weight: bold;
@@ -2869,7 +2828,6 @@
                                 animation-delay: 1.5s;
                                 opacity: 0;
                             }
-                            
                             .user-connected {
                                 font-size: 1.5rem;
                                 color: white;
@@ -2882,6 +2840,26 @@
                         
                         <div class="success-cube">✓</div>
                         <div class="success-explosion"></div>
+                    `;
+                }, 100);
+                
+                // Phase 2: Success explosion and confetti
+                setTimeout(() => {
+                    transitionContainer.innerHTML = `
+                        <div class="connection-established">CONNECTION ESTABLISHED</div>
+                        <div class="user-connected">User ${cleanUsername}@bgf.connected has been connected to BGF Network</div>
+                        <button onclick="finishRegistration()" style="
+                            background: linear-gradient(145deg, #4CAF50, #45a049);
+                            border: none;
+                            color: white;
+                            padding: 15px 30px;
+                            font-size: 1.2rem;
+                            font-weight: bold;
+                            border-radius: 10px;
+                            cursor: pointer;
+                            animation: rainbowGlow 2s linear infinite;
+                            transition: all 0.3s ease;
+                        ">Enter BGF Mail</button>
                     `;
                     
                     // Generate confetti
@@ -2896,121 +2874,7 @@
                             transitionContainer.appendChild(confetti);
                         }
                     }, 500);
-                    
-                    @keyframes successExplosion {
-                        0% {
-                            transform: scale(0);
-                            opacity: 0;
-                        }
-                        50% {
-                            transform: scale(1.5);
-                            opacity: 1;
-                        }
-                        100% {
-                            transform: scale(2);
-                            opacity: 0;
-                        }
-                    }
-                    
-                    @keyframes confettiFall {
-                        0% {
-                            transform: translateY(-100vh) rotate(0deg);
-                            opacity: 1;
-                        }
-                        100% {
-                            transform: translateY(100vh) rotate(720deg);
-                            opacity: 0;
-                        }
-                    }
-                    
-                    @keyframes connectionEstablished {
-                        0% {
-                            transform: scale(0) rotate(0deg);
-                            opacity: 0;
-                        }
-                        50% {
-                            transform: scale(1.2) rotate(180deg);
-                            opacity: 1;
-                        }
-                        100% {
-                            transform: scale(1) rotate(360deg);
-                            opacity: 1;
-                        }
-                    }
-                    
-                    @keyframes rainbowGlow {
-                        0% { filter: brightness(1); }
-                        50% { filter: brightness(1.3); }
-                        100% { filter: brightness(1); }
-                    }
-                    
-                    .success-cube {
-                        width: 200px;
-                        height: 200px;
-                        background: linear-gradient(135deg, #4CAF50, #00ff00, #00ffff);
-                        border-radius: 20px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 3rem;
-                        font-weight: bold;
-                        color: white;
-                        text-shadow: 0 0 30px rgba(76, 175, 80, 0.8);
-                        animation: collapseCube 1s ease-in forwards;
-                        box-shadow: 0 0 50px rgba(76, 175, 80, 0.8);
-                    }
-                    
-                    .success-explosion {
-                        position: absolute;
-                        width: 300px;
-                        height: 300px;
-                        background: radial-gradient(circle, rgba(76, 175, 80, 0.8), transparent);
-                        border-radius: 50%;
-                        animation: successExplosion 1.5s ease-out forwards;
-                    }
-                    
-                    .confetti {
-                        position: absolute;
-                        width: 10px;
-                        height: 10px;
-                        animation: confettiFall 2s linear forwards;
-                    }
-                    
-                    .connection-established {
-                        font-size: 2rem;
-                        font-weight: bold;
-                        color: #4CAF50;
-                        text-shadow: 0 0 30px rgba(76, 175, 80, 0.8);
-                        animation: connectionEstablished 1s ease-out forwards;
-                        animation-delay: 1.5s;
-                        opacity: 0;
-                    }
-                    
-                    .user-connected {
-                        font-size: 1.5rem;
-                        color: white;
-                        text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-                        animation: fadeIn 1s ease-in forwards;
-                        animation-delay: 2.5s;
-                        opacity: 0;
-                    }
-                </style>
-                
-                <div class="success-cube">✓</div>
-                <div class="success-explosion"></div>
-                                        padding: 15px 30px;
-                                        font-size: 1.2rem;
-                                        font-weight: bold;
-                                        border-radius: 10px;
-                                        cursor: pointer;
-                                        animation: rainbowGlow 2s linear infinite;
-                                        transition: all 0.3s ease;
-                                    ">Enter BGFR Mail</button>
-                                </div>
-                            </div>
-                        `;
-                    }, 2000);
-                }, 100);
+                }, 2000);
             }
         }
         
@@ -3206,6 +3070,11 @@
             const soundBtn = document.getElementById('soundBtn');
             const soundIcon = document.getElementById('soundIcon');
             
+            if (!video) {
+                console.log('Video element not found');
+                return;
+            }
+            
             if (video.muted) {
                 // Unmute video
                 video.muted = false;
@@ -3213,28 +3082,48 @@
                 soundIcon.className = 'fas fa-volume-up';
                 
                 // Try to play with sound (may need user interaction)
-                video.play().catch(error => {
+                video.play().then(() => {
+                    console.log('Video unmuted successfully');
+                }).catch(error => {
                     console.log('Autoplay with sound blocked:', error);
+                    // Show message to user
+                    showNotification('Click the video to enable sound', 'info');
+                    // Keep video unmuted but show user message
+                    video.muted = false;
                 });
             } else {
                 // Mute video
                 video.muted = true;
                 soundBtn.classList.remove('sound-on');
                 soundIcon.className = 'fas fa-volume-mute';
+                console.log('Video muted');
             }
         }
         
         // Enable sound on first user interaction
-        document.addEventListener('click', function enableSound() {
+        function enableSound() {
             const video = document.getElementById('bgVideo');
-            if (video.muted) {
+            if (video && video.muted) {
                 video.muted = false;
                 document.getElementById('soundBtn').classList.add('sound-on');
                 document.getElementById('soundIcon').className = 'fas fa-volume-up';
+                
+                // Try to play with sound
+                video.play().then(() => {
+                    console.log('Sound enabled on first interaction');
+                }).catch(error => {
+                    console.log('Sound enable failed:', error);
+                });
             }
-            // Remove listener after first interaction
-            document.removeEventListener('click', enableSound);
-        }, { once: true });
+        }
+        
+        // Add click listener to entire page for sound enable
+        document.addEventListener('click', function enableSoundOnPageClick() {
+            const video = document.getElementById('bgVideo');
+            if (video && video.muted) {
+                enableSound();
+            }
+        }, { once: true });    // Remove listener after first interaction
         
         // Password Recovery System
         let currentOTP = null;
