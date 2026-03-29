@@ -62,7 +62,11 @@
             padding: 30px;
             box-shadow: 0 0 50px rgba(0, 255, 159, 0.3);
             z-index: 10;
-            opacity: 0;
+            opacity: 1;
+            animation: terminalGlow 2s ease-in-out infinite alternate;
+        }
+
+        .terminal-container.show {
             animation: terminalGlow 2s ease-in-out infinite alternate;
         }
 
@@ -71,54 +75,15 @@
             100% { box-shadow: 0 0 60px rgba(0, 255, 159, 0.5); }
         }
 
-        .terminal-container.show {
-            animation: terminalAppear 1s ease-out forwards;
-        }
-
-        @keyframes terminalAppear {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.8);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
-            }
-        }
-
         /* Terminal Lines */
         .terminal-line {
             margin: 8px 0;
             font-size: 14px;
-            opacity: 0;
-            animation: typewriterLine 0.5s ease-out forwards;
-        }
-
-        @keyframes typewriterLine {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            opacity: 1;
         }
 
         .terminal-line.error {
             color: #ff6b6b;
-            animation: typewriterError 0.5s ease-out forwards;
-        }
-
-        @keyframes typewriterError {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
         }
 
         .terminal-line.warning {
@@ -133,8 +98,7 @@
         /* Loading Bar */
         .loading-container {
             margin-top: 30px;
-            opacity: 0;
-            animation: loadingAppear 1s ease-out 2s forwards;
+            opacity: 1;
         }
 
         @keyframes loadingAppear {
@@ -432,14 +396,18 @@
         // Hacker Intro System
         class HackerIntro {
             constructor() {
+                console.log('HackerIntro constructor called');
                 this.binaryRain = new BinaryRain();
+                console.log('BinaryRain initialized');
                 this.terminalLines = [];
                 this.currentLineIndex = 0;
                 this.loadingProgress = 0;
                 this.phase = 'terminal';
                 
                 this.generateTerminalLines();
+                console.log('Terminal lines generated:', this.terminalLines.length);
                 this.startIntro();
+                console.log('Intro started');
             }
             
             generateTerminalLines() {
@@ -482,37 +450,43 @@
                 
                 this.terminalLines = [
                     { text: '> BOOTING BLACKSITE SYSTEM...', type: 'success', delay: 0 },
-                    { text: `> CONNECTING TO ${fakeIPs[Math.floor(Math.random() * fakeIPs.length)]}...`, type: 'normal', delay: 800 },
-                    { text: '> AUTHENTICATING...', type: 'normal', delay: 1600 },
-                    { text: '> ESTABLISHING SECURE CHANNEL...', type: 'normal', delay: 2400 },
-                    { text: '> LOADING SECURITY PROTOCOLS...', type: 'normal', delay: 3200 },
-                    { text: `${crypticWords[Math.floor(Math.random() * crypticWords.length)]}... ACTIVE`, type: 'warning', delay: 4000 },
-                    { text: `${loadingMessages[Math.floor(Math.random() * loadingMessages.length)]}`, type: 'normal', delay: 4800 },
-                    { text: '> DECRYPTING NODE...', type: 'normal', delay: 5600 },
-                    { text: '> ACCESS GRANTED', type: 'success', delay: 6400 },
-                    { text: '> WELCOME TO BLACKSITE NETWORK', type: 'success', delay: 7200 }
+                    { text: `> CONNECTING TO ${fakeIPs[Math.floor(Math.random() * fakeIPs.length)]}...`, type: 'normal', delay: 300 },
+                    { text: '> AUTHENTICATING...', type: 'normal', delay: 600 },
+                    { text: '> ESTABLISHING SECURE CHANNEL...', type: 'normal', delay: 900 },
+                    { text: '> LOADING SECURITY PROTOCOLS...', type: 'normal', delay: 1200 },
+                    { text: `${crypticWords[Math.floor(Math.random() * crypticWords.length)]}... ACTIVE`, type: 'warning', delay: 1500 },
+                    { text: `${loadingMessages[Math.floor(Math.random() * loadingMessages.length)]}`, type: 'normal', delay: 1800 },
+                    { text: '> DECRYPTING NODE...', type: 'normal', delay: 2100 },
+                    { text: '> ACCESS GRANTED', type: 'success', delay: 2400 },
+                    { text: '> WELCOME TO BLACKSITE NETWORK', type: 'success', delay: 2700 }
                 ];
                 
                 // Add some random errors
                 if (Math.random() > 0.7) {
-                    this.terminalLines.splice(4, 0, { text: '> ERROR: CONNECTION INTERRUPTED', type: 'error', delay: 3600 });
-                    this.terminalLines.splice(5, 0, { text: '> RETRYING...', type: 'warning', delay: 4400 });
+                    this.terminalLines.splice(4, 0, { text: '> ERROR: CONNECTION INTERRUPTED', type: 'error', delay: 1350 });
+                    this.terminalLines.splice(5, 0, { text: '> RETRYING...', type: 'warning', delay: 1650 });
                 }
             }
             
             startIntro() {
+                console.log('Starting intro sequence');
                 this.showTerminal();
-                setTimeout(() => this.startLoading(), 8000);
+                setTimeout(() => this.startLoading(), 3000); // Reduced delay
             }
             
             showTerminal() {
+                console.log('Showing terminal');
                 const terminal = document.getElementById('terminal');
                 const output = document.getElementById('terminalOutput');
+                
+                console.log('Terminal element:', terminal);
+                console.log('Output element:', output);
                 
                 terminal.classList.add('show');
                 
                 this.terminalLines.forEach((line, index) => {
                     setTimeout(() => {
+                        console.log(`Adding line ${index}: ${line.text}`);
                         this.addTerminalLine(line.text, line.type);
                     }, line.delay);
                 });
@@ -526,17 +500,9 @@
                 
                 output.appendChild(line);
                 
-                // Typewriter effect
-                line.style.width = '0';
-                line.style.whiteSpace = 'nowrap';
-                line.style.overflow = 'hidden';
+                console.log(`Line added: ${text}`);
                 
-                setTimeout(() => {
-                    line.style.transition = 'width 0.5s ease-out';
-                    line.style.width = '100%';
-                }, 100);
-                
-                // Random glitch effect
+                // Simple glitch effect
                 if (Math.random() > 0.8) {
                     setTimeout(() => {
                         line.classList.add('glitch');
@@ -613,7 +579,13 @@
         
         // Initialize Intro
         document.addEventListener('DOMContentLoaded', () => {
-            new HackerIntro();
+            console.log('DOM Content Loaded - Starting Hacker Intro');
+            try {
+                new HackerIntro();
+                console.log('Hacker Intro initialized successfully');
+            } catch (error) {
+                console.error('Error initializing Hacker Intro:', error);
+            }
         });
     </script>
 </body>

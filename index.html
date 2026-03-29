@@ -18,10 +18,58 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
             z-index: -1;
+        }
+        
+        .video-background iframe {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100vw;
+            height: 56.25vw; /* 16:9 aspect ratio */
+            min-width: 100%;
+            min-height: 100%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        
+        .video-fallback {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #000 0%, #111 50%, #000 100%);
+            z-index: -1;
+        }
+        
+        .video-loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #00ff9f;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 255, 159, 0.3);
+            border-top: 3px solid #00ff9f;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         .title-section {
@@ -1533,11 +1581,32 @@
     </style>
 </head>
 <body>
-    <!-- Local Video Background -->
-    <video class="video-background" autoplay loop muted playsinline id="bgVideo">
+    <!-- Optimized Video Background -->
+    <!-- OPTION 1: Local Video (Current - may buffer on slow connections) -->
+    <video class="video-background" autoplay loop muted playsinline id="bgVideo" preload="metadata" poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080'%3E%3Crect width='1920' height='1080' fill='%23000'/%3E%3C/svg%3E">
         <source src="BGF V2.mp4" type="video/mp4">
-        Your browser does not support the video tag.
+        <!-- Fallback for browsers that don't support the video -->
+        <div class="video-fallback"></div>
     </video>
+    
+    <!-- OPTION 2: YouTube Fallback (Uncomment this and comment out video above for better streaming) -->
+    <!--
+    <div class="video-background">
+        <iframe 
+            src="https://www.youtube.com/embed/aj85Ok5NhBE?autoplay=1&mute=1&loop=1&playlist=aj85Ok5NhBE&controls=0&showinfo=0&modestbranding=1&iv_load_policy=3&cc_load_policy=0&fs=0&rel=0&disablekb=1" 
+            frameborder="0" 
+            allow="autoplay; encrypted-media" 
+            allowfullscreen
+            class="youtube-iframe">
+        </iframe>
+    </div>
+    -->
+    
+    <!-- Loading indicator -->
+    <div class="video-loading" id="videoLoading">
+        <div class="loading-spinner"></div>
+        <p>Loading video...</p>
+    </div>
     
     <!-- Sound Control Button -->
     <button class="sound-control" id="soundBtn" onclick="toggleSound()">
@@ -2958,6 +3027,82 @@
         
         // Initialize mail system on page load
         initMailSystem();
+        
+        // Video Loading Optimization
+        function optimizeVideoLoading() {
+            const video = document.getElementById('bgVideo');
+            const loadingIndicator = document.getElementById('videoLoading');
+            const fallback = document.querySelector('.video-fallback');
+            
+            // Show loading indicator
+            loadingIndicator.style.display = 'block';
+            
+            // Optimize video loading
+            video.addEventListener('loadstart', () => {
+                console.log('Video loading started');
+                loadingIndicator.style.display = 'block';
+            });
+            
+            video.addEventListener('canplay', () => {
+                console.log('Video can play');
+                loadingIndicator.style.display = 'none';
+            });
+            
+            video.addEventListener('loadeddata', () => {
+                console.log('Video data loaded');
+                loadingIndicator.style.display = 'none';
+            });
+            
+            video.addEventListener('error', (e) => {
+                console.error('Video loading error:', e);
+                loadingIndicator.style.display = 'none';
+                // Show fallback
+                fallback.style.display = 'block';
+                video.style.display = 'none';
+            });
+            
+            video.addEventListener('stalled', () => {
+                console.log('Video stalled - buffering');
+                // Don't show loading indicator for brief stalls
+            });
+            
+            video.addEventListener('waiting', () => {
+                console.log('Video waiting - buffering');
+                // Show loading indicator only if waiting for more than 1 second
+                setTimeout(() => {
+                    if (video.readyState < 4) {
+                        loadingIndicator.style.display = 'block';
+                    }
+                }, 1000);
+            });
+            
+            // Set video quality based on network
+            if (navigator.connection) {
+                const connection = navigator.connection;
+                if (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g') {
+                    // For slow connections, consider using a lower quality video
+                    console.log('Slow connection detected, video may buffer');
+                }
+            }
+            
+            // Preload video metadata only
+            video.preload = 'metadata';
+            
+            // Start playing as soon as possible
+            video.play().catch(error => {
+                console.log('Video autoplay failed:', error);
+                // Show fallback if autoplay fails
+                setTimeout(() => {
+                    if (video.paused) {
+                        fallback.style.display = 'block';
+                        video.style.display = 'none';
+                    }
+                }, 3000);
+            });
+        }
+        
+        // Initialize video optimization
+        document.addEventListener('DOMContentLoaded', optimizeVideoLoading);
         
         // Sound Control Function
         function toggleSound() {
