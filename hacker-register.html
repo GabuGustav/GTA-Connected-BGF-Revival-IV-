@@ -1551,30 +1551,42 @@
             
             playGeneral() {
                 this.stopAll();
-                this.generalMusic.volume = this.volume;
-                this.generalMusic.play().catch(e => console.log('General music play failed:', e));
-                this.currentTrack = 'general';
+                // Small delay to avoid race condition
+                setTimeout(() => {
+                    this.generalMusic.volume = this.volume;
+                    this.generalMusic.play().catch(e => console.log('General music play failed:', e));
+                    this.currentTrack = 'general';
+                }, 50);
             }
             
             playEasy() {
                 this.stopAll();
-                this.easyMusic.volume = this.volume;
-                this.easyMusic.play().catch(e => console.log('Easy music play failed:', e));
-                this.currentTrack = 'easy';
+                // Small delay to avoid race condition
+                setTimeout(() => {
+                    this.easyMusic.volume = this.volume;
+                    this.easyMusic.play().catch(e => console.log('Easy music play failed:', e));
+                    this.currentTrack = 'easy';
+                }, 50);
             }
             
             playHard() {
                 this.stopAll();
-                this.hardMusic.volume = this.volume;
-                this.hardMusic.play().catch(e => console.log('Hard music play failed:', e));
-                this.currentTrack = 'hard';
+                // Small delay to avoid race condition
+                setTimeout(() => {
+                    this.hardMusic.volume = this.volume;
+                    this.hardMusic.play().catch(e => console.log('Hard music play failed:', e));
+                    this.currentTrack = 'hard';
+                }, 50);
             }
             
             playHell() {
                 this.stopAll();
-                this.hellMusic.volume = this.volume;
-                this.hellMusic.play().catch(e => console.log('Hell music play failed:', e));
-                this.currentTrack = 'hell';
+                // Small delay to avoid race condition
+                setTimeout(() => {
+                    this.hellMusic.volume = this.volume;
+                    this.hellMusic.play().catch(e => console.log('Hell music play failed:', e));
+                    this.currentTrack = 'hell';
+                }, 50);
             }
             
             setVolume(level) {

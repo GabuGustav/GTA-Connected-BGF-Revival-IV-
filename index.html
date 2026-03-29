@@ -1965,22 +1965,38 @@
         
         // Initialize mail system
         function initMailSystem() {
-            console.log('Initializing BGFR Mail system...');
+            console.log('Initializing BGF Mail system...');
+            console.log('Current localStorage data:', localStorage.getItem('bgfMailData'));
+            console.log('Current sessionStorage data:', sessionStorage.getItem('bgfMailData'));
             
             // Load mail data from localStorage with fallback
-            let saved = localStorage.getItem('bgfrMailData');
+            let saved = localStorage.getItem('bgfMailData');
             
             // Try to get from sessionStorage (for cross-tab sharing)
             if (!saved) {
-                saved = sessionStorage.getItem('bgfrMailData');
+                saved = sessionStorage.getItem('bgfMailData');
             }
             
             if (saved) {
-                mailData = JSON.parse(saved);
-                console.log('Loaded existing mail data:', mailData);
-                // Sync to both storages for sharing
-                localStorage.setItem('bgfrMailData', JSON.stringify(mailData));
-                sessionStorage.setItem('bgfrMailData', JSON.stringify(mailData));
+                try {
+                    mailData = JSON.parse(saved);
+                    console.log('Loaded existing mail data:', mailData);
+                    console.log('Available users:', Object.keys(mailData));
+                    // Sync to both storages for sharing
+                    localStorage.setItem('bgfMailData', JSON.stringify(mailData));
+                    sessionStorage.setItem('bgfMailData', JSON.stringify(mailData));
+                } catch (error) {
+                    console.error('Error parsing mail data:', error);
+                    // Reset to default data
+                    mailData = {
+                        'admin': {
+                            password: 'admin123',
+                            inbox: [],
+                            sent: []
+                        }
+                    };
+                    saveMailData();
+                }
             } else {
                 // Create sample mail data
                 console.log('Creating new mail data...');
@@ -1990,8 +2006,8 @@
                         inbox: [
                             {
                                 from: 'system',
-                                subject: 'Welcome to BGFR Mail!',
-                                message: 'Welcome to the BGFR Revival IV mailing system. This is your internal email for server communications.',
+                                subject: 'Welcome to BGF Mail!',
+                                message: 'Welcome admin@bgf.connected! Your account has been created successfully.',
                                 date: new Date().toISOString(),
                                 read: false
                             }
@@ -2005,25 +2021,30 @@
             
             // Listen for storage changes (cross-tab sync)
             window.addEventListener('storage', function(e) {
-                if (e.key === 'bgfrMailData' && e.newValue) {
-                    mailData = JSON.parse(e.newValue);
-                    if (currentUser) {
-                        loadInbox(); // Refresh if logged in
+                if (e.key === 'bgfMailData' && e.newValue) {
+                    try {
+                        mailData = JSON.parse(e.newValue);
+                        console.log('Storage updated:', mailData);
+                        if (currentUser) {
+                            loadInbox(); // Refresh if logged in
+                        }
+                    } catch (error) {
+                        console.error('Error parsing storage update:', error);
                     }
                 }
             });
             
-            console.log('BGFR Mail system initialized successfully');
+            console.log('BGF Mail system initialized successfully');
         }
         
         function saveMailData() {
             const dataString = JSON.stringify(mailData);
-            localStorage.setItem('bgfrMailData', dataString);
-            sessionStorage.setItem('bgfrMailData', dataString);
+            localStorage.setItem('bgfMailData', dataString);
+            sessionStorage.setItem('bgfMailData', dataString);
             
             // Trigger storage event for other tabs
             window.dispatchEvent(new StorageEvent('storage', {
-                key: 'bgfrMailData',
+                key: 'bgfMailData',
                 newValue: dataString
             }));
         }
@@ -2134,6 +2155,14 @@
             const subject = document.getElementById('composeSubject').value.trim();
             const message = document.getElementById('composeMessage').value.trim();
             
+            console.log('=== SEND MAIL DEBUG ===');
+            console.log('To:', to);
+            console.log('Subject:', subject);
+            console.log('Message:', message);
+            console.log('Current user:', currentUser);
+            console.log('Available users:', Object.keys(mailData));
+            console.log('MailData object:', mailData);
+            
             if (!to || !subject || !message) {
                 alert('Please fill all fields');
                 return;
@@ -2141,6 +2170,9 @@
             
             // Remove @bgf.connected if present
             const toUsername = to.replace('@bgf.connected', '');
+            
+            console.log('Looking for user:', toUsername);
+            console.log('User exists:', mailData[toUsername] ? 'YES' : 'NO');
             
             if (!mailData[toUsername]) {
                 alert('User not found');
@@ -2954,6 +2986,7 @@
         function triggerRecipientNotification(recipient, sender, subject) {
             // Store notification for recipient (they'll see it when they check)
             const notificationKey = `notification_${recipient}`;
+            
             const notification = {
                 from: sender,
                 subject: subject,
@@ -2961,27 +2994,68 @@
             };
             localStorage.setItem(notificationKey, JSON.stringify(notification));
         }
-        
-        function startNotificationCheck() {
-            // Check for new messages every 2 seconds
-            notificationCheckInterval = setInterval(() => {
-                if (!currentUser) return;
-                
-                const notificationKey = `notification_${currentUser}`;
-                const notification = localStorage.getItem(notificationKey);
-                
-                if (notification) {
-                    const data = JSON.parse(notification);
-                    showNotification(`New message from ${data.from}@bgfr.connected: "${data.subject}"`, 'new-message');
-                    localStorage.removeItem(notificationKey); // Remove after showing
-                    loadInbox(); // Refresh inbox to show new message
-                }
-            }, 2000);
+        setTimeout(() => {
+            transitionContainer.innerHTML = `
+                <div class="connection-established">CONNECTION ESTABLISHED</div>
+                <div class="user-connected">User ${cleanUsername}@bgf.connected has been connected to BGF Network</div>
+                <button onclick="finishRegistration()" style="
+                    background: linear-gradient(145deg, #4CAF50, #45a049);
+                    border: none;
+                    color: white;
+                    padding: 15px 30px;
+                    font-size: 1.2rem;
+                    font-weight: bold;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    animation: rainbowGlow 2s linear infinite;
+                    transition: all 0.3s ease;
+                ">Enter BGF Mail</button>
+            `;
+            confetti.className = 'confetti';
+            confetti.style.left = `${Math.random() * 100}%`;
+            confetti.style.background = `rgba(0, 255, 150, ${0.5 + Math.random() * 0.5})`;
+            confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+            confetti.style.animationDuration = `${2 + Math.random() * 2}s`;
+            transitionContainer.appendChild(confetti);
         }
+    }, 500);
+}, 2000);
+}
         
-        // Initialize mail system on page load
-        initMailSystem();
+// Finish registration and enter mail
+function finishRegistration() {
+    const transitionContainer = document.querySelector('.transition-container');
+    if (transitionContainer) {
+        transitionContainer.remove();
+    }
+    
+    // Auto-login
+    currentUser = cleanUsername;
+    showInbox();
+    startNotificationCheck();
+    
+    // Show welcome notification
+    showNotification(`Welcome to BGF Mail, ${currentUser}@bgf.connected!`, 'success');
+}
         
+// Notification system
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `mail-notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-envelope"></i>
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()">&times;</button>
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
         // Check if this is the first visit and redirect to intro
         if (!sessionStorage.getItem('introCompleted')) {
             console.log('First visit detected, redirecting to intro...');
