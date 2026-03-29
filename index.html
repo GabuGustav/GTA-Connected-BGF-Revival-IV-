@@ -1283,26 +1283,170 @@
         .discord-float.heartbeat {
             animation: heartbeat 0.8s ease-in-out;
         }
+        
+        .sound-control {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .sound-control:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+        
+        .sound-control.sound-on {
+            background: rgba(76, 175, 80, 0.7);
+            border-color: rgba(76, 175, 80, 0.4);
+        }
+        
+        .sound-control.sound-on:hover {
+            background: rgba(76, 175, 80, 0.9);
+        }
+        
+        .credits-section {
+            position: relative;
+            z-index: 1;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 40px 30px;
+            margin: 30px auto;
+            max-width: 900px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+        }
+        
+        .credits-container {
+            text-align: center;
+        }
+        
+        .credits-title {
+            color: #fff;
+            font-size: 2.2rem;
+            margin: 0 0 30px 0;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 300;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+        
+        .credits-content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .credits-message {
+            flex: 1;
+        }
+        
+        .credits-text {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+        }
+        
+        .highlight {
+            color: #ff9800;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+        }
+        
+        .credits-signature {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            margin: 20px 0 0 0;
+            font-style: italic;
+        }
+        
+        .signature {
+            color: #e91e63;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px rgba(233, 30, 99, 0.5);
+        }
+        
+        .credits-divider {
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.3), 
+                transparent
+            );
+            margin: 20px 0;
+        }
+        
+        .credits-info {
+            flex: 1;
+        }
+        
+        .credits-note {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+        
+        .credits-year {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .credits-section {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .credits-title {
+                font-size: 1.8rem;
+            }
+            
+            .credits-text {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- YouTube iframe as background (for GitHub Pages) -->
+    <!-- Local Video Background -->
+    <video class="video-background" autoplay loop muted playsinline id="bgVideo">
+        <source src="BGF V2.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    
+    <!-- Sound Control Button -->
+    <button class="sound-control" id="soundBtn" onclick="toggleSound()">
+        <i class="fas fa-volume-mute" id="soundIcon"></i>
+    </button>
+    
+    <!-- YouTube iframe fallback (for GitHub Pages if local video not available) -->
+    <!-- Uncomment this and comment out video above if needed -->
+    <!--
     <div class="video-background">
         <iframe 
             src="https://www.youtube.com/embed/aj85Ok5NhBE?autoplay=1&mute=1&loop=1&playlist=aj85Ok5NhBE&controls=0&showinfo=0&modestbranding=1&iv_load_policy=3&cc_load_policy=0&fs=0&rel=0&disablekb=1" 
             frameborder="0" 
             allow="autoplay; encrypted-media" 
-            style="pointer-events: none;"
             allowfullscreen>
         </iframe>
     </div>
-    
-    <!-- Fallback local video (for local testing) -->
-    <!-- Uncomment this for local testing and comment out iframe above -->
-    <!--
-    <video class="video-background" autoplay loop>
-        <source src="background.mp4" type="video/mp4">
-    </video>
     -->
     
     <!-- Title Section at Top -->
@@ -1387,6 +1531,31 @@
                     <button onclick="resetPassword()" class="recovery-btn">
                         <i class="fas fa-save"></i> Reset Password
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Credits Section -->
+    <div class="credits-section">
+        <div class="credits-container">
+            <h3 class="credits-title">Special Thanks</h3>
+            <div class="credits-content">
+                <div class="credits-message">
+                    <p class="credits-text">
+                        <span class="highlight">Thanks to Stillo</span> for the incredible video background that brings our world to life.
+                    </p>
+                    <p class="credits-signature">
+                        With gratitude and appreciation,<br>
+                        <span class="signature">Lots of love ❤️</span>
+                    </p>
+                </div>
+                <div class="credits-divider"></div>
+                <div class="credits-info">
+                    <p class="credits-note">
+                        BGF Revival IV - GTA Connected Server<br>
+                        <span class="credits-year">© 2026</span>
+                    </p>
                 </div>
             </div>
         </div>
@@ -1517,7 +1686,9 @@
     <script>
         // Random heartbeat animation
         function randomHeartbeat() {
-            const discordFloat = document.getElementById('discordFloat');
+            const discordFloat = document.getElementById('discordBtn');
+            
+            if (!discordFloat) return; // Safety check
             
             // Remove all animation classes
             discordFloat.classList.remove('spinning', 'heartbeat');
@@ -1548,39 +1719,42 @@
         }, 3000);
         
         // Mouse following 3D tilt effect
-        const discordFloat = document.getElementById('discordFloat');
+        const discordFloat = document.getElementById('discordBtn');
         const rulesTab = document.getElementById('rulesTab');
-        const icon = discordFloat.querySelector('.icon');
         
-        // Move rules when Discord expands
-        discordFloat.addEventListener('mouseenter', () => {
-            rulesTab.classList.add('shifted');
-        });
-        
-        discordFloat.addEventListener('mouseleave', () => {
-            rulesTab.classList.remove('shifted');
-        });
-        
-        discordFloat.addEventListener('mousemove', (e) => {
-            const rect = discordFloat.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
+        if (discordFloat && rulesTab) {
+            const icon = discordFloat.querySelector('.icon');
             
-            const mouseX = e.clientX - centerX;
-            const mouseY = e.clientY - centerY;
+            // Move rules when Discord expands
+            discordFloat.addEventListener('mouseenter', () => {
+                rulesTab.classList.add('shifted');
+            });
             
-            // Calculate rotation (max 15 degrees)
-            const rotateX = (mouseY / (rect.height / 2)) * -15;
-            const rotateY = (mouseX / (rect.width / 2)) * 15;
+            discordFloat.addEventListener('mouseleave', () => {
+                rulesTab.classList.remove('shifted');
+            });
             
-            // Apply tilt to icon only so it doesn't conflict with button expansion
-            icon.style.transform = `perspective(500px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.2)`;
-        });
-        
-        discordFloat.addEventListener('mouseleave', () => {
-            // Reset icon tilt
-            icon.style.transform = 'perspective(500px) rotateX(0deg) rotateY(0deg) scale(1)';
-        });
+            discordFloat.addEventListener('mousemove', (e) => {
+                const rect = discordFloat.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                const mouseX = e.clientX - centerX;
+                const mouseY = e.clientY - centerY;
+                
+                // Calculate rotation (max 15 degrees)
+                const rotateX = (mouseY / (rect.height / 2)) * -15;
+                const rotateY = (mouseX / (rect.width / 2)) * 15;
+                
+                // Apply tilt to icon only so it doesn't conflict with button expansion
+                icon.style.transform = `perspective(500px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.2)`;
+            });
+            
+            discordFloat.addEventListener('mouseleave', () => {
+                // Reset icon tilt
+                icon.style.transform = 'perspective(500px) rotateX(0deg) rotateY(0deg) scale(1)';
+            });
+        }
         // Toggle rules popup
         let rulesVisible = false;
         function toggleRules() {
@@ -1609,11 +1783,13 @@
         
         // BGF Mail System
         let currentUser = null;
-        let mailData = {};
         let notificationCheckInterval = null;
+        let mailData = {}; // Initialize mailData here
         
         // Initialize mail system
         function initMailSystem() {
+            console.log('Initializing BGF Mail system...');
+            
             // Load mail data from localStorage with fallback
             let saved = localStorage.getItem('bgfMailData');
             
@@ -1624,11 +1800,13 @@
             
             if (saved) {
                 mailData = JSON.parse(saved);
+                console.log('Loaded existing mail data:', mailData);
                 // Sync to both storages for sharing
                 localStorage.setItem('bgfMailData', JSON.stringify(mailData));
                 sessionStorage.setItem('bgfMailData', JSON.stringify(mailData));
             } else {
                 // Create sample mail data
+                console.log('Creating new mail data...');
                 mailData = {
                     'admin': {
                         password: 'admin123',
@@ -1645,6 +1823,7 @@
                     }
                 };
                 saveMailData();
+                console.log('Created admin account: admin/admin123');
             }
             
             // Listen for storage changes (cross-tab sync)
@@ -1656,6 +1835,8 @@
                     }
                 }
             });
+            
+            console.log('BGF Mail system initialized successfully');
         }
         
         function saveMailData() {
@@ -1671,16 +1852,27 @@
         }
         
         function loginMail() {
+            console.log('Login function called');
+            
             const username = document.getElementById('mailUsername').value.toLowerCase().trim();
             const password = document.getElementById('mailPassword').value;
+            
+            console.log('Username:', username, 'Password:', password ? '***' : 'empty');
+            console.log('MailData:', mailData);
             
             if (!username || !password) {
                 alert('Please enter username and password');
                 return;
             }
             
+            if (!mailData) {
+                alert('Mail system not initialized. Please refresh the page.');
+                return;
+            }
+            
             if (!mailData[username]) {
                 // Auto-register new user
+                console.log('Creating new user:', username);
                 mailData[username] = {
                     password: password,
                     inbox: [
@@ -1695,6 +1887,7 @@
                     sent: []
                 };
                 saveMailData();
+                alert(`Account created for ${username}@bgf.connected!`);
             }
             
             if (mailData[username].password !== password) {
@@ -1703,6 +1896,7 @@
             }
             
             currentUser = username;
+            console.log('Login successful for:', currentUser);
             showInbox();
             startNotificationCheck();
         }
@@ -1958,6 +2152,42 @@
         
         // Initialize mail system on page load
         initMailSystem();
+        
+        // Sound Control Function
+        function toggleSound() {
+            const video = document.getElementById('bgVideo');
+            const soundBtn = document.getElementById('soundBtn');
+            const soundIcon = document.getElementById('soundIcon');
+            
+            if (video.muted) {
+                // Unmute video
+                video.muted = false;
+                soundBtn.classList.add('sound-on');
+                soundIcon.className = 'fas fa-volume-up';
+                
+                // Try to play with sound (may need user interaction)
+                video.play().catch(error => {
+                    console.log('Autoplay with sound blocked:', error);
+                });
+            } else {
+                // Mute video
+                video.muted = true;
+                soundBtn.classList.remove('sound-on');
+                soundIcon.className = 'fas fa-volume-mute';
+            }
+        }
+        
+        // Enable sound on first user interaction
+        document.addEventListener('click', function enableSound() {
+            const video = document.getElementById('bgVideo');
+            if (video.muted) {
+                video.muted = false;
+                document.getElementById('soundBtn').classList.add('sound-on');
+                document.getElementById('soundIcon').className = 'fas fa-volume-up';
+            }
+            // Remove listener after first interaction
+            document.removeEventListener('click', enableSound);
+        }, { once: true });
         
         // Password Recovery System
         let currentOTP = null;
