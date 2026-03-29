@@ -1286,45 +1286,24 @@
     </style>
 </head>
 <body>
-    <!-- YouTube iframe as background -->
-    <iframe 
-        class="video-background"
-        src="https://www.youtube-nocookie.com/embed/9Q7Vr3s9H2Q?si=oAONGXur0nBQQ584&autoplay=1&mute=1&loop=1&playlist=9Q7Vr3s9H2Q&controls=0&showinfo=0&autohide=1&modestbranding=1&disablekb=1&fs=0&iv_load_policy=3&rel=0"
-        frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        referrerpolicy="strict-origin-when-cross-origin"
-        style="pointer-events: none;"
-        allowfullscreen>
-    </iframe>
+    <!-- YouTube iframe as background (for GitHub Pages) -->
+    <div class="video-background">
+        <iframe 
+            src="https://www.youtube.com/embed/aj85Ok5NhBE?autoplay=1&mute=1&loop=1&playlist=aj85Ok5NhBE&controls=0&showinfo=0&modestbranding=1&iv_load_policy=3&cc_load_policy=0&fs=0&rel=0&disablekb=1" 
+            frameborder="0" 
+            allow="autoplay; encrypted-media" 
+            style="pointer-events: none;"
+            allowfullscreen>
+        </iframe>
+    </div>
     
-    <!-- Fallback if YouTube fails -->
-    <video class="video-background" autoplay loop muted id="fallbackVideo" style="display: none;">
-        <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+    <!-- Fallback local video (for local testing) -->
+    <!-- Uncomment this for local testing and comment out iframe above -->
+    <!--
+    <video class="video-background" autoplay loop>
+        <source src="background.mp4" type="video/mp4">
     </video>
-    
-    <script>
-        // Check if YouTube video loads, if not, use fallback
-        const iframe = document.querySelector('.video-background');
-        const fallback = document.getElementById('fallbackVideo');
-        
-        iframe.onerror = function() {
-            iframe.style.display = 'none';
-            fallback.style.display = 'block';
-        };
-        
-        // Also check after 5 seconds
-        setTimeout(() => {
-            try {
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                if (!iframeDoc || iframeDoc.title.includes('Video unavailable')) {
-                    iframe.style.display = 'none';
-                    fallback.style.display = 'block';
-                }
-            } catch (e) {
-                // Cross-origin error, assume YouTube is working
-            }
-        }, 5000);
-    </script>
+    -->
     
     <!-- Title Section at Top -->
     <div class="title-section">
