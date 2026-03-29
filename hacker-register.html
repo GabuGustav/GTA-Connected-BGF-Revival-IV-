@@ -1,0 +1,2677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BGFR Network Access Terminal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #00ff9f;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Binary Rain Canvas */
+        #binaryCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Mode Selector */
+        .mode-selector {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+            display: block;
+        }
+
+        .mode-selector.hidden {
+            display: none;
+        }
+
+        .mode-title {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            text-shadow: 0 0 30px rgba(0, 255, 159, 0.8);
+            animation: titleGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 0 0 30px rgba(0, 255, 159, 0.8); }
+            50% { text-shadow: 0 0 50px rgba(0, 255, 159, 1); }
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        /* Volume Control */
+        .volume-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .volume-control label {
+            color: #00ff9f;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 255, 159, 0.5);
+        }
+        
+        .volume-slider {
+            width: 200px;
+            height: 6px;
+            background: rgba(0, 255, 159, 0.2);
+            border: 1px solid #00ff9f;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #00ff9f;
+            border: 2px solid #000;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 159, 0.8);
+            transition: all 0.3s ease;
+        }
+        
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(0, 255, 159, 1);
+        }
+        
+        .volume-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #00ff9f;
+            border: 2px solid #000;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 159, 0.8);
+            transition: all 0.3s ease;
+        }
+        
+        .volume-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(0, 255, 159, 1);
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: 2px solid #00ff9f;
+            color: #00ff9f;
+            padding: 25px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 30px rgba(0, 255, 159, 0.5);
+        }
+
+        .mode-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 159, 0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .mode-btn:hover::before {
+            left: 100%;
+        }
+
+        .mode-btn.easy:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 50px rgba(0, 255, 159, 0.8);
+            border-color: #00ffcc;
+        }
+
+        .mode-btn.hard:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 60px rgba(255, 107, 107, 0.8);
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .mode-btn.hell:hover {
+            transform: scale(1.05) skew(2deg);
+            box-shadow: 0 0 80px rgba(255, 0, 0, 1);
+            border-color: #ff0000;
+            color: #ff0000;
+            animation: hellHover 0.3s ease;
+        }
+
+        @keyframes hellHover {
+            0%, 100% { transform: scale(1.05) skew(0deg); }
+            25% { transform: scale(1.05) skew(3deg); }
+            75% { transform: scale(1.05) skew(-3deg); }
+        }
+
+        .mode-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Trace Bar */
+        .trace-bar {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff9f;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+
+        .trace-bar.active {
+            display: block;
+        }
+
+        .trace-bar.hard {
+            animation: tracePulseHard 1.5s infinite;
+        }
+
+        .trace-bar.hell {
+            animation: tracePulseHell 1s infinite;
+        }
+
+        @keyframes tracePulseHard {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 159, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(255, 107, 107, 0.8); }
+        }
+
+        @keyframes tracePulseHell {
+            0%, 100% { box-shadow: 0 0 30px rgba(255, 0, 0, 0.8); }
+            50% { box-shadow: 0 0 60px rgba(255, 0, 0, 1); }
+        }
+
+        .trace-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff9f, #ff6b6b);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .trace-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: traceScan 1s linear infinite;
+        }
+
+        @keyframes traceScan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .trace-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-shadow: 0 0 10px rgba(0, 255, 159, 0.8);
+            z-index: 1;
+        }
+
+        .trace-text.warning {
+            color: #ff6b6b;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
+            animation: traceWarning 0.5s infinite;
+        }
+
+        @keyframes traceWarning {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* System Overlay */
+        .system-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .system-overlay.active {
+            display: flex;
+            pointer-events: auto;
+        }
+
+        .system-overlay.easy {
+            animation: easyBoot 1s ease forwards;
+        }
+
+        @keyframes easyBoot {
+            0% { background: rgba(0, 0, 0, 0); }
+            100% { background: rgba(0, 0, 0, 0.9); }
+        }
+
+        .system-overlay.hard {
+            animation: hardBoot 1.5s ease forwards;
+        }
+
+        @keyframes hardBoot {
+            0% { 
+                background: rgba(0, 0, 0, 0);
+                filter: none;
+            }
+            50% { 
+                background: rgba(50, 0, 0, 0.5);
+                filter: hue-rotate(180deg) saturate(2);
+            }
+            100% { 
+                background: rgba(0, 0, 0, 0.95);
+                filter: none;
+            }
+        }
+
+        .system-overlay.hell {
+            animation: hellBoot 2s ease forwards;
+        }
+
+        @keyframes hellBoot {
+            0% { 
+                background: rgba(0, 0, 0, 0);
+                filter: none;
+            }
+            20% { 
+                background: rgba(100, 0, 0, 0.4);
+                filter: hue-rotate(90deg) saturate(3) brightness(1.2);
+            }
+            40% { 
+                background: rgba(150, 0, 0, 0.7);
+                filter: hue-rotate(180deg) saturate(4) brightness(1.5);
+            }
+            60% { 
+                background: rgba(0, 0, 0, 0.85);
+                filter: hue-rotate(270deg) saturate(2);
+            }
+            80% { 
+                background: rgba(0, 0, 0, 0.92);
+                filter: hue-rotate(360deg) saturate(1);
+            }
+            100% { 
+                background: rgba(0, 0, 0, 0.96);
+                filter: none;
+            }
+        }
+
+        /* System Messages */
+        .system-message {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            z-index: 101;
+            display: none;
+        }
+
+        .system-message.easy {
+            color: #00ff9f;
+            text-shadow: 0 0 15px rgba(0, 255, 159, 0.8);
+        }
+
+        .system-message.hard {
+            color: #ff6b6b;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 1);
+        }
+
+        .system-message.hell {
+            color: #ff0000;
+            text-shadow: 0 0 25px rgba(255, 0, 0, 1.2);
+            animation: hostileMessage 0.5s ease;
+        }
+
+        @keyframes hostileMessage {
+            0% { 
+                opacity: 0;
+                transform: translateX(-50%) scale(0.8);
+            }
+            50% {
+                opacity: 1;
+                transform: translateX(-50%) scale(1.1);
+            }
+            100% { 
+                opacity: 1;
+                transform: translateX(-50%) scale(1);
+            }
+        }
+
+        /* Challenge Container */
+        .challenge-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 10, 5, 0.95);
+            border: 2px solid #00ff9f;
+            border-radius: 10px;
+            padding: 40px;
+            max-width: 700px;
+            width: 90%;
+            text-align: center;
+            z-index: 102;
+            display: none;
+            box-shadow: 0 0 60px rgba(0, 255, 159, 0.5);
+        }
+
+        .challenge-container.active {
+            display: block;
+            animation: challengeAppear 0.8s ease forwards;
+        }
+
+        @keyframes challengeAppear {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8) rotateX(15deg);
+                filter: blur(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1) rotateX(0deg);
+                filter: blur(0);
+            }
+        }
+
+        .challenge-container.hard {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 80px rgba(255, 107, 107, 0.6);
+        }
+
+        .challenge-container.hell {
+            border-color: #ff0000;
+            box-shadow: 0 0 100px rgba(255, 0, 0, 0.8);
+            animation: hellChallengeAppear 1s ease forwards;
+        }
+
+        @keyframes hellChallengeAppear {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.7) rotateX(25deg);
+                filter: blur(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1) rotateX(0deg);
+                filter: blur(0);
+            }
+        }
+
+        .challenge-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .challenge-title.easy {
+            color: #00ff9f;
+            text-shadow: 0 0 15px rgba(0, 255, 159, 0.8);
+        }
+
+        .challenge-title.hard {
+            color: #ff6b6b;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 1);
+        }
+
+        .challenge-title.hell {
+            color: #ff0000;
+            text-shadow: 0 0 25px rgba(255, 0, 0, 1.2);
+        }
+
+        .challenge-instruction {
+            font-size: 1rem;
+            margin-bottom: 25px;
+            color: rgba(0, 255, 159, 0.8);
+        }
+
+        .challenge-instruction.hard {
+            color: rgba(255, 107, 107, 0.8);
+        }
+
+        .challenge-instruction.hell {
+            color: rgba(255, 0, 0, 0.8);
+        }
+
+        /* Challenge Elements */
+        .challenge-code {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid;
+            border-radius: 5px;
+            letter-spacing: 4px;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .challenge-code.easy {
+            border-color: #00ff9f;
+            color: #00ff9f;
+            text-shadow: 0 0 20px rgba(0, 255, 159, 0.8);
+        }
+
+        .challenge-code.hard {
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+            text-shadow: 0 0 25px rgba(255, 107, 107, 1);
+            animation: hardCodeGlow 1s ease-in-out infinite;
+        }
+
+        @keyframes hardCodeGlow {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+                border-color: #ff6b6b;
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(255, 107, 107, 1);
+                border-color: #ff3333;
+            }
+        }
+
+        .challenge-code.hell {
+            border-color: #ff0000;
+            color: #ff0000;
+            text-shadow: 0 0 30px rgba(255, 0, 0, 1.2);
+            animation: hellCodeGlow 0.5s ease-in-out infinite;
+        }
+
+        @keyframes hellCodeGlow {
+            0%, 100% { 
+                box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+                border-color: #ff0000;
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 60px rgba(255, 0, 0, 1.2);
+                border-color: #ff3333;
+                transform: scale(1.02);
+            }
+        }
+
+        .challenge-input {
+            width: 100%;
+            background: rgba(0, 10, 5, 0.9);
+            border: 2px solid #00ff9f;
+            color: #00ff9f;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .challenge-input:focus {
+            outline: none;
+            box-shadow: 0 0 30px rgba(0, 255, 159, 0.6);
+            background: rgba(0, 10, 5, 0.95);
+        }
+
+        .challenge-input.hard:focus {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 40px rgba(255, 107, 107, 0.7);
+            background: rgba(10, 0, 0, 0.95);
+        }
+
+        .challenge-input.hell:focus {
+            border-color: #ff0000;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.8);
+            background: rgba(20, 0, 0, 0.95);
+        }
+
+        .challenge-input.error {
+            animation: inputError 0.5s ease;
+        }
+
+        @keyframes inputError {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .challenge-btn {
+            background: transparent;
+            border: 2px solid #00ff9f;
+            color: #00ff9f;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .challenge-btn:hover {
+            background: rgba(0, 255, 159, 0.2);
+            box-shadow: 0 0 30px rgba(0, 255, 159, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .challenge-btn.hard {
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .challenge-btn.hard:hover {
+            background: rgba(255, 107, 107, 0.2);
+            box-shadow: 0 0 40px rgba(255, 107, 107, 0.8);
+        }
+
+        .challenge-btn.hell {
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+
+        .challenge-btn.hell:hover {
+            background: rgba(255, 0, 0, 0.2);
+            box-shadow: 0 0 50px rgba(255, 0, 0, 1);
+            transform: translateY(-3px);
+        }
+
+        /* Countdown Timer */
+        .countdown {
+            font-size: 1.3rem;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .countdown.easy {
+            color: #00ff9f;
+        }
+
+        .countdown.hard {
+            color: #ff6b6b;
+        }
+
+        .countdown.hell {
+            color: #ff0000;
+            animation: countdownWarning 0.5s infinite;
+        }
+
+        @keyframes countdownWarning {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Registration Form */
+        .registration-container {
+            background: rgba(0, 15, 10, 0.95);
+            border: 2px solid #00ff9f;
+            border-radius: 10px;
+            padding: 50px;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            opacity: 0;
+            transform: translateY(50px) scale(0.9) rotateX(10deg);
+            filter: blur(5px);
+            box-shadow: 0 0 80px rgba(0, 255, 159, 0.4);
+            display: none;
+        }
+
+        .registration-container.active {
+            display: block;
+            animation: formAppear 1.5s ease forwards;
+        }
+
+        @keyframes formAppear {
+            0% {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9) rotateX(10deg);
+                filter: blur(5px);
+            }
+            50% {
+                opacity: 0.8;
+                transform: translateY(10px) scale(1.05) rotateX(5deg);
+                filter: blur(2px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotateX(0deg);
+                filter: blur(0);
+            }
+        }
+
+        .registration-container.hard {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 100px rgba(255, 107, 107, 0.5);
+            animation: hardFormAppear 1.5s ease forwards;
+        }
+
+        @keyframes hardFormAppear {
+            0% {
+                opacity: 0;
+                transform: translateY(80px) scale(0.8) rotateX(20deg);
+                filter: blur(8px);
+            }
+            50% {
+                opacity: 0.7;
+                transform: translateY(20px) scale(1.1) rotateX(10deg);
+                filter: blur(3px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotateX(0deg);
+                filter: blur(0);
+            }
+        }
+
+        .registration-container.hell {
+            border-color: #ff0000;
+            box-shadow: 0 0 120px rgba(255, 0, 0, 0.6);
+            animation: hellFormAppear 2s ease forwards;
+        }
+
+        @keyframes hellFormAppear {
+            0% {
+                opacity: 0;
+                transform: translateY(100px) scale(0.7) rotateX(30deg);
+                filter: blur(12px);
+            }
+            30% {
+                opacity: 0.5;
+                transform: translateY(40px) scale(1.2) rotateX(15deg);
+                filter: blur(6px);
+            }
+            60% {
+                opacity: 0.9;
+                transform: translateY(-20px) scale(1.05) rotateX(5deg);
+                filter: blur(2px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1) rotateX(0deg);
+                filter: blur(0);
+            }
+        }
+
+        .form-title {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(0, 255, 159, 0.8);
+        }
+
+        .form-title.hard {
+            color: #ff6b6b;
+            text-shadow: 0 0 25px rgba(255, 107, 107, 1);
+        }
+
+        .form-title.hell {
+            color: #ff0000;
+            text-shadow: 0 0 30px rgba(255, 0, 0, 1.2);
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(0, 10, 5, 0.9);
+            border: 2px solid #00ff9f;
+            color: #00ff9f;
+            padding: 18px;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input::placeholder {
+            color: rgba(0, 255, 159, 0.4);
+            font-style: italic;
+        }
+
+        .form-input:focus {
+            outline: none;
+            box-shadow: 0 0 30px rgba(0, 255, 159, 0.6);
+            background: rgba(0, 10, 5, 0.95);
+        }
+
+        .form-input.hard:focus {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 40px rgba(255, 107, 107, 0.7);
+            background: rgba(10, 0, 0, 0.95);
+        }
+
+        .form-input.hell:focus {
+            border-color: #ff0000;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.8);
+            background: rgba(20, 0, 0, 0.95);
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: transparent;
+            border: 2px solid #00ff9f;
+            color: #00ff9f;
+            padding: 18px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: rgba(0, 255, 159, 0.2);
+            box-shadow: 0 0 40px rgba(0, 255, 159, 0.7);
+            transform: translateY(-2px);
+        }
+
+        .submit-btn.hard {
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .submit-btn.hard:hover {
+            background: rgba(255, 107, 107, 0.2);
+            box-shadow: 0 0 50px rgba(255, 107, 107, 0.8);
+        }
+
+        .submit-btn.hell {
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+
+        .submit-btn.hell:hover {
+            background: rgba(255, 0, 0, 0.2);
+            box-shadow: 0 0 60px rgba(255, 0, 0, 1);
+            transform: translateY(-3px);
+        }
+
+        /* Loading Sequence */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-sequence {
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .loading-sequence.easy {
+            color: #00ff9f;
+        }
+
+        .loading-sequence.hard {
+            color: #ff6b6b;
+        }
+
+        .loading-sequence.hell {
+            color: #ff0000;
+        }
+
+        .loading-log {
+            margin: 8px 0;
+            opacity: 0;
+            animation: logAppear 0.5s forwards;
+        }
+
+        @keyframes logAppear {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Result Overlay */
+        .result-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        .result-overlay.active {
+            display: flex;
+            animation: resultFlash 0.6s ease;
+        }
+
+        @keyframes resultFlash {
+            0%, 100% { background: rgba(0, 0, 0, 0.98); }
+            25% { background: rgba(0, 255, 159, 0.3); }
+            50% { background: rgba(255, 107, 107, 0.3); }
+            75% { background: rgba(255, 0, 0, 0.3); }
+        }
+
+        .result-message {
+            font-size: 4rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            text-shadow: 0 0 40px currentColor;
+            animation: resultPop 1.5s ease forwards;
+            transform: scale(0);
+        }
+
+        @keyframes resultPop {
+            0% { 
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            20% {
+                transform: scale(1.3) rotate(2deg);
+                opacity: 1;
+            }
+            40% {
+                transform: scale(0.9) rotate(-1deg);
+                opacity: 1;
+            }
+            60% {
+                transform: scale(1.1) rotate(1deg);
+                opacity: 1;
+            }
+            80% {
+                transform: scale(0.95) rotate(-0.5deg);
+                opacity: 1;
+            }
+            100% { 
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .result-message.terminated {
+            color: #ff3333;
+            text-shadow: 0 0 50px rgba(255, 51, 51, 1.2);
+        }
+
+        .result-message.granted {
+            color: #00ff9f;
+            text-shadow: 0 0 50px rgba(0, 255, 159, 1.2);
+        }
+
+        .sub-message {
+            font-size: 1.4rem;
+            margin-top: 30px;
+            opacity: 0;
+            animation: fadeInScale 1s ease 0.8s forwards;
+            text-shadow: 0 0 20px rgba(0, 255, 159, 0.8);
+        }
+
+        @keyframes fadeInScale {
+            0% { 
+                opacity: 0;
+                transform: scale(0.7);
+            }
+            100% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Glitch Effects */
+        .glitch {
+            animation: glitch 0.2s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 100% { 
+                transform: translate(0);
+                filter: hue-rotate(0deg);
+                opacity: 1;
+            }
+            20% { 
+                transform: translate(-2px, 2px);
+                filter: hue-rotate(90deg);
+                opacity: 0.8;
+            }
+            40% { 
+                transform: translate(-2px, -2px);
+                filter: hue-rotate(180deg);
+                opacity: 0.6;
+            }
+            60% { 
+                transform: translate(2px, 2px);
+                filter: hue-rotate(270deg);
+                opacity: 0.8;
+            }
+            80% { 
+                transform: translate(2px, -2px);
+                filter: hue-rotate(360deg);
+                opacity: 0.9;
+            }
+        }
+
+        .rgb-split {
+            animation: rgbSplit 0.3s infinite;
+        }
+
+        @keyframes rgbSplit {
+            0%, 100% { 
+                text-shadow: 
+                    2px 2px 0 #ff0000,
+                    -2px -2px 0 #00ffff;
+            }
+            50% { 
+                text-shadow: 
+                    -2px 2px 0 #ff0000,
+                    2px -2px 0 #00ffff;
+            }
+        }
+
+        /* Particles */
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #00ff9f;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 6px rgba(0, 255, 159, 0.8);
+        }
+
+        .particle.danger {
+            background: #ff6b6b;
+            box-shadow: 0 0 6px rgba(255, 107, 107, 0.8);
+        }
+
+        /* Interference Warnings */
+        .interference-warning {
+            font-size: 1rem;
+            margin: 10px 0;
+            color: #ff6b6b;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: warningPulse 0.5s infinite;
+            display: none;
+        }
+
+        @keyframes warningPulse {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.5;
+                transform: scale(1.05);
+            }
+        }
+
+        .interference-warning.hell {
+            color: #ff0000;
+            animation: hellWarningPulse 0.3s infinite;
+        }
+
+        @keyframes hellWarningPulse {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+            25% { 
+                opacity: 0.7;
+                transform: scale(1.1) rotate(1deg);
+            }
+            75% { 
+                opacity: 0.7;
+                transform: scale(1.1) rotate(-1deg);
+            }
+        }
+
+        /* Lock Warning */
+        .lock-warning {
+            font-size: 1.2rem;
+            margin: 15px 0;
+            color: #ff0000;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 1);
+            animation: lockWarning 1s infinite;
+            display: none;
+        }
+
+        @keyframes lockWarning {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+                text-shadow: 0 0 20px rgba(255, 0, 0, 1);
+            }
+            50% { 
+                opacity: 0.3;
+                transform: scale(1.2);
+                text-shadow: 0 0 40px rgba(255, 0, 0, 1.5);
+            }
+        }
+
+        /* RGB Split Effect */
+        .rgb-split-effect {
+            animation: rgbSplitEffect 0.2s infinite;
+        }
+
+        @keyframes rgbSplitEffect {
+            0%, 100% { 
+                transform: translate(0);
+                filter: hue-rotate(0deg);
+            }
+            33% { 
+                transform: translate(-2px, 2px);
+                filter: hue-rotate(120deg);
+            }
+            66% { 
+                transform: translate(2px, -2px);
+                filter: hue-rotate(240deg);
+            }
+        }
+
+        /* Screen Flash */
+        .screen-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            pointer-events: none;
+            animation: screenFlash 0.1s ease-out;
+        }
+
+        @keyframes screenFlash {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Moving Memory Sequence */
+        .moving-sequence {
+            animation: sequenceMove 2s ease-in-out infinite;
+        }
+
+        @keyframes sequenceMove {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Disappearing Letters */
+        .disappearing-text {
+            animation: disappearText 0.5s infinite;
+        }
+
+        @keyframes disappearText {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Reversed Text */
+        .reversed-text {
+            transform: rotateX(180deg);
+            filter: blur(2px);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .mode-title {
+                font-size: 2rem;
+            }
+            
+            .mode-buttons {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .trace-bar {
+                width: 300px;
+                height: 25px;
+            }
+            
+            .challenge-container {
+                padding: 30px 20px;
+            }
+            
+            .challenge-code {
+                font-size: 1.5rem;
+            }
+            
+            .result-message {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Audio Elements -->
+    <audio id="generalMusic" loop>
+        <source src="rahulbhardwaj603-dark-tales-147852.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="easyMusic" loop>
+        <source src="joelfazhari-dark-mysterious-true-crime-music-loopable-235870.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="hardMusic" loop>
+        <source src="nickpanekaiassets-synthwave-for-hackerz-217852.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="hellMusic" loop>
+        <source src="4379051-hacker-alarm-124960.mp3" type="audio/mpeg">
+    </audio>
+    
+    <!-- Binary Rain Canvas -->
+    <canvas id="binaryCanvas"></canvas>
+    
+    <!-- Mode Selector -->
+    <div class="mode-selector" id="modeSelector">
+        <h1 class="mode-title">SELECT DIFFICULTY</h1>
+        <div class="mode-buttons">
+            <button class="mode-btn easy" data-mode="easy">EASY</button>
+            <button class="mode-btn hard" data-mode="hard">HARD</button>
+            <button class="mode-btn hell" data-mode="hell">HELL++</button>
+        </div>
+        
+        <!-- Volume Control -->
+        <div class="volume-control">
+            <label for="volumeSlider">🔊 VOLUME</label>
+            <input type="range" id="volumeSlider" min="0" max="100" value="30" class="volume-slider">
+        </div>
+    </div>
+    
+    <!-- Trace Bar -->
+    <div class="trace-bar" id="traceBar">
+        <div class="trace-fill" id="traceFill"></div>
+        <div class="trace-text" id="traceText">TRACE: 0%</div>
+    </div>
+    
+    <!-- System Messages -->
+    <div class="system-message" id="systemMessage">SYSTEM READY</div>
+    
+    <!-- System Overlay -->
+    <div class="system-overlay" id="systemOverlay">
+        <!-- Easy Mode - Simple Typing Challenge -->
+        <div class="challenge-container" id="easyChallenge">
+            <h3 class="challenge-title easy">ACCESS VERIFICATION</h3>
+            <p class="challenge-instruction easy">Type the code below to gain access:</p>
+            <div class="challenge-code easy" id="easyCode">X7K9M2P4</div>
+            <input type="text" class="challenge-input easy" id="easyInput" placeholder="ENTER CODE" maxlength="8">
+            <div>
+                <button class="challenge-btn easy" id="easySubmit">SUBMIT</button>
+            </div>
+        </div>
+        
+        <!-- Hard Mode - Speed Typing Challenge -->
+        <div class="challenge-container" id="hardSpeedChallenge">
+            <h3 class="challenge-title hard">SPEED TYPING CHALLENGE</h3>
+            <p class="challenge-instruction hard">Type the code EXACTLY before it changes!</p>
+            <div class="challenge-code hard" id="hardSpeedCode">X7K9M2P4</div>
+            <input type="text" class="challenge-input hard" id="hardSpeedInput" placeholder="ENTER CODE" maxlength="8">
+            <div class="countdown hard" id="hardSpeedCountdown">Time: 30s</div>
+            <div>
+                <button class="challenge-btn hard" id="hardSpeedSubmit">SUBMIT</button>
+            </div>
+        </div>
+        
+        <!-- Hard Mode - Memory Challenge -->
+        <div class="challenge-container" id="hardMemoryChallenge">
+            <h3 class="challenge-title hard">MEMORY TEST</h3>
+            <p class="challenge-instruction hard">Memorize this sequence:</p>
+            <div class="challenge-code hard" id="hardMemorySequence">A9F4M7X2</div>
+            <p class="challenge-instruction hard" id="hardMemoryInstruction" style="display: none;">Now enter it from memory:</p>
+            <input type="text" class="challenge-input hard" id="hardMemoryInput" placeholder="ENTER SEQUENCE" maxlength="8" style="display: none;">
+            <div class="countdown hard" id="hardMemoryCountdown" style="display: none;">Time: 20s</div>
+            <div>
+                <button class="challenge-btn hard" id="hardMemoryStart" style="display: none;">START MEMORY TEST</button>
+                <button class="challenge-btn hard" id="hardMemorySubmit" style="display: none;">SUBMIT</button>
+            </div>
+        </div>
+        
+        <!-- Hell++ Mode - Ultra-Speed Challenge -->
+        <div class="challenge-container" id="hellSpeedChallenge">
+            <h3 class="challenge-title hell">ULTRA-SPEED TYPING</h3>
+            <p class="challenge-instruction hell">Type the code EXACTLY before it changes!</p>
+            <div class="challenge-code hell" id="hellSpeedCode">X7K9M2P4</div>
+            <input type="text" class="challenge-input hell" id="hellSpeedInput" placeholder="ENTER CODE" maxlength="10">
+            <div class="countdown hell" id="hellSpeedCountdown">Time: 15s</div>
+            <div class="interference-warning" id="hellSpeedWarning" style="display: none;">⚠ INPUT INTERFERENCE DETECTED</div>
+            <div>
+                <button class="challenge-btn hell" id="hellSpeedSubmit">SUBMIT</button>
+            </div>
+        </div>
+        
+        <!-- Hell++ Mode - Extended Memory Challenge -->
+        <div class="challenge-container" id="hellMemoryChallenge">
+            <h3 class="challenge-title hell">EXTENDED MEMORY TEST</h3>
+            <p class="challenge-instruction hell">Memorize this sequence:</p>
+            <div class="challenge-code hell" id="hellMemorySequence">A9F4M7X2K5P</div>
+            <p class="challenge-instruction hell" id="hellMemoryInstruction" style="display: none;">Now enter it from memory:</p>
+            <input type="text" class="challenge-input hell" id="hellMemoryInput" placeholder="ENTER SEQUENCE" maxlength="10" style="display: none;">
+            <div class="countdown hell" id="hellMemoryCountdown" style="display: none;">Time: 15s</div>
+            <div class="interference-warning" id="hellMemoryWarning" style="display: none;">⚠ MEMORY CORRUPTION DETECTED</div>
+            <div>
+                <button class="challenge-btn hell" id="hellMemoryStart" style="display: none;">START MEMORY TEST</button>
+                <button class="challenge-btn hell" id="hellMemorySubmit" style="display: none;">SUBMIT</button>
+            </div>
+        </div>
+        
+        <!-- Hell++ Mode - Matrix Logic Challenge -->
+        <div class="challenge-container" id="hellLogicChallenge">
+            <h3 class="challenge-title hell">MATRIX LOGIC PUZZLE</h3>
+            <p class="challenge-instruction hell">Solve quickly:</p>
+            <div class="challenge-code hell" id="hellLogicPuzzle">If 3x + 7 = 22, what is x?</div>
+            <input type="text" class="challenge-input hell" id="hellLogicInput" placeholder="ENTER ANSWER">
+            <div class="countdown hell" id="hellLogicCountdown">Time: 10s</div>
+            <div class="interference-warning" id="hellLogicWarning" style="display: none;">⚠ LOGIC CIRCUIT INTERFERENCE</div>
+            <div>
+                <button class="challenge-btn hell" id="hellLogicSubmit">SUBMIT</button>
+            </div>
+        </div>
+        
+        <!-- Hell++ Mode - Precision Command Challenge -->
+        <div class="challenge-container" id="hellPrecisionChallenge">
+            <h3 class="challenge-title hell">PRECISION COMMAND INPUT</h3>
+            <p class="challenge-instruction hell">Enter EXACT command (case-sensitive):</p>
+            <div class="challenge-code hell" id="hellPrecisionCode">Alpha_Beta#42!</div>
+            <input type="text" class="challenge-input hell" id="hellPrecisionInput" placeholder="ENTER EXACT COMMAND">
+            <div class="countdown hell" id="hellPrecisionCountdown">Time: 20s</div>
+            <div class="interference-warning" id="hellPrecisionWarning" style="display: none;">⚠ COMMAND CORRUPTION DETECTED</div>
+            <div>
+                <button class="challenge-btn hell" id="hellPrecisionSubmit">SUBMIT</button>
+            </div>
+        </div>
+        
+        <!-- Hell++ Mode - Final Sabotage Challenge -->
+        <div class="challenge-container" id="hellSabotageChallenge">
+            <h3 class="challenge-title hell">SYSTEM COUNTERMEASURE</h3>
+            <p class="challenge-instruction hell">Override security protocols:</p>
+            <div class="challenge-code hell" id="hellSabotageCode">OVERRIDE:77#X9@M2!</div>
+            <input type="text" class="challenge-input hell" id="hellSabotageInput" placeholder="ENTER OVERRIDE" maxlength="15">
+            <div class="countdown hell" id="hellSabotageCountdown">Time: 25s</div>
+            <div class="interference-warning" id="hellSabotageWarning" style="display: none;">⚠ SECURITY SYSTEM FIGHTING BACK</div>
+            <div class="lock-warning" id="hellSabotageLock" style="display: none;">🔒 INPUT LOCKED BY SECURITY</div>
+            <div>
+                <button class="challenge-btn hell" id="hellSabotageSubmit">OVERRIDE</button>
+            </div>
+        </div>
+        
+        <!-- Registration Form -->
+        <div class="registration-container" id="registrationContainer">
+            <h2 class="form-title" id="formTitle">NETWORK ACCESS TERMINAL</h2>
+            
+            <form id="registrationForm">
+                <div class="form-group">
+                    <input type="text" class="form-input" id="username" placeholder="> username.exe" required>
+                </div>
+                
+                <div class="form-group">
+                    <input type="email" class="form-input" id="email" placeholder="> email.key" required>
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" class="form-input" id="password" placeholder="> password.key" required>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    EXECUTE FINAL PROTOCOL
+                </button>
+            </form>
+            
+            <!-- Loading Overlay -->
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loading-sequence" id="loadingSequence">
+                    <div class="loading-log">> initializing...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Result Overlay -->
+    <div class="result-overlay" id="resultOverlay">
+        <div>
+            <div class="result-message" id="resultMessage">ACCESS GRANTED</div>
+            <div class="sub-message" id="subMessage">Welcome to the Network</div>
+        </div>
+    </div>
+
+    <script>
+        // Binary Rain Canvas Effect
+        class BinaryRain {
+            constructor() {
+                this.canvas = document.getElementById('binaryCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.resize();
+                this.columns = [];
+                this.init();
+                this.animate();
+                
+                window.addEventListener('resize', () => this.resize());
+            }
+            
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+                this.columnWidth = 20;
+                this.columnCount = Math.floor(this.canvas.width / this.columnWidth);
+            }
+            
+            init() {
+                for (let i = 0; i < this.columnCount; i++) {
+                    this.columns[i] = {
+                        x: i * this.columnWidth,
+                        y: Math.random() * this.canvas.height,
+                        speed: 2 + Math.random() * 4,
+                        chars: [],
+                        opacity: Math.random() * 0.5 + 0.5
+                    };
+                    
+                    const charCount = Math.floor(Math.random() * 15) + 10;
+                    for (let j = 0; j < charCount; j++) {
+                        this.columns[i].chars.push(Math.random() > 0.5 ? '1' : '0');
+                    }
+                }
+            }
+            
+            animate() {
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.ctx.font = '14px Courier New';
+                
+                this.columns.forEach(column => {
+                    column.chars.forEach((char, index) => {
+                        const y = column.y - (index * 20);
+                        
+                        if (y > 0 && y < this.canvas.height) {
+                            const fadeOpacity = (1 - index / column.chars.length) * column.opacity;
+                            const green = Math.floor(255 * fadeOpacity);
+                            
+                            this.ctx.fillStyle = `rgba(0, ${green}, 159, ${fadeOpacity})`;
+                            this.ctx.fillText(char, column.x, y);
+                        }
+                    });
+                    
+                    column.y += column.speed;
+                    
+                    if (column.y - column.chars.length * 20 > this.canvas.height) {
+                        column.y = -column.chars.length * 20;
+                        column.speed = 2 + Math.random() * 4;
+                        column.opacity = Math.random() * 0.5 + 0.5;
+                        
+                        if (Math.random() > 0.7) {
+                            const changeIndex = Math.floor(Math.random() * column.chars.length);
+                            column.chars[changeIndex] = Math.random() > 0.5 ? '1' : '0';
+                        }
+                    }
+                });
+                
+                requestAnimationFrame(() => this.animate());
+            }
+            
+            setSpeed(mode) {
+                const speedMultiplier = {
+                    easy: 0.5,
+                    hard: 1.5,
+                    hell: 3
+                };
+                
+                this.columns.forEach(column => {
+                    column.speed = (2 + Math.random() * 4) * speedMultiplier[mode];
+                });
+            }
+        }
+
+        // Create Particles
+        function createParticles(x, y, count = 40, danger = false) {
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = danger ? 'particle danger' : 'particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                
+                const angle = (Math.PI * 2 * i) / count;
+                const velocity = 8 + Math.random() * 15;
+                const lifetime = 1500 + Math.random() * 1500;
+                
+                particle.style.animation = `none`;
+                particle.style.transition = `all ${lifetime}ms ease-out`;
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    particle.style.transform = `translate(${Math.cos(angle) * velocity * 30}px, ${Math.sin(angle) * velocity * 30}px)`;
+                    particle.style.opacity = '0';
+                }, 10);
+                
+                setTimeout(() => particle.remove(), lifetime);
+            }
+        }
+
+        // Audio Manager for Background Music
+        class AudioManager {
+            constructor() {
+                this.generalMusic = document.getElementById('generalMusic');
+                this.easyMusic = document.getElementById('easyMusic');
+                this.hardMusic = document.getElementById('hardMusic');
+                this.hellMusic = document.getElementById('hellMusic');
+                this.currentTrack = null;
+                this.volume = 0.3; // Set initial volume
+            }
+            
+            stopAll() {
+                [this.generalMusic, this.easyMusic, this.hardMusic, this.hellMusic].forEach(audio => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                });
+                this.currentTrack = null;
+            }
+            
+            playGeneral() {
+                this.stopAll();
+                this.generalMusic.volume = this.volume;
+                this.generalMusic.play().catch(e => console.log('General music play failed:', e));
+                this.currentTrack = 'general';
+            }
+            
+            playEasy() {
+                this.stopAll();
+                this.easyMusic.volume = this.volume;
+                this.easyMusic.play().catch(e => console.log('Easy music play failed:', e));
+                this.currentTrack = 'easy';
+            }
+            
+            playHard() {
+                this.stopAll();
+                this.hardMusic.volume = this.volume;
+                this.hardMusic.play().catch(e => console.log('Hard music play failed:', e));
+                this.currentTrack = 'hard';
+            }
+            
+            playHell() {
+                this.stopAll();
+                this.hellMusic.volume = this.volume;
+                this.hellMusic.play().catch(e => console.log('Hell music play failed:', e));
+                this.currentTrack = 'hell';
+            }
+            
+            setVolume(level) {
+                this.volume = Math.max(0, Math.min(1, level));
+                if (this.currentTrack && this[this.currentTrack + 'Music']) {
+                    this[this.currentTrack + 'Music'].volume = this.volume;
+                }
+            }
+        }
+
+        // Three-Tier Hacker System
+        class HackerSystem {
+            constructor() {
+                this.currentMode = null;
+                this.currentPhase = 'selection';
+                this.tracePercentage = 0;
+                this.traceTimer = null;
+                this.challengeIndex = 0;
+                this.failedAttempts = 0;
+                this.binaryRain = null;
+                this.countdownTimers = {};
+                this.changeTimers = {};
+                this.audioManager = new AudioManager();
+                
+                // Start general music on load
+                this.audioManager.playGeneral();
+                
+                // Volume control
+                const volumeSlider = document.getElementById('volumeSlider');
+                volumeSlider.addEventListener('input', (e) => {
+                    const volume = e.target.value / 100;
+                    this.audioManager.setVolume(volume);
+                });
+                
+                this.modeConfigs = {
+                    easy: {
+                        challenges: ['easy'],
+                        traceSpeed: 0.5,
+                        traceEnabled: false,
+                        failurePenalty: 5,
+                        maxAttempts: 5,
+                        countdowns: { easy: 60 },
+                        changeIntervals: { easy: 10000 }
+                    },
+                    hard: {
+                        challenges: ['hardSpeed', 'hardMemory'],
+                        traceSpeed: 1.5,
+                        traceEnabled: true,
+                        failurePenalty: 15,
+                        maxAttempts: 3,
+                        countdowns: { hardSpeed: 30, hardMemory: 20 },
+                        changeIntervals: { hardSpeed: 5000 }
+                    },
+                    hell: {
+                        challenges: ['hellSpeed', 'hellMemory', 'hellLogic', 'hellPrecision', 'hellSabotage'],
+                        traceSpeed: 5,
+                        traceEnabled: true,
+                        failurePenalty: 35,
+                        maxAttempts: 2,
+                        countdowns: { hellSpeed: 12, hellMemory: 12, hellLogic: 8, hellPrecision: 18, hellSabotage: 25 },
+                        changeIntervals: { hellSpeed: 1500, hellSabotage: 3000 }
+                    }
+                };
+                
+                this.initEventListeners();
+            }
+            
+            initEventListeners() {
+                // Mode selection buttons
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.startMode(btn.dataset.mode);
+                    });
+                });
+                
+                // Easy mode
+                document.getElementById('easySubmit').addEventListener('click', () => {
+                    this.checkEasyChallenge();
+                });
+                document.getElementById('easyInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.checkEasyChallenge();
+                });
+                
+                // Hard mode - Speed
+                document.getElementById('hardSpeedSubmit').addEventListener('click', () => {
+                    this.checkHardSpeedChallenge();
+                });
+                document.getElementById('hardSpeedInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.checkHardSpeedChallenge();
+                });
+                
+                // Hard mode - Memory
+                document.getElementById('hardMemoryStart').addEventListener('click', () => {
+                    this.startHardMemoryTest();
+                });
+                document.getElementById('hardMemorySubmit').addEventListener('click', () => {
+                    this.checkHardMemoryChallenge();
+                });
+                document.getElementById('hardMemoryInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.checkHardMemoryChallenge();
+                });
+                
+                // Hell mode - Speed
+                document.getElementById('hellSpeedSubmit').addEventListener('click', () => {
+                    this.checkHellSpeedChallenge();
+                });
+                document.getElementById('hellSpeedInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.checkHellSpeedChallenge();
+                });
+                
+                // Hell mode - Memory
+                document.getElementById('hellMemoryStart').addEventListener('click', () => {
+                    this.startHellMemoryTest();
+                });
+                document.getElementById('hellMemorySubmit').addEventListener('click', () => {
+                    this.checkHellMemoryChallenge();
+                });
+                document.getElementById('hellMemoryInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.checkHellMemoryChallenge();
+                });
+                
+                // Hell mode - Logic
+                document.getElementById('hellLogicSubmit').addEventListener('click', () => {
+                    this.checkHellLogicChallenge();
+                });
+                document.getElementById('hellLogicInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.checkHellLogicChallenge();
+                });
+                
+                // Hell mode - Precision
+                document.getElementById('hellPrecisionSubmit').addEventListener('click', () => {
+                    this.checkHellPrecisionChallenge();
+                });
+                document.getElementById('hellPrecisionInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.checkHellPrecisionChallenge();
+                });
+                
+                // Hell++ mode - Sabotage
+                document.getElementById('hellSabotageSubmit').addEventListener('click', () => {
+                    this.checkHellSabotageChallenge();
+                });
+                document.getElementById('hellSabotageInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.checkHellSabotageChallenge();
+                });
+                
+                // Form submission
+                document.getElementById('registrationForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.submitForm();
+                });
+            }
+            
+            startMode(mode) {
+                this.currentMode = mode;
+                this.currentPhase = 'challenges';
+                this.binaryRain = new BinaryRain();
+                
+                // Change music based on mode
+                switch(mode) {
+                    case 'easy':
+                        this.audioManager.playEasy();
+                        break;
+                    case 'hard':
+                        this.audioManager.playHard();
+                        break;
+                    case 'hell':
+                        this.audioManager.playHell();
+                        break;
+                }
+                
+                const modeSelector = document.getElementById('modeSelector');
+                const systemOverlay = document.getElementById('systemOverlay');
+                const systemMessage = document.getElementById('systemMessage');
+                
+                // Hide mode selector
+                modeSelector.classList.add('hidden');
+                
+                // Show system overlay with mode-specific animation
+                systemOverlay.classList.add('active', mode);
+                
+                // Set binary rain speed
+                this.binaryRain.setSpeed(mode);
+                
+                // Show mode-specific message
+                const messages = {
+                    easy: "SYSTEM INITIATED - CASUAL MODE",
+                    hard: "BREACH DETECTED - PROFESSIONAL MODE",
+                    hell: "BLACKSITE BREACH - HELL++ MODE ACTIVATED"
+                };
+                this.showSystemMessage(messages[mode]);
+                
+                // Create particles
+                const rect = modeSelector.getBoundingClientRect();
+                const particleCount = mode === 'easy' ? 30 : mode === 'hard' ? 60 : 100;
+                createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, particleCount, mode === 'hell');
+                
+                // Hell++ specific RGB split effect
+                if (mode === 'hell') {
+                    this.createRGBSplit();
+                    this.createScreenFlash();
+                }
+                
+                // Start trace if enabled
+                if (this.modeConfigs[mode].traceEnabled) {
+                    setTimeout(() => {
+                        this.startTrace();
+                    }, 1000);
+                }
+                
+                // Start first challenge
+                setTimeout(() => {
+                    this.startFirstChallenge();
+                }, 2000);
+                
+                // Add mode-specific effects
+                if (mode === 'hard' || mode === 'hell') {
+                    this.startInterference();
+                }
+            }
+            
+            showSystemMessage(message) {
+                const systemMessage = document.getElementById('systemMessage');
+                systemMessage.textContent = message;
+                systemMessage.className = `system-message ${this.currentMode}`;
+                systemMessage.style.display = 'block';
+                
+                setTimeout(() => {
+                    systemMessage.style.display = 'none';
+                }, 3000);
+            }
+            
+            startTrace() {
+                const traceBar = document.getElementById('traceBar');
+                const traceFill = document.getElementById('traceFill');
+                const traceText = document.getElementById('traceText');
+                
+                traceBar.classList.add('active', this.currentMode);
+                this.tracePercentage = 0;
+                
+                this.traceTimer = setInterval(() => {
+                    this.tracePercentage += this.modeConfigs[this.currentMode].traceSpeed;
+                    
+                    if (this.tracePercentage >= 100) {
+                        this.tracePercentage = 100;
+                        this.traceTerminated();
+                    }
+                    
+                    traceFill.style.width = `${this.tracePercentage}%`;
+                    traceText.textContent = `TRACE: ${Math.floor(this.tracePercentage)}%`;
+                    
+                    if (this.tracePercentage >= 70) {
+                        traceText.classList.add('warning');
+                    } else {
+                        traceText.classList.remove('warning');
+                    }
+                }, 200);
+            }
+            
+            startFirstChallenge() {
+                this.challengeIndex = 0;
+                this.showChallenge(this.modeConfigs[this.currentMode].challenges[0]);
+            }
+            
+            showChallenge(challengeType) {
+                // Hide all challenges
+                document.querySelectorAll('.challenge-container').forEach(container => {
+                    container.classList.remove('active');
+                    container.style.display = 'none';
+                });
+                
+                // Show specific challenge
+                const challengeElement = document.getElementById(`${challengeType}Challenge`);
+                challengeElement.classList.add('active');
+                challengeElement.style.display = 'block';
+                
+                // Initialize challenge
+                switch(challengeType) {
+                    case 'easy':
+                        this.initEasyChallenge();
+                        break;
+                    case 'hardSpeed':
+                        this.initHardSpeedChallenge();
+                        break;
+                    case 'hardMemory':
+                        this.initHardMemoryChallenge();
+                        break;
+                    case 'hellSpeed':
+                        this.initHellSpeedChallenge();
+                        break;
+                    case 'hellMemory':
+                        this.initHellMemoryChallenge();
+                        break;
+                    case 'hellLogic':
+                        this.initHellLogicChallenge();
+                        break;
+                    case 'hellPrecision':
+                        this.initHellPrecisionChallenge();
+                        break;
+                    case 'hellSabotage':
+                        this.initHellSabotageChallenge();
+                        break;
+                }
+            }
+            
+            initEasyChallenge() {
+                this.currentEasyCode = this.generateRandomCode(8);
+                document.getElementById('easyCode').textContent = this.currentEasyCode;
+                document.getElementById('easyInput').value = '';
+                document.getElementById('easyInput').focus();
+            }
+            
+            initHardSpeedChallenge() {
+                this.currentHardSpeedCode = this.generateRandomCode(8);
+                document.getElementById('hardSpeedCode').textContent = this.currentHardSpeedCode;
+                document.getElementById('hardSpeedInput').value = '';
+                document.getElementById('hardSpeedInput').focus();
+                
+                // Start countdown
+                this.startCountdown('hardSpeed', 30);
+                
+                // Change code periodically
+                this.changeTimers.hardSpeed = setInterval(() => {
+                    if (this.currentPhase === 'challenges') {
+                        this.currentHardSpeedCode = this.generateRandomCode(8);
+                        document.getElementById('hardSpeedCode').textContent = this.currentHardSpeedCode;
+                        this.addInterference();
+                    }
+                }, this.modeConfigs.hard.changeIntervals.hardSpeed);
+            }
+            
+            initHardMemoryChallenge() {
+                this.currentHardMemorySequence = this.generateRandomCode(8);
+                document.getElementById('hardMemorySequence').textContent = this.currentHardMemorySequence;
+                document.getElementById('hardMemoryInput').value = '';
+                document.getElementById('hardMemoryInput').style.display = 'none';
+                document.getElementById('hardMemoryInstruction').style.display = 'none';
+                document.getElementById('hardMemoryCountdown').style.display = 'none';
+                document.getElementById('hardMemorySubmit').style.display = 'none';
+                document.getElementById('hardMemoryStart').style.display = 'inline-block';
+                document.getElementById('hardMemoryStart').focus();
+            }
+            
+            startHardMemoryTest() {
+                document.getElementById('hardMemorySequence').style.display = 'none';
+                document.getElementById('hardMemoryInstruction').style.display = 'block';
+                document.getElementById('hardMemoryInput').style.display = 'block';
+                document.getElementById('hardMemoryInput').focus();
+                document.getElementById('hardMemoryCountdown').style.display = 'block';
+                document.getElementById('hardMemorySubmit').style.display = 'inline-block';
+                document.getElementById('hardMemoryStart').style.display = 'none';
+                
+                // Start countdown
+                this.startCountdown('hardMemory', 20);
+                
+                // Clear memory after delay
+                setTimeout(() => {
+                    this.currentHardMemorySequence = '';
+                }, 1000);
+            }
+            
+            initHellSpeedChallenge() {
+                this.currentHellSpeedCode = this.generateRandomCode(10);
+                document.getElementById('hellSpeedCode').textContent = this.currentHellSpeedCode;
+                document.getElementById('hellSpeedInput').value = '';
+                document.getElementById('hellSpeedInput').focus();
+                
+                // Start countdown
+                this.startCountdown('hellSpeed', 12);
+                
+                // Start interference
+                this.startHellInterference('hellSpeed');
+                
+                // Change code periodically
+                this.changeTimers.hellSpeed = setInterval(() => {
+                    if (this.currentPhase === 'challenges') {
+                        this.currentHellSpeedCode = this.generateRandomCode(10);
+                        document.getElementById('hellSpeedCode').textContent = this.currentHellSpeedCode;
+                        this.addIntenseInterference();
+                    }
+                }, this.modeConfigs.hell.changeIntervals.hellSpeed);
+            }
+            
+            initHellMemoryChallenge() {
+                this.currentHellMemorySequence = this.generateRandomCode(10);
+                document.getElementById('hellMemorySequence').textContent = this.currentHellMemorySequence;
+                document.getElementById('hellMemoryInput').value = '';
+                document.getElementById('hellMemoryInput').style.display = 'none';
+                document.getElementById('hellMemoryInstruction').style.display = 'none';
+                document.getElementById('hellMemoryCountdown').style.display = 'none';
+                document.getElementById('hellMemorySubmit').style.display = 'none';
+                document.getElementById('hellMemoryStart').style.display = 'inline-block';
+                document.getElementById('hellMemoryStart').focus();
+                
+                // Add moving sequence effect
+                const sequenceEl = document.getElementById('hellMemorySequence');
+                sequenceEl.classList.add('moving-sequence');
+            }
+            
+            startHellMemoryTest() {
+                const sequenceEl = document.getElementById('hellMemorySequence');
+                sequenceEl.classList.add('moving-sequence');
+                
+                document.getElementById('hellMemorySequence').style.display = 'none';
+                document.getElementById('hellMemoryInstruction').style.display = 'block';
+                document.getElementById('hellMemoryInput').style.display = 'block';
+                document.getElementById('hellMemoryInput').focus();
+                document.getElementById('hellMemoryCountdown').style.display = 'block';
+                document.getElementById('hellMemorySubmit').style.display = 'inline-block';
+                document.getElementById('hellMemoryStart').style.display = 'none';
+                
+                // Start countdown
+                this.startCountdown('hellMemory', 12);
+                
+                // Clear memory after delay
+                setTimeout(() => {
+                    this.currentHellMemorySequence = '';
+                }, 1000);
+            }
+            
+            initHellLogicChallenge() {
+                const puzzles = [
+                    { question: "If 3x + 7 = 22, what is x?", answer: "5" },
+                    { question: "What is 15 + 27?", answer: "42" },
+                    { question: "If 2^4 = 16, what is 2^5?", answer: "32" },
+                    { question: "Next number: 2, 4, 8, 16, ?", answer: "32" },
+                    { question: "If y = 3x - 2 and x = 4, what is y?", answer: "10" }
+                ];
+                
+                this.currentHellLogicPuzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
+                document.getElementById('hellLogicPuzzle').textContent = this.currentHellLogicPuzzle.question;
+                document.getElementById('hellLogicInput').value = '';
+                document.getElementById('hellLogicInput').focus();
+                
+                // Start countdown
+                this.startCountdown('hellLogic', 8);
+                
+                // Start interference
+                this.startHellInterference('hellLogic');
+            }
+            
+            initHellPrecisionChallenge() {
+                const precisionCodes = [
+                    "Alpha_Beta#42!",
+                    "Gamma_Delta@99$",
+                    "Omega_Zeta%77^",
+                    "Sigma_Pi&33*",
+                    "Theta_Eta(88)"
+                ];
+                
+                this.currentHellPrecisionCode = precisionCodes[Math.floor(Math.random() * precisionCodes.length)];
+                document.getElementById('hellPrecisionCode').textContent = this.currentHellPrecisionCode;
+                document.getElementById('hellPrecisionInput').value = '';
+                document.getElementById('hellPrecisionInput').focus();
+                
+                // Start countdown
+                this.startCountdown('hellPrecision', 18);
+                
+                // Start interference
+                this.startHellInterference('hellPrecision');
+            }
+            
+            initHellSabotageChallenge() {
+                const sabotageCodes = [
+                    "OVERRIDE:77#X9@M2!",
+                    "BREACH:99#K4@L8!",
+                    "FORCE:55#P7@N3!",
+                    "HACK:88#M2@Q6!",
+                    "CRACK:66#R5@T9!"
+                ];
+                
+                this.currentHellSabotageCode = sabotageCodes[Math.floor(Math.random() * sabotageCodes.length)];
+                document.getElementById('hellSabotageCode').textContent = this.currentHellSabotageCode;
+                document.getElementById('hellSabotageInput').value = '';
+                document.getElementById('hellSabotageInput').focus();
+                
+                // Start countdown
+                this.startCountdown('hellSabotage', 25);
+                
+                // Start aggressive interference
+                this.startHellInterference('hellSabotage');
+                
+                // Random input locks
+                this.startInputLocks('hellSabotage');
+                
+                // Change code periodically
+                this.changeTimers.hellSabotage = setInterval(() => {
+                    if (this.currentPhase === 'challenges') {
+                        this.currentHellSabotageCode = sabotageCodes[Math.floor(Math.random() * sabotageCodes.length)];
+                        document.getElementById('hellSabotageCode').textContent = this.currentHellSabotageCode;
+                        this.addIntenseInterference();
+                    }
+                }, this.modeConfigs.hell.changeIntervals.hellSabotage);
+            }
+            
+            startCountdown(challengeId, time) {
+                let timeRemaining = time;
+                const countdownEl = document.getElementById(`${challengeId}Countdown`);
+                
+                this.countdownTimers[challengeId] = setInterval(() => {
+                    timeRemaining--;
+                    countdownEl.textContent = `Time: ${timeRemaining}s`;
+                    
+                    if (timeRemaining <= 0) {
+                        clearInterval(this.countdownTimers[challengeId]);
+                        this.challengeFailed('TIME EXPIRED');
+                    }
+                }, 1000);
+            }
+            
+            generateRandomCode(length) {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let code = '';
+                for (let i = 0; i < length; i++) {
+                    code += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return code;
+            }
+            
+            checkEasyChallenge() {
+                const input = document.getElementById('easyInput').value.toUpperCase();
+                
+                if (input === this.currentEasyCode) {
+                    this.challengePassed();
+                } else {
+                    this.challengeFailed('INCORRECT CODE');
+                }
+            }
+            
+            checkHardSpeedChallenge() {
+                const input = document.getElementById('hardSpeedInput').value.toUpperCase();
+                
+                if (input === this.currentHardSpeedCode) {
+                    this.challengePassed();
+                } else {
+                    this.challengeFailed('INCORRECT CODE');
+                }
+            }
+            
+            checkHardMemoryChallenge() {
+                const input = document.getElementById('hardMemoryInput').value.toUpperCase();
+                
+                if (input === this.currentHardMemorySequence) {
+                    this.challengePassed();
+                } else {
+                    this.challengeFailed('INCORRECT SEQUENCE');
+                }
+            }
+            
+            checkHellSpeedChallenge() {
+                const input = document.getElementById('hellSpeedInput').value.toUpperCase();
+                
+                if (input === this.currentHellSpeedCode) {
+                    this.challengePassed();
+                } else {
+                    this.challengeFailed('INCORRECT CODE');
+                }
+            }
+            
+            checkHellMemoryChallenge() {
+                const input = document.getElementById('hellMemoryInput').value.toUpperCase();
+                
+                if (input === this.currentHellMemorySequence) {
+                    this.challengePassed();
+                } else {
+                    this.challengeFailed('INCORRECT SEQUENCE');
+                }
+            }
+            
+            checkHellLogicChallenge() {
+                const input = document.getElementById('hellLogicInput').value.trim();
+                
+                if (input === this.currentHellLogicPuzzle.answer) {
+                    this.challengePassed();
+                } else {
+                    this.challengeFailed('INCORRECT ANSWER');
+                }
+            }
+            
+            checkHellPrecisionChallenge() {
+                const input = document.getElementById('hellPrecisionInput').value;
+                
+                // Random false failure for Hell++ mode
+                if (this.currentMode === 'hell' && Math.random() > 0.9) {
+                    this.showSystemMessage('FALSE POSITIVE - SYSTEM ERROR');
+                    this.createScreenFlash();
+                    this.challengeFailed('FALSE POSITIVE');
+                    return;
+                }
+                
+                if (input === this.currentHellPrecisionCode) {
+                    this.challengePassed();
+                } else {
+                    this.challengeFailed('INCORRECT FORMAT');
+                }
+            }
+            
+            checkHellSabotageChallenge() {
+                const input = document.getElementById('hellSabotageInput').value;
+                
+                // Heavy interference during sabotage challenge
+                if (Math.random() > 0.7) {
+                    this.addIntenseInterference();
+                }
+                
+                // Random false failure for Hell++ mode
+                if (this.currentMode === 'hell' && Math.random() > 0.85) {
+                    this.showSystemMessage('SECURITY COUNTERMEASURE ACTIVATED');
+                    this.createScreenFlash();
+                    this.challengeFailed('COUNTERMEASURE');
+                    return;
+                }
+                
+                if (input === this.currentHellSabotageCode) {
+                    this.challengePassed();
+                } else {
+                    this.challengeFailed('INCORRECT OVERRIDE');
+                }
+            }
+            
+            challengePassed() {
+                // Clear timers
+                Object.keys(this.countdownTimers).forEach(key => {
+                    if (this.countdownTimers[key]) {
+                        clearInterval(this.countdownTimers[key]);
+                    }
+                });
+                Object.keys(this.changeTimers).forEach(key => {
+                    if (this.changeTimers[key]) {
+                        clearInterval(this.changeTimers[key]);
+                    }
+                });
+                
+                // Reduce trace slightly
+                if (this.modeConfigs[this.currentMode].traceEnabled) {
+                    this.tracePercentage = Math.max(0, this.tracePercentage - 10);
+                    this.updateTraceDisplay();
+                }
+                
+                // Move to next challenge
+                this.challengeIndex++;
+                
+                if (this.challengeIndex < this.modeConfigs[this.currentMode].challenges.length) {
+                    setTimeout(() => {
+                        this.showChallenge(this.modeConfigs[this.currentMode].challenges[this.challengeIndex]);
+                    }, 1000);
+                } else {
+                    // All challenges passed, show form
+                    this.showRegistrationForm();
+                }
+            }
+            
+            challengeFailed(reason) {
+                // Clear timers
+                Object.keys(this.countdownTimers).forEach(key => {
+                    if (this.countdownTimers[key]) {
+                        clearInterval(this.countdownTimers[key]);
+                    }
+                });
+                
+                this.failedAttempts++;
+                
+                // Increase trace
+                if (this.modeConfigs[this.currentMode].traceEnabled) {
+                    this.tracePercentage = Math.min(100, this.tracePercentage + this.modeConfigs[this.currentMode].failurePenalty);
+                    this.updateTraceDisplay();
+                }
+                
+                // Add interference
+                if (this.currentMode === 'hard' || this.currentMode === 'hell') {
+                    this.addInterference();
+                }
+                
+                // Show failure message
+                const failureMessages = {
+                    easy: ['INCORRECT CODE', 'TRY AGAIN'],
+                    hard: ['INPUT CORRUPTED', 'SIGNAL INTERFERENCE DETECTED', 'ACCESS DENIED'],
+                    hell: ['SYSTEM COUNTERMEASURE ACTIVATED', 'INTRUSION BLOCKED', 'SECURITY PROTOCOL ENGAGED', 'YOU CANNOT WIN', 'SYSTEM IS WATCHING']
+                };
+                
+                const modeMessages = failureMessages[this.currentMode] || failureMessages.easy;
+                this.showSystemMessage(modeMessages[Math.floor(Math.random() * modeMessages.length)]);
+                
+                // Hell++ specific taunts
+                if (this.currentMode === 'hell') {
+                    setTimeout(() => {
+                        const taunts = ['GIVE UP NOW', 'YOU ARE TOO SLOW', 'SYSTEM LAUGHS AT YOU', 'FAILURE IS INEVITABLE'];
+                        this.showSystemMessage(taunts[Math.floor(Math.random() * taunts.length)]);
+                    }, 1500);
+                }
+                
+                // Add error animation
+                const activeInput = document.querySelector('.challenge-input:focus');
+                if (activeInput) {
+                    activeInput.classList.add('error');
+                    setTimeout(() => activeInput.classList.remove('error'), 500);
+                }
+                
+                if (this.failedAttempts >= this.modeConfigs[this.currentMode].maxAttempts) {
+                    this.traceTerminated();
+                } else {
+                    // Retry same challenge
+                    setTimeout(() => {
+                        this.showChallenge(this.modeConfigs[this.currentMode].challenges[this.challengeIndex]);
+                    }, 2000);
+                }
+            }
+            
+            updateTraceDisplay() {
+                const traceFill = document.getElementById('traceFill');
+                const traceText = document.getElementById('traceText');
+                
+                traceFill.style.width = `${this.tracePercentage}%`;
+                traceText.textContent = `TRACE: ${Math.floor(this.tracePercentage)}%`;
+                
+                if (this.tracePercentage >= 70) {
+                    traceText.classList.add('warning');
+                } else {
+                    traceText.classList.remove('warning');
+                }
+            }
+            
+            showRegistrationForm() {
+                this.currentPhase = 'form';
+                
+                // Clear all timers
+                Object.keys(this.countdownTimers).forEach(key => {
+                    if (this.countdownTimers[key]) {
+                        clearInterval(this.countdownTimers[key]);
+                    }
+                });
+                Object.keys(this.changeTimers).forEach(key => {
+                    if (this.changeTimers[key]) {
+                        clearInterval(this.changeTimers[key]);
+                    }
+                });
+                
+                // Hide all challenges
+                document.querySelectorAll('.challenge-container').forEach(container => {
+                    container.classList.remove('active');
+                    container.style.display = 'none';
+                });
+                
+                // Show registration form
+                const registrationContainer = document.getElementById('registrationContainer');
+                const formTitle = document.getElementById('formTitle');
+                
+                registrationContainer.classList.add('active', this.currentMode);
+                registrationContainer.style.display = 'block';
+                
+                // Set form title based on mode
+                const titles = {
+                    easy: 'CASUAL ACCESS TERMINAL',
+                    hard: 'PROFESSIONAL ACCESS TERMINAL',
+                    hell: 'BLACKSITE ACCESS TERMINAL'
+                };
+                formTitle.textContent = titles[this.currentMode];
+                formTitle.className = `form-title ${this.currentMode}`;
+                
+                // Apply mode classes to form elements
+                document.querySelectorAll('.form-input, .submit-btn').forEach(el => {
+                    el.classList.add(this.currentMode);
+                });
+                
+                // Focus first input
+                setTimeout(() => {
+                    document.getElementById('username').focus();
+                }, 1000);
+            }
+            
+            async submitForm() {
+                const username = document.getElementById('username').value;
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                // Disable form
+                document.getElementById('submitBtn').disabled = true;
+                document.querySelectorAll('.form-input').forEach(input => input.disabled = true);
+                
+                // Show loading
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                const loadingSequence = document.getElementById('loadingSequence');
+                const container = document.getElementById('registrationContainer');
+                
+                loadingOverlay.classList.add('active');
+                loadingSequence.className = `loading-sequence ${this.currentMode}`;
+                
+                // Mode-specific loading sequences
+                const loadingSteps = {
+                    easy: [
+                        "> processing request...",
+                        "> validating credentials...",
+                        "> creating account...",
+                        "> access granted!"
+                    ],
+                    hard: [
+                        "> decrypting request...",
+                        "> bypassing security...",
+                        "> validating credentials...",
+                        "> escalating privileges...",
+                        "> access granted!"
+                    ],
+                    hell: [
+                        "> decrypting...",
+                        "> rerouting...",
+                        "> bypassing locks...",
+                        "> injecting credentials...",
+                        "> escalating privileges...",
+                        "> FINALIZING CONNECTION...",
+                        "> ACCESS GRANTED!"
+                    ]
+                };
+                
+                loadingSequence.innerHTML = '';
+                
+                for (let i = 0; i < loadingSteps[this.currentMode].length; i++) {
+                    await new Promise(resolve => setTimeout(resolve, this.currentMode === 'easy' ? 600 : this.currentMode === 'hard' ? 400 : 300));
+                    
+                    const logDiv = document.createElement('div');
+                    logDiv.className = 'loading-log';
+                    logDiv.textContent = loadingSteps[this.currentMode][i];
+                    loadingSequence.appendChild(logDiv);
+                    
+                    // Add interference for hard/hell modes
+                    if ((this.currentMode === 'hard' || this.currentMode === 'hell') && Math.random() > 0.6) {
+                        container.classList.add('glitch');
+                        setTimeout(() => container.classList.remove('glitch'), 100);
+                    }
+                }
+                
+                // Success
+                this.showResult('ACCESS GRANTED', 'Welcome to the Network');
+                
+                // Store data
+                console.log('User registered:', { username, email, password });
+                
+                // Redirect
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 4000);
+            }
+            
+            traceTerminated() {
+                clearInterval(this.traceTimer);
+                this.currentPhase = 'terminated';
+                
+                // Clear all timers
+                Object.keys(this.countdownTimers).forEach(key => {
+                    if (this.countdownTimers[key]) {
+                        clearInterval(this.countdownTimers[key]);
+                    }
+                });
+                Object.keys(this.changeTimers).forEach(key => {
+                    if (this.changeTimers[key]) {
+                        clearInterval(this.changeTimers[key]);
+                    }
+                });
+                
+                this.showResult('ACCESS TERMINATED', 'System locked. Initiating purge...');
+                
+                // Hell++ specific taunts
+                if (this.currentMode === 'hell') {
+                    setTimeout(() => {
+                        this.showSystemMessage('YOU FAILED THE TEST');
+                    }, 1000);
+                    setTimeout(() => {
+                        this.showSystemMessage('THE SYSTEM WINS');
+                    }, 2500);
+                    setTimeout(() => {
+                        this.showSystemMessage('TRY AGAIN WHEN YOU\'RE READY');
+                    }, 4000);
+                }
+                
+                // Create danger particles
+                createParticles(window.innerWidth / 2, window.innerHeight / 2, 100, true);
+                
+                // Restart after delay
+                setTimeout(() => {
+                    location.reload();
+                }, 5000);
+            }
+            
+            showResult(message, subMessage) {
+                const resultOverlay = document.getElementById('resultOverlay');
+                const resultMessage = document.getElementById('resultMessage');
+                const subMessageEl = document.getElementById('subMessage');
+                
+                resultMessage.textContent = message;
+                subMessageEl.textContent = subMessage;
+                
+                if (message === 'ACCESS TERMINATED') {
+                    resultMessage.classList.add('terminated');
+                    resultMessage.classList.remove('granted');
+                } else {
+                    resultMessage.classList.add('granted');
+                    resultMessage.classList.remove('terminated');
+                }
+                
+                resultOverlay.classList.add('active');
+                
+                // Create particles for success
+                if (message === 'ACCESS GRANTED') {
+                    const particleCount = this.currentMode === 'easy' ? 50 : this.currentMode === 'hard' ? 100 : 150;
+                    createParticles(window.innerWidth / 2, window.innerHeight / 2, particleCount);
+                    
+                    // Hell++ specific RGB explosion
+                    if (this.currentMode === 'hell') {
+                        this.createRGBSplit();
+                        this.createScreenFlash();
+                        
+                        // Multiple screen flashes for dramatic effect
+                        setTimeout(() => this.createScreenFlash(), 200);
+                        setTimeout(() => this.createScreenFlash(), 400);
+                        setTimeout(() => this.createScreenFlash(), 600);
+                    }
+                }
+            }
+            
+            startInterference() {
+                setInterval(() => {
+                    if (Math.random() > 0.7) {
+                        this.addInterference();
+                    }
+                }, this.currentMode === 'hard' ? 4000 : this.currentMode === 'hell' ? 2000 : 6000);
+            }
+            
+            startHellInterference(challengeId) {
+                // Show interference warning
+                const warningEl = document.getElementById(`${challengeId}Warning`);
+                if (warningEl) {
+                    warningEl.style.display = 'block';
+                    setTimeout(() => {
+                        warningEl.style.display = 'none';
+                    }, 2000);
+                }
+                
+                // Start aggressive interference
+                this.hellInterferenceTimer = setInterval(() => {
+                    if (Math.random() > 0.6) {
+                        this.addIntenseInterference();
+                    }
+                }, 1500);
+            }
+            
+            startInputLocks(challengeId) {
+                // Random input locks for Hell++ mode
+                this.inputLockTimer = setInterval(() => {
+                    if (Math.random() > 0.8) {
+                        this.lockInput(challengeId);
+                    }
+                }, 4000);
+            }
+            
+            lockInput(challengeId) {
+                const input = document.getElementById(`${challengeId}Input`);
+                const lockWarning = document.getElementById(`${challengeId}Lock`);
+                
+                if (input && lockWarning) {
+                    input.disabled = true;
+                    lockWarning.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        input.disabled = false;
+                        lockWarning.style.display = 'none';
+                    }, 2000);
+                }
+            }
+            
+            createRGBSplit() {
+                const overlay = document.getElementById('systemOverlay');
+                overlay.classList.add('rgb-split-effect');
+                
+                setTimeout(() => {
+                    overlay.classList.remove('rgb-split-effect');
+                }, 2000);
+            }
+            
+            createScreenFlash() {
+                const flash = document.createElement('div');
+                flash.className = 'screen-flash';
+                document.body.appendChild(flash);
+                
+                setTimeout(() => {
+                    flash.remove();
+                }, 100);
+            }
+            
+            addIntenseInterference() {
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.classList.contains('challenge-input') || activeElement.classList.contains('form-input'))) {
+                    // Multiple interference types
+                    const interferenceType = Math.random();
+                    
+                    if (interferenceType < 0.25) {
+                        // Text scramble
+                        this.scrambleText(activeElement);
+                    } else if (interferenceType < 0.5) {
+                        // Text reversal
+                        this.reverseText(activeElement);
+                    } else if (interferenceType < 0.75) {
+                        // Disappearing text
+                        this.disappearText(activeElement);
+                    } else {
+                        // Moving sequence
+                        this.moveSequence(activeElement);
+                    }
+                }
+                
+                // Random TRACE increase even when correct
+                if (this.currentMode === 'hell' && Math.random() > 0.7) {
+                    this.tracePercentage = Math.min(100, this.tracePercentage + 2);
+                    this.updateTraceDisplay();
+                }
+            }
+            
+            scrambleText(element) {
+                const originalValue = element.value;
+                const scrambled = originalValue.split('').map(char => 
+                    Math.random() > 0.5 ? char : String.fromCharCode(33 + Math.floor(Math.random() * 94))
+                ).join('');
+                
+                element.value = scrambled;
+                element.classList.add('glitch');
+                
+                setTimeout(() => {
+                    element.value = originalValue;
+                    element.classList.remove('glitch');
+                }, 300);
+            }
+            
+            reverseText(element) {
+                const originalValue = element.value;
+                element.value = originalValue.split('').reverse().join('');
+                element.classList.add('reversed-text');
+                
+                setTimeout(() => {
+                    element.value = originalValue;
+                    element.classList.remove('reversed-text');
+                }, 400);
+            }
+            
+            disappearText(element) {
+                element.classList.add('disappearing-text');
+                
+                setTimeout(() => {
+                    element.classList.remove('disappearing-text');
+                }, 500);
+            }
+            
+            moveSequence(element) {
+                const container = element.closest('.challenge-container');
+                if (container) {
+                    const codeElement = container.querySelector('.challenge-code');
+                    if (codeElement) {
+                        codeElement.classList.add('moving-sequence');
+                        
+                        setTimeout(() => {
+                            codeElement.classList.remove('moving-sequence');
+                        }, 2000);
+                    }
+                }
+            }
+            
+            addInterference() {
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.classList.contains('challenge-input') || activeElement.classList.contains('form-input'))) {
+                    // Scramble text briefly
+                    const originalValue = activeElement.value;
+                    const scrambled = originalValue.split('').map(char => 
+                        Math.random() > 0.5 ? char : String.fromCharCode(33 + Math.floor(Math.random() * 94))
+                    ).join('');
+                    
+                    activeElement.value = scrambled;
+                    activeElement.classList.add('glitch');
+                    
+                    setTimeout(() => {
+                        activeElement.value = originalValue;
+                        activeElement.classList.remove('glitch');
+                    }, 200);
+                }
+                
+                // Random UI shift for hell mode
+                if (this.currentMode === 'hell' && Math.random() > 0.8) {
+                    const container = document.querySelector('.challenge-container.active, .registration-container.active');
+                    if (container) {
+                        container.style.transform = `translate(${Math.random() * 6 - 3}px, ${Math.random() * 6 - 3}px)`;
+                        setTimeout(() => {
+                            container.style.transform = '';
+                        }, 300);
+                    }
+                }
+            }
+        }
+
+        // Initialize System
+        document.addEventListener('DOMContentLoaded', () => {
+            new HackerSystem();
+        });
+    </script>
+</body>
+</html>

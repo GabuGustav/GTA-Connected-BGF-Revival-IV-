@@ -1083,6 +1083,114 @@
             }
         }
         
+        .hologram-input {
+            background: rgba(0, 255, 150, 0.1);
+            border: 2px solid rgba(0, 255, 150, 0.3);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .hologram-input:focus {
+            outline: none;
+            border-color: rgba(0, 255, 150, 0.6);
+            background: rgba(0, 255, 150, 0.15);
+            box-shadow: 0 0 20px rgba(0, 255, 150, 0.3);
+        }
+        
+        .hologram-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .hologram-btn {
+            background: linear-gradient(145deg, rgba(0, 255, 150, 0.2), rgba(0, 255, 200, 0.1));
+            border: 2px solid rgba(0, 255, 150, 0.4);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .hologram-btn:hover {
+            background: linear-gradient(145deg, rgba(0, 255, 150, 0.3), rgba(0, 255, 200, 0.2));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 150, 0.4);
+            border-color: rgba(0, 255, 150, 0.6);
+        }
+        
+        .register-popup {
+            max-width: 400px;
+        }
+        
+        .mail-popup-title {
+            color: #4CAF50;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .register-form-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .register-form-content .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .register-form-content .password-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .register-form-content .hologram-input {
+            flex: 1;
+        }
+        
+        .register-form-content .mail-domain {
+            color: #4CAF50;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+        }
+        
+        .register-form-content .show-password-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .register-form-content .show-password-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        
         .recovery-section {
             position: relative;
             z-index: 1;
@@ -1561,29 +1669,29 @@
         </div>
     </div>
     
-    <!-- BGF Mail Section -->
+    <!-- BGFR Mail Section -->
     <div class="mail-section">
-        <h2 class="mail-title">BGF Mail</h2>
+        <h2 class="mail-title">BGFR Mail</h2>
         <div class="mail-container">
             <div class="mail-login">
-                <h3><i class="fas fa-envelope"></i> BGF Mail Login</h3>
+                <h3><i class="fas fa-envelope"></i> BGFR Mail Login</h3>
                 <div class="mail-form">
                     <div class="input-group">
-                        <input type="text" id="mailUsername" placeholder="username" class="mail-input">
-                        <span class="mail-domain">@bgf.connected</span>
+                        <input type="text" id="mailUsername" placeholder="username" class="mail-input hologram-input">
+                        <span class="mail-domain">@bgfr.connected</span>
                     </div>
                     <div class="password-group">
-                        <input type="password" id="mailPassword" placeholder="password" class="mail-input">
+                        <input type="password" id="mailPassword" placeholder="password" class="mail-input hologram-input">
                         <button type="button" onclick="togglePassword()" class="show-password-btn">
                             <i class="fas fa-eye" id="passwordIcon"></i>
                         </button>
                     </div>
-                    <button onclick="loginMail()" class="mail-login-btn">
+                    <button onclick="loginMail()" class="mail-login-btn hologram-btn">
                         <i class="fas fa-sign-in-alt"></i> Login to Mail
                     </button>
                 </div>
                 <div class="mail-register">
-                    <p>New to BGF Mail? <a href="#" onclick="showRegister()">Register here</a></p>
+                    <p>New to BGFR Mail? <a href="hacker-register.html">Register here</a></p>
                     <p>Forgot your password? <a href="#" onclick="showRecovery()">Reset password</a></p>
                 </div>
             </div>
@@ -1606,7 +1714,7 @@
             <div class="mail-compose" id="mailCompose" style="display: none;">
                 <h3><i class="fas fa-pen"></i> Compose Mail</h3>
                 <div class="compose-form">
-                    <input type="text" id="composeTo" placeholder="To: username@bgf.connected" class="mail-input">
+                    <input type="text" id="composeTo" placeholder="To: username@bgfr.connected" class="mail-input">
                     <input type="text" id="composeSubject" placeholder="Subject" class="mail-input">
                     <textarea id="composeMessage" placeholder="Message" class="mail-textarea"></textarea>
                     <div class="compose-actions">
@@ -1788,22 +1896,22 @@
         
         // Initialize mail system
         function initMailSystem() {
-            console.log('Initializing BGF Mail system...');
+            console.log('Initializing BGFR Mail system...');
             
             // Load mail data from localStorage with fallback
-            let saved = localStorage.getItem('bgfMailData');
+            let saved = localStorage.getItem('bgfrMailData');
             
             // Try to get from sessionStorage (for cross-tab sharing)
             if (!saved) {
-                saved = sessionStorage.getItem('bgfMailData');
+                saved = sessionStorage.getItem('bgfrMailData');
             }
             
             if (saved) {
                 mailData = JSON.parse(saved);
                 console.log('Loaded existing mail data:', mailData);
                 // Sync to both storages for sharing
-                localStorage.setItem('bgfMailData', JSON.stringify(mailData));
-                sessionStorage.setItem('bgfMailData', JSON.stringify(mailData));
+                localStorage.setItem('bgfrMailData', JSON.stringify(mailData));
+                sessionStorage.setItem('bgfrMailData', JSON.stringify(mailData));
             } else {
                 // Create sample mail data
                 console.log('Creating new mail data...');
@@ -1813,8 +1921,8 @@
                         inbox: [
                             {
                                 from: 'system',
-                                subject: 'Welcome to BGF Mail!',
-                                message: 'Welcome to the BGF Revival IV mailing system. This is your internal email for server communications.',
+                                subject: 'Welcome to BGFR Mail!',
+                                message: 'Welcome to the BGFR Revival IV mailing system. This is your internal email for server communications.',
                                 date: new Date().toISOString(),
                                 read: false
                             }
@@ -1828,7 +1936,7 @@
             
             // Listen for storage changes (cross-tab sync)
             window.addEventListener('storage', function(e) {
-                if (e.key === 'bgfMailData' && e.newValue) {
+                if (e.key === 'bgfrMailData' && e.newValue) {
                     mailData = JSON.parse(e.newValue);
                     if (currentUser) {
                         loadInbox(); // Refresh if logged in
@@ -1836,17 +1944,17 @@
                 }
             });
             
-            console.log('BGF Mail system initialized successfully');
+            console.log('BGFR Mail system initialized successfully');
         }
         
         function saveMailData() {
             const dataString = JSON.stringify(mailData);
-            localStorage.setItem('bgfMailData', dataString);
-            sessionStorage.setItem('bgfMailData', dataString);
+            localStorage.setItem('bgfrMailData', dataString);
+            sessionStorage.setItem('bgfrMailData', dataString);
             
             // Trigger storage event for other tabs
             window.dispatchEvent(new StorageEvent('storage', {
-                key: 'bgfMailData',
+                key: 'bgfrMailData',
                 newValue: dataString
             }));
         }
@@ -1878,8 +1986,8 @@
                     inbox: [
                         {
                             from: 'system',
-                            subject: 'Welcome to BGF Mail!',
-                            message: `Welcome ${username}@bgf.connected! Your account has been created successfully.`,
+                            subject: 'Welcome to BGFR Mail!',
+                            message: `Welcome ${username}@bgfr.connected! Your account has been created successfully.`,
                             date: new Date().toISOString(),
                             read: false
                         }
@@ -1887,7 +1995,7 @@
                     sent: []
                 };
                 saveMailData();
-                alert(`Account created for ${username}@bgf.connected!`);
+                alert(`Account created for ${username}@bgfr.connected!`);
             }
             
             if (mailData[username].password !== password) {
@@ -1924,7 +2032,7 @@
             mailList.innerHTML = inbox.map((mail, index) => `
                 <div class="mail-item" onclick="readMail(${index})">
                     <div class="mail-item-header">
-                        <span class="mail-from">${mail.from}@bgf.connected</span>
+                        <span class="mail-from">${mail.from}@bgfr.connected</span>
                         <span class="mail-date">${new Date(mail.date).toLocaleDateString()}</span>
                     </div>
                     <div class="mail-subject">${mail.subject}</div>
@@ -1962,8 +2070,8 @@
                 return;
             }
             
-            // Remove @bgf.connected if present
-            const toUsername = to.replace('@bgf.connected', '');
+            // Remove @bgfr.connected if present
+            const toUsername = to.replace('@bgfr.connected', '');
             
             if (!mailData[toUsername]) {
                 alert('User not found');
@@ -1993,7 +2101,7 @@
             saveMailData();
             
             // Show notification to sender
-            showNotification(`Message sent to ${toUsername}@bgf.connected!`, 'success');
+            showNotification(`Message sent to ${toUsername}@bgfr.connected!`, 'success');
             
             // If recipient is online (has the page open), show them a notification
             if (toUsername !== currentUser) {
@@ -2044,8 +2152,8 @@
                         inbox: [
                             {
                                 from: 'system',
-                                subject: 'Welcome to BGF Mail!',
-                                message: `Welcome ${cleanUsername}@bgf.connected! Your account has been created successfully.`,
+                                subject: 'Welcome to BGFR Mail!',
+                                message: `Welcome ${cleanUsername}@bgfr.connected! Your account has been created successfully.`,
                                 date: new Date().toISOString(),
                                 read: false
                             }
@@ -2054,7 +2162,7 @@
                     };
                     saveMailData();
                     
-                    alert(`Account created! Your email is: ${cleanUsername}@bgf.connected\nYou can now login.`);
+                    alert(`Account created! Your email is: ${cleanUsername}@bgfr.connected\nYou can now login.`);
                     
                     // Pre-fill login form
                     document.getElementById('mailUsername').value = cleanUsername;
@@ -2063,6 +2171,704 @@
                     alert('Password must be at least 6 characters');
                 }
             }
+        }
+        
+        // Test function to verify click works
+        function testClick() {
+            console.log('Register link clicked!');
+            alert('Register link clicked! Check console for popup status.');
+        }
+        
+        // Epic transition animation system
+        function showRegisterPopup() {
+            console.log('Register popup called');
+            
+            // Check if popup already exists
+            if (document.querySelector('.register-popup-overlay')) {
+                console.log('Popup already exists, removing first');
+                document.querySelector('.register-popup-overlay').remove();
+            }
+            
+            // Create transition container
+            const transitionContainer = document.createElement('div');
+            transitionContainer.className = 'transition-container';
+            transitionContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.95);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                pointer-events: auto;
+                overflow: hidden;
+            `;
+            
+            // Add click to close functionality
+            transitionContainer.addEventListener('click', function(e) {
+                if (e.target === transitionContainer) {
+                    transitionContainer.remove();
+                }
+            });
+            
+            // Phase 1: Matrix rain and system boot
+            transitionContainer.innerHTML = `
+                <style>
+                    @keyframes matrixRain {
+                        0% {
+                            transform: translateY(-100%);
+                            opacity: 0;
+                        }
+                        10% {
+                            opacity: 1;
+                        }
+                        90% {
+                            opacity: 1;
+                        }
+                        100% {
+                            transform: translateY(100vh);
+                            opacity: 0;
+                        }
+                    }
+                    
+                    @keyframes glitchText {
+                        0%, 100% { 
+                            text-shadow: 
+                                2px 2px 0 #ff0000,
+                                -2px -2px 0 #00ff00,
+                                2px -2px 0 #0000ff,
+                                -2px 2px 0 #ff00ff,
+                                0 0 20px rgba(0, 255, 150, 0.8);
+                            opacity: 1;
+                            transform: translateX(0);
+                        }
+                        25% { 
+                            text-shadow: 
+                                -2px 2px 0 #ff0000,
+                                2px -2px 0 #00ff00,
+                                -2px -2px 0 #0000ff,
+                                2px 2px 0 #ff00ff,
+                                0 0 30px rgba(0, 255, 150, 1);
+                            opacity: 0.8;
+                            transform: translateX(-2px);
+                        }
+                        50% { 
+                            text-shadow: 
+                                2px -2px 0 #ff0000,
+                                -2px 2px 0 #00ff00,
+                                2px 2px 0 #0000ff,
+                                -2px -2px 0 #ff00ff,
+                                0 0 40px rgba(0, 255, 150, 1.2);
+                            opacity: 0.6;
+                            transform: translateX(2px);
+                        }
+                        75% { 
+                            text-shadow: 
+                                -2px -2px 0 #ff0000,
+                                2px 2px 0 #00ff00,
+                                -2px 2px 0 #0000ff,
+                                2px -2px 0 #ff00ff,
+                                0 0 25px rgba(0, 255, 150, 0.9);
+                            opacity: 0.4;
+                            transform: translateX(-1px);
+                        }
+                    }
+                    
+                    @keyframes particleExplosion {
+                        0% {
+                            transform: translate(0, 0) scale(0);
+                            opacity: 1;
+                        }
+                        100% {
+                            transform: translate(var(--tx), var(--ty)) scale(0) rotate(1080deg);
+                            opacity: 0;
+                        }
+                    }
+                    
+                    @keyframes energyRing {
+                        0% {
+                            transform: scale(0) rotate(0deg);
+                            opacity: 1;
+                            border-width: 3px;
+                        }
+                        100% {
+                            transform: scale(4) rotate(360deg);
+                            opacity: 0;
+                            border-width: 1px;
+                        }
+                    }
+                    
+                    @keyframes cubeFormation {
+                        0% {
+                            transform: scale(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+                            opacity: 0;
+                        }
+                        25% {
+                            transform: scale(0.5) rotateX(90deg) rotateY(90deg) rotateZ(45deg);
+                            opacity: 0.3;
+                        }
+                        50% {
+                            transform: scale(1.5) rotateX(180deg) rotateY(180deg) rotateZ(90deg);
+                            opacity: 0.8;
+                        }
+                        75% {
+                            transform: scale(1.2) rotateX(270deg) rotateY(270deg) rotateZ(135deg);
+                            opacity: 0.9;
+                        }
+                        100% {
+                            transform: scale(1) rotateX(360deg) rotateY(360deg) rotateZ(180deg);
+                            opacity: 1;
+                        }
+                    }
+                    
+                    @keyframes hologramScan {
+                        0% {
+                            background: linear-gradient(90deg, transparent, rgba(0, 255, 150, 0.8), transparent);
+                            transform: translateY(-100%) rotateX(45deg);
+                        }
+                        100% {
+                            background: linear-gradient(90deg, transparent, rgba(0, 255, 150, 0.8), transparent);
+                            transform: translateY(100%) rotateX(45deg);
+                        }
+                    }
+                    
+                    @keyframes connectionPulse {
+                        0%, 100% {
+                            box-shadow: 
+                                0 0 30px rgba(0, 255, 150, 0.8),
+                                0 0 60px rgba(0, 255, 200, 0.6),
+                                0 0 90px rgba(76, 175, 80, 0.4),
+                                0 0 120px rgba(0, 255, 150, 0.3),
+                                inset 0 0 40px rgba(0, 255, 150, 0.6);
+                        }
+                        50% {
+                            box-shadow: 
+                                0 0 60px rgba(0, 255, 150, 1),
+                                0 0 120px rgba(0, 255, 200, 0.8),
+                                0 0 180px rgba(76, 175, 80, 0.6),
+                                0 0 240px rgba(0, 255, 150, 0.4),
+                                inset 0 0 80px rgba(0, 255, 150, 0.8);
+                        }
+                    }
+                    
+                    @keyframes systemBoot {
+                        0% {
+                            opacity: 0;
+                            transform: scale(0.8) rotateX(15deg);
+                        }
+                        100% {
+                            opacity: 1;
+                            transform: scale(1) rotateX(0deg);
+                        }
+                    }
+                    
+                    .matrix-column {
+                        position: absolute;
+                        top: -100%;
+                        font-family: 'Courier New', monospace;
+                        font-size: 14px;
+                        color: rgba(0, 255, 150, 0.8);
+                        text-shadow: 0 0 5px rgba(0, 255, 150, 0.5);
+                        animation: matrixRain 3s linear infinite;
+                        white-space: nowrap;
+                    }
+                    
+                    .glitch-text {
+                        font-size: 5rem;
+                        font-weight: bold;
+                        text-transform: uppercase;
+                        letter-spacing: 6px;
+                        color: white;
+                        animation: glitchText 0.3s infinite;
+                        font-family: 'Courier New', monospace;
+                        position: relative;
+                        z-index: 10;
+                    }
+                    
+                    .particle {
+                        position: absolute;
+                        width: 6px;
+                        height: 6px;
+                        background: radial-gradient(circle, rgba(0, 255, 150, 1), rgba(0, 255, 200, 0.8));
+                        border-radius: 50%;
+                        animation: particleExplosion 1.5s ease-out forwards;
+                        box-shadow: 0 0 10px rgba(0, 255, 150, 0.8);
+                    }
+                    
+                    .energy-ring {
+                        position: absolute;
+                        width: 100px;
+                        height: 100px;
+                        border: 3px solid rgba(0, 255, 150, 0.8);
+                        border-radius: 50%;
+                        animation: energyRing 2s ease-out forwards;
+                        box-shadow: 0 0 20px rgba(0, 255, 150, 0.6);
+                    }
+                    
+                    .cube-container {
+                        position: relative;
+                        width: 250px;
+                        height: 250px;
+                        transform-style: preserve-3d;
+                        animation: cubeFormation 3s ease-in-out forwards;
+                    }
+                    
+                    .cube-face {
+                        position: absolute;
+                        width: 250px;
+                        height: 250px;
+                        background: linear-gradient(135deg, 
+                            rgba(0, 255, 150, 0.4),
+                            rgba(0, 255, 200, 0.2),
+                            rgba(76, 175, 80, 0.3)
+                        );
+                        border: 3px solid rgba(0, 255, 150, 0.8);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 2.5rem;
+                        font-weight: bold;
+                        color: white;
+                        text-shadow: 0 0 30px rgba(0, 255, 150, 1);
+                        backdrop-filter: blur(5px);
+                    }
+                    
+                    .cube-face.front { transform: translateZ(125px); }
+                    .cube-face.back { transform: rotateY(180deg) translateZ(125px); }
+                    .cube-face.right { transform: rotateY(90deg) translateZ(125px); }
+                    .cube-face.left { transform: rotateY(-90deg) translateZ(125px); }
+                    .cube-face.top { transform: rotateX(90deg) translateZ(125px); }
+                    .cube-face.bottom { transform: rotateX(-90deg) translateZ(125px); }
+                    
+                    .scan-line {
+                        position: absolute;
+                        width: 120%;
+                        height: 6px;
+                        background: linear-gradient(90deg, transparent, rgba(0, 255, 150, 0.9), transparent);
+                        animation: hologramScan 2s linear infinite;
+                        left: -10%;
+                    }
+                    
+                    .system-status {
+                        position: absolute;
+                        top: 20px;
+                        left: 20px;
+                        font-family: 'Courier New', monospace;
+                        color: rgba(0, 255, 150, 0.8);
+                        font-size: 0.9rem;
+                        animation: systemBoot 1s ease-out forwards;
+                        text-align: left;
+                    }
+                </style>
+                
+                <div class="system-status">
+                    <div>BOOTING BGFR SYSTEM...</div>
+                    <div>INITIALIZING QUANTUM ENCRYPTION...</div>
+                    <div>ESTABLISHING NEURAL LINK...</div>
+                    <div>LOADING HOLOGRAPHIC INTERFACE...</div>
+                </div>
+                
+                <div class="glitch-text">INITIALIZING...</div>
+            `;
+            
+            document.body.appendChild(transitionContainer);
+            
+            // Create matrix rain effect
+            for (let i = 0; i < 20; i++) {
+                const column = document.createElement('div');
+                column.className = 'matrix-column';
+                column.style.left = `${Math.random() * 100}%`;
+                column.style.animationDelay = `${Math.random() * 3}s`;
+                column.style.animationDuration = `${3 + Math.random() * 2}s`;
+                
+                // Generate random characters
+                let text = '';
+                for (let j = 0; j < 50; j++) {
+                    text += String.fromCharCode(33 + Math.floor(Math.random() * 94));
+                }
+                column.textContent = text;
+                
+                transitionContainer.appendChild(column);
+            }
+            
+            // Phase 1: System boot (0-1s)
+            setTimeout(() => {
+                const glitchText = transitionContainer.querySelector('.glitch-text');
+                glitchText.textContent = 'CONNECTING...';
+                
+                // Update system status
+                const systemStatus = transitionContainer.querySelector('.system-status');
+                systemStatus.innerHTML = `
+                    <div>QUANTUM ENCRYPTION: ACTIVE</div>
+                    <div>NEURAL LINK: ESTABLISHED</div>
+                    <div>HOLOGRAPHIC INTERFACE: ONLINE</div>
+                    <div>CONNECTING TO BGFR NETWORK...</div>
+                `;
+                
+                // Phase 2: Energy rings and particle explosion
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        const ring = document.createElement('div');
+                        ring.className = 'energy-ring';
+                        ring.style.left = '50%';
+                        ring.style.top = '50%';
+                        ring.style.transform = 'translate(-50%, -50%)';
+                        transitionContainer.appendChild(ring);
+                    }, i * 200);
+                }
+                
+                // Massive particle explosion
+                for (let i = 0; i < 100; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.setProperty('--tx', `${(Math.random() - 0.5) * 1200}px`);
+                    particle.style.setProperty('--ty', `${(Math.random() - 0.5) * 1200}px`);
+                    particle.style.left = '50%';
+                    particle.style.top = '50%';
+                    particle.style.animationDelay = `${Math.random() * 0.3}s`;
+                    transitionContainer.appendChild(particle);
+                }
+            }, 1000);
+            
+            // Phase 3: Epic cube formation (2.5s)
+            setTimeout(() => {
+                // Clear matrix rain and particles
+                const matrixColumns = transitionContainer.querySelectorAll('.matrix-column');
+                const particles = transitionContainer.querySelectorAll('.particle');
+                const rings = transitionContainer.querySelectorAll('.energy-ring');
+                
+                [...matrixColumns, ...particles, ...rings].forEach(el => el.remove());
+                
+                transitionContainer.innerHTML = `
+                    <div class="cube-container">
+                        <div class="cube-face front">BGFR</div>
+                        <div class="cube-face back">MAIL</div>
+                        <div class="cube-face right">SYSTEM</div>
+                        <div class="cube-face left">ONLINE</div>
+                        <div class="cube-face top">✓</div>
+                        <div class="cube-face bottom">✓</div>
+                    </div>
+                    <div class="scan-line"></div>
+                    <div class="scan-line" style="animation-delay: 1s;"></div>
+                    <div class="scan-line" style="animation-delay: 0.5s;"></div>
+                `;
+            }, 2500);
+            
+            // Phase 4: Transform to registration form (5.5s)
+            setTimeout(() => {
+                transitionContainer.innerHTML = `
+                    <div class="register-popup-static" style="
+                        position: relative; 
+                        z-index: 10001; 
+                        pointer-events: auto; 
+                        background: linear-gradient(135deg, 
+                            rgba(0, 255, 150, 0.15),
+                            rgba(0, 255, 200, 0.08),
+                            rgba(76, 175, 80, 0.12)
+                        );
+                        border: 2px solid rgba(76, 175, 80, 0.4);
+                        border-radius: 20px;
+                        padding: 40px;
+                        max-width: 450px;
+                        width: 90%;
+                        box-shadow: 
+                            0 0 80px rgba(0, 255, 150, 0.3),
+                            0 0 160px rgba(0, 255, 200, 0.2),
+                            0 0 240px rgba(76, 175, 80, 0.15),
+                            inset 0 0 30px rgba(255, 255, 255, 0.15);
+                        color: white;
+                        overflow: hidden;
+                        animation: connectionPulse 2s ease-in-out infinite;
+                        transform: scale(0) rotateX(15deg);
+                        transition: transform 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+                    ">
+                        <div class="scan-line"></div>
+                        <div class="scan-line" style="animation-delay: 0.7s;"></div>
+                        <div class="scan-line" style="animation-delay: 1.4s;"></div>
+                        <div class="mail-popup-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.15);">
+                            <div class="mail-popup-title" style="color: #4CAF50; font-size: 1.8rem; font-weight: bold; text-shadow: 0 0 15px rgba(76, 175, 80, 0.8); text-transform: uppercase; letter-spacing: 3px;">Create BGFR Account</div>
+                            <button class="mail-popup-close" onclick="this.closest('.transition-container').remove()" style="background: rgba(255, 68, 68, 0.3); border: 2px solid rgba(255, 68, 68, 0.5); color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; position: relative; z-index: 10002; pointer-events: auto;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="register-form-content" style="display: flex; flex-direction: column; gap: 25px;">
+                            <div class="input-group" style="display: flex; align-items: center; gap: 15px;">
+                                <input type="text" id="popupUsername" placeholder="Username" class="hologram-input" style="flex: 1; pointer-events: auto; font-size: 1.1rem;">
+                                <span class="mail-domain" style="color: #4CAF50; font-weight: bold; text-shadow: 0 0 8px rgba(76, 175, 80, 0.8); font-size: 1.1rem;">@bgfr.connected</span>
+                            </div>
+                            <div class="password-group" style="display: flex; align-items: center; gap: 15px;">
+                                <input type="password" id="popupPassword" placeholder="Password" class="hologram-input" style="flex: 1; pointer-events: auto; font-size: 1.1rem;">
+                                <button type="button" onclick="togglePopupPassword()" class="show-password-btn" style="background: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255, 255, 255, 0.25); color: white; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; pointer-events: auto;">
+                                    <i class="fas fa-eye" id="popupPasswordIcon"></i>
+                                </button>
+                            </div>
+                            <button onclick="createAccount()" class="hologram-btn" style="pointer-events: auto; font-size: 1.2rem; padding: 18px 35px;">
+                                <i class="fas fa-user-plus"></i> Create Account
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // Trigger the epic scale animation
+                setTimeout(() => {
+                    const popup = transitionContainer.querySelector('.register-popup-static');
+                    if (popup) {
+                        popup.style.transform = 'scale(1) rotateX(0deg)';
+                    }
+                }, 100);
+                
+                // Enable pointer events after animation
+                setTimeout(() => {
+                    transitionContainer.style.pointerEvents = 'auto';
+                }, 1000);
+            }, 5500);
+            
+            console.log('ULTRA EPIC transition sequence initiated');
+        }
+        
+        // Toggle password visibility in popup
+        function togglePopupPassword() {
+            const passwordInput = document.getElementById('popupPassword');
+            const passwordIcon = document.getElementById('popupPasswordIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.className = 'fas fa-eye';
+            }
+        }
+        
+        // Create account from popup
+        function createAccount() {
+            const username = document.getElementById('popupUsername').value.toLowerCase().trim();
+            const password = document.getElementById('popupPassword').value;
+            
+            if (!username || !password) {
+                alert('Please enter username and password');
+                return;
+            }
+            
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+            
+            // Clean username
+            const cleanUsername = username.replace(/[^a-z0-9]/g, '');
+            
+            if (!cleanUsername) {
+                alert('Username must contain only letters and numbers');
+                return;
+            }
+            
+            if (mailData[cleanUsername]) {
+                alert('Username already exists');
+                return;
+            }
+            
+            // Create account
+            mailData[cleanUsername] = {
+                password: password,
+                inbox: [
+                    {
+                        from: 'system',
+                        subject: 'Welcome to BGFR Mail!',
+                        message: `Welcome ${cleanUsername}@bgfr.connected! Your account has been created successfully.`,
+                        date: new Date().toISOString(),
+                        read: false
+                    }
+                ],
+                sent: []
+            };
+            saveMailData();
+            
+            // Epic success animation sequence
+            const transitionContainer = document.querySelector('.transition-container');
+            if (transitionContainer) {
+                // Disable form during animation
+                transitionContainer.style.pointerEvents = 'none';
+                
+                // Phase 1: Form collapse and cube reformation
+                setTimeout(() => {
+                    transitionContainer.innerHTML = `
+                        <style>
+                            @keyframes collapseCube {
+                                0% {
+                                    transform: scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+                                    opacity: 1;
+                                }
+                                50% {
+                                    transform: scale(0.5) rotateX(180deg) rotateY(180deg) rotateZ(90deg);
+                                    opacity: 0.5;
+                                }
+                                100% {
+                                    transform: scale(0) rotateX(360deg) rotateY(360deg) rotateZ(180deg);
+                                    opacity: 0;
+                                }
+                            }
+                            
+                            @keyframes successExplosion {
+                                0% {
+                                    transform: scale(0);
+                                    opacity: 0;
+                                }
+                                50% {
+                                    transform: scale(1.5);
+                                    opacity: 1;
+                                }
+                                100% {
+                                    transform: scale(2);
+                                    opacity: 0;
+                                }
+                            }
+                            
+                            @keyframes confettiFall {
+                                0% {
+                                    transform: translateY(-100vh) rotate(0deg);
+                                    opacity: 1;
+                                }
+                                100% {
+                                    transform: translateY(100vh) rotate(720deg);
+                                    opacity: 0;
+                                }
+                            }
+                            
+                            @keyframes connectionEstablished {
+                                0% {
+                                    transform: scale(0) rotate(0deg);
+                                    opacity: 0;
+                                }
+                                50% {
+                                    transform: scale(1.2) rotate(180deg);
+                                    opacity: 1;
+                                }
+                                100% {
+                                    transform: scale(1) rotate(360deg);
+                                    opacity: 1;
+                                }
+                            }
+                            
+                            @keyframes rainbowGlow {
+                                0% { filter: brightness(1); }
+                                50% { filter: brightness(1.3); }
+                                100% { filter: brightness(1); }
+                            }
+                            
+                            .success-cube {
+                                width: 200px;
+                                height: 200px;
+                                background: linear-gradient(135deg, #4CAF50, #00ff00, #00ffff);
+                                border-radius: 20px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-size: 3rem;
+                                font-weight: bold;
+                                color: white;
+                                text-shadow: 0 0 30px rgba(76, 175, 80, 0.8);
+                                animation: collapseCube 1s ease-in forwards;
+                                box-shadow: 0 0 50px rgba(76, 175, 80, 0.8);
+                            }
+                            
+                            .success-explosion {
+                                position: absolute;
+                                width: 300px;
+                                height: 300px;
+                                background: radial-gradient(circle, rgba(76, 175, 80, 0.8), transparent);
+                                border-radius: 50%;
+                                animation: successExplosion 1.5s ease-out forwards;
+                            }
+                            
+                            .confetti {
+                                position: absolute;
+                                width: 10px;
+                                height: 10px;
+                                animation: confettiFall 2s linear forwards;
+                            }
+                            
+                            .connection-established {
+                                font-size: 2rem;
+                                font-weight: bold;
+                                color: #4CAF50;
+                                text-shadow: 0 0 30px rgba(76, 175, 80, 0.8);
+                                animation: connectionEstablished 1s ease-out forwards;
+                                animation-delay: 1.5s;
+                                opacity: 0;
+                            }
+                            
+                            .user-connected {
+                                font-size: 1.5rem;
+                                color: white;
+                                text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+                                animation: fadeIn 1s ease-in forwards;
+                                animation-delay: 2.5s;
+                                opacity: 0;
+                            }
+                        </style>
+                        
+                        <div class="success-cube">✓</div>
+                        <div class="success-explosion"></div>
+                    `;
+                    
+                    // Generate confetti
+                    setTimeout(() => {
+                        for (let i = 0; i < 50; i++) {
+                            const confetti = document.createElement('div');
+                            confetti.className = 'confetti';
+                            confetti.style.left = `${Math.random() * 100}%`;
+                            confetti.style.background = `rgba(0, 255, 150, ${0.5 + Math.random() * 0.5})`;
+                            confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+                            confetti.style.animationDuration = `${2 + Math.random() * 2}s`;
+                            transitionContainer.appendChild(confetti);
+                        }
+                    }, 500);
+                    
+                    // Phase 2: Success message
+                    setTimeout(() => {
+                        transitionContainer.innerHTML = `
+                            <div style="text-align: center;">
+                                <div class="connection-established">CONNECTION ESTABLISHED</div>
+                                <div class="user-connected">User ${cleanUsername}@bgfr.connected has been connected to the BGFR Network</div>
+                                <div style="margin-top: 30px;">
+                                    <button onclick="finishRegistration()" style="
+                                        background: linear-gradient(145deg, #4CAF50, #45a049);
+                                        border: none;
+                                        color: white;
+                                        padding: 15px 30px;
+                                        font-size: 1.2rem;
+                                        font-weight: bold;
+                                        border-radius: 10px;
+                                        cursor: pointer;
+                                        animation: rainbowGlow 2s linear infinite;
+                                        transition: all 0.3s ease;
+                                    ">Enter BGFR Mail</button>
+                                </div>
+                            </div>
+                        `;
+                    }, 2000);
+                }, 100);
+            }
+        }
+        
+        // Finish registration and enter mail
+        function finishRegistration() {
+            const transitionContainer = document.querySelector('.transition-container');
+            if (transitionContainer) {
+                transitionContainer.remove();
+            }
+            
+            // Auto-login
+            currentUser = cleanUsername;
+            showInbox();
+            startNotificationCheck();
+            
+            // Show welcome notification
+            showNotification(`Welcome to BGFR Mail, ${currentUser}@bgfr.connected!`, 'success');
         }
         
         // Notification system
@@ -2094,7 +2900,7 @@
             popup.innerHTML = `
                 <div class="mail-popup">
                     <div class="mail-popup-header">
-                        <div class="mail-popup-from">${mail.from}@bgf.connected</div>
+                        <div class="mail-popup-from">${mail.from}@bgfr.connected</div>
                         <div class="mail-popup-date">${new Date(mail.date).toLocaleString()}</div>
                         <button class="mail-popup-close" onclick="this.closest('.mail-popup-overlay').remove()">
                             <i class="fas fa-times"></i>
@@ -2143,7 +2949,7 @@
                 
                 if (notification) {
                     const data = JSON.parse(notification);
-                    showNotification(`New message from ${data.from}@bgf.connected: "${data.subject}"`, 'new-message');
+                    showNotification(`New message from ${data.from}@bgfr.connected: "${data.subject}"`, 'new-message');
                     localStorage.removeItem(notificationKey); // Remove after showing
                     loadInbox(); // Refresh inbox to show new message
                 }
