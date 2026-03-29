@@ -1631,6 +1631,23 @@
         <h1 class="glitch-title">BGF Revival IV</h1>
     </div>
     
+    <!-- Audio Elements -->
+    <audio id="generalMusic" loop>
+        <source src="rahulbhardwaj603-dark-tales-147852.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="easyMusic" loop>
+        <source src="joelfazhari-dark-mysterious-true-crime-music-loopable-235870.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="hardMusic" loop>
+        <source src="nickpanekaiassets-synthwave-for-hackerz-217852.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="hellMusic" loop>
+        <source src="4379051-hacker-alarm-124960.mp3" type="audio/mpeg">
+    </audio>
+    
+    <!-- Secure Key Manager -->
+    <script src="js/secure-key-manager.js"></script>
+    
     <!-- Gamemodes Section -->
     <div class="gamemodes-section">
         <h2 class="gamemodes-title">Gamemodes</h2>
@@ -1958,33 +1975,50 @@
             }
         }
         
-        // BGF Mail System
+        // Constants for magic numbers
+        const CONSTANTS = {
+            PASSWORD_MIN_LENGTH: 6,
+            OTP_EXPIRY_MINUTES: 10,
+            VIDEO_LOADING_TIMEOUT: 3000,
+            VIDEO_BUFFERING_TIMEOUT: 1000,
+            CLEANUP_INTERVAL: 60000,
+            STORAGE_KEY: 'bgfMailData',
+            OTP_STORAGE_KEY: 'bgfOTPs'
+        };
+        
+        // Global state management
+        let mailData = {};
         let currentUser = null;
         let notificationCheckInterval = null;
-        let mailData = {}; // Initialize mailData here
+        let isSaving = false;
+        let saveQueue = [];
+        let videoTimers = [];
         
         // Initialize mail system
         function initMailSystem() {
             console.log('Initializing BGF Mail system...');
-            console.log('Current localStorage data:', localStorage.getItem('bgfMailData'));
-            console.log('Current sessionStorage data:', sessionStorage.getItem('bgfMailData'));
+            console.log('Current localStorage data:', localStorage.getItem(CONSTANTS.STORAGE_KEY));
+            console.log('Current sessionStorage data:', sessionStorage.getItem(CONSTANTS.STORAGE_KEY));
             
             // Load mail data from localStorage with fallback
-            let saved = localStorage.getItem('bgfMailData');
+            let saved = localStorage.getItem(CONSTANTS.STORAGE_KEY);
             
             // Try to get from sessionStorage (for cross-tab sharing)
             if (!saved) {
-                saved = sessionStorage.getItem('bgfMailData');
+                saved = sessionStorage.getItem(CONSTANTS.STORAGE_KEY);
             }
             
             if (saved) {
                 try {
-                    mailData = JSON.parse(saved);
+                    mailData = safeJSONParse(saved);
+                    if (!mailData || typeof mailData !== 'object') {
+                        throw new Error('Invalid mail data structure');
+                    }
                     console.log('Loaded existing mail data:', mailData);
                     console.log('Available users:', Object.keys(mailData));
                     // Sync to both storages for sharing
-                    localStorage.setItem('bgfMailData', JSON.stringify(mailData));
-                    sessionStorage.setItem('bgfMailData', JSON.stringify(mailData));
+                    localStorage.setItem(CONSTANTS.STORAGE_KEY, JSON.stringify(mailData));
+                    sessionStorage.setItem(CONSTANTS.STORAGE_KEY, JSON.stringify(mailData));
                 } catch (error) {
                     console.error('Error parsing mail data:', error);
                     // Reset to default data
@@ -2021,12 +2055,18 @@
             
             // Listen for storage changes (cross-tab sync)
             window.addEventListener('storage', function(e) {
-                if (e.key === 'bgfMailData' && e.newValue) {
+                if (e.key === CONSTANTS.STORAGE_KEY && e.newValue) {
                     try {
-                        mailData = JSON.parse(e.newValue);
-                        console.log('Storage updated:', mailData);
-                        if (currentUser) {
-                            loadInbox(); // Refresh if logged in
+                        const newData = safeJSONParse(e.newValue);
+                        if (newData && typeof newData === 'object') {
+                            // Only update if we're not currently saving
+                            if (!isSaving) {
+                                mailData = newData;
+                                console.log('Storage updated:', mailData);
+                                if (currentUser) {
+                                    loadInbox(); // Refresh if logged in
+                                }
+                            }
                         }
                     } catch (error) {
                         console.error('Error parsing storage update:', error);
@@ -2037,16 +2077,50 @@
             console.log('BGF Mail system initialized successfully');
         }
         
+        // Safe JSON parsing with fallback
+        function safeJSONParse(str, fallback = {}) {
+            try {
+                return JSON.parse(str);
+            } catch (error) {
+                console.error('JSON parse error:', error);
+                return fallback;
+            }
+        }
+        
+        // Debounced save function to prevent race conditions
         function saveMailData() {
-            const dataString = JSON.stringify(mailData);
-            localStorage.setItem('bgfMailData', dataString);
-            sessionStorage.setItem('bgfMailData', dataString);
+            if (isSaving) {
+                saveQueue.push(() => performSave());
+                return;
+            }
             
-            // Trigger storage event for other tabs
-            window.dispatchEvent(new StorageEvent('storage', {
-                key: 'bgfMailData',
-                newValue: dataString
-            }));
+            isSaving = true;
+            performSave();
+        }
+        
+        function performSave() {
+            try {
+                const dataString = JSON.stringify(mailData);
+                localStorage.setItem(CONSTANTS.STORAGE_KEY, dataString);
+                sessionStorage.setItem(CONSTANTS.STORAGE_KEY, dataString);
+                
+                // Trigger storage event for other tabs
+                window.dispatchEvent(new StorageEvent('storage', {
+                    key: CONSTANTS.STORAGE_KEY,
+                    newValue: dataString
+                }));
+                
+                // Process queued saves
+                if (saveQueue.length > 0) {
+                    const nextSave = saveQueue.shift();
+                    setTimeout(nextSave, 100);
+                } else {
+                    isSaving = false;
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                isSaving = false;
+            }
         }
         
         function loginMail() {
@@ -2179,39 +2253,111 @@
                 return;
             }
             
-            // Add to recipient's inbox
-            mailData[toUsername].inbox.unshift({
+            // Send via Brevo API first
+            sendEmailViaBrevo(to, subject, message).then(result => {
+                handleMailSendResult(result, toUsername, subject, message);
+            }).catch(error => {
+                console.error('Email sending error:', error);
+                handleMailSendResult({ success: false, error: error.message }, toUsername, subject, message);
+            });
+        }
+        
+        // Centralized mail send result handler
+        function handleMailSendResult(result, toUsername, subject, message) {
+            const messageData = {
                 from: currentUser,
                 subject: subject,
                 message: message,
                 date: new Date().toISOString(),
                 read: false
-            });
+            };
+            
+            // Add Brevo message ID if available
+            if (result.success && result.messageId) {
+                messageData.brevoMessageId = result.messageId;
+            }
+            
+            // Add to recipient's inbox
+            if (!mailData[toUsername].inbox) {
+                mailData[toUsername].inbox = [];
+            }
+            mailData[toUsername].inbox.unshift(messageData);
             
             // Add to sent items
             if (!mailData[currentUser].sent) {
                 mailData[currentUser].sent = [];
             }
             mailData[currentUser].sent.unshift({
-                to: toUsername,
-                subject: subject,
-                message: message,
-                date: new Date().toISOString()
+                ...messageData,
+                to: toUsername
             });
             
+            // Save data
             saveMailData();
             
-            // Show notification to sender
-            showNotification(`Message sent to ${toUsername}@bgf.connected!`, 'success');
+            // Show appropriate notification
+            if (result.success) {
+                console.log('Brevo email sent successfully:', result.messageId);
+                showNotification(`Message sent to ${toUsername}@bgf.connected!`, 'success');
+                alert('Message sent successfully!');
+            } else {
+                console.error('Brevo API failed:', result.error);
+                showNotification(`Message sent to ${toUsername}@bgf.connected! (Local only)`, 'warning');
+                alert('Message sent locally (API unavailable)');
+            }
             
-            // If recipient is online (has the page open), show them a notification
+            // Trigger recipient notification
             if (toUsername !== currentUser) {
-                // Trigger notification for recipient (they'll see it when they check)
                 triggerRecipientNotification(toUsername, currentUser, subject);
             }
             
-            alert('Message sent successfully!');
+            // Close compose
             cancelCompose();
+        }
+        
+        // Send email via Brevo API
+        async function sendEmailViaBrevo(to, subject, message) {
+            try {
+                const response = await fetch('/.netlify/functions/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        to: to,
+                        subject: subject,
+                        message: `
+                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #1a1a1a; color: #fff;">
+                                <div style="text-align: center; margin-bottom: 30px;">
+                                    <h1 style="color: #00ff9f; text-shadow: 0 0 10px rgba(0, 255, 159, 0.5);">BGF Mail</h1>
+                                    <p style="color: #888;">Official BGF Connected Mail System</p>
+                                </div>
+                                <div style="background: #2a2a2a; padding: 20px; border-radius: 10px; border: 1px solid #00ff9f;">
+                                    <h2 style="color: #00ff9f; margin-bottom: 15px;">${subject}</h2>
+                                    <div style="color: #fff; line-height: 1.6;">${message}</div>
+                                </div>
+                                <div style="margin-top: 30px; text-align: center; color: #888; font-size: 12px;">
+                                    <p>Sent from: ${currentUser}@bgf.connected</p>
+                                    <p>Time: ${new Date().toLocaleString()}</p>
+                                    <p>This is an automated message from BGF Connected Mail System</p>
+                                </div>
+                            </div>
+                        `
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    return { success: true, messageId: result.messageId };
+                } else {
+                    return { success: false, error: result.error || 'Unknown error' };
+                }
+                
+            } catch (error) {
+                console.error('Brevo API call failed:', error);
+                return { success: false, error: error.message };
+            }
         }
         
         function cancelCompose() {
@@ -2994,33 +3140,6 @@
             };
             localStorage.setItem(notificationKey, JSON.stringify(notification));
         }
-        setTimeout(() => {
-            transitionContainer.innerHTML = `
-                <div class="connection-established">CONNECTION ESTABLISHED</div>
-                <div class="user-connected">User ${cleanUsername}@bgf.connected has been connected to BGF Network</div>
-                <button onclick="finishRegistration()" style="
-                    background: linear-gradient(145deg, #4CAF50, #45a049);
-                    border: none;
-                    color: white;
-                    padding: 15px 30px;
-                    font-size: 1.2rem;
-                    font-weight: bold;
-                    border-radius: 10px;
-                    cursor: pointer;
-                    animation: rainbowGlow 2s linear infinite;
-                    transition: all 0.3s ease;
-                ">Enter BGF Mail</button>
-            `;
-            confetti.className = 'confetti';
-            confetti.style.left = `${Math.random() * 100}%`;
-            confetti.style.background = `rgba(0, 255, 150, ${0.5 + Math.random() * 0.5})`;
-            confetti.style.animationDelay = `${Math.random() * 0.5}s`;
-            confetti.style.animationDuration = `${2 + Math.random() * 2}s`;
-            transitionContainer.appendChild(confetti);
-        }
-    }, 500);
-}, 2000);
-}
         
 // Finish registration and enter mail
 function finishRegistration() {
@@ -3056,58 +3175,79 @@ function showNotification(message, type = 'info') {
     setTimeout(() => {
         if (notification.parentElement) {
             notification.remove();
-        // Check if this is the first visit and redirect to intro
-        if (!sessionStorage.getItem('introCompleted')) {
-            console.log('First visit detected, redirecting to intro...');
-            window.location.href = 'hacker-intro.html';
         }
-        
-        // Video Loading Optimization
+    }, 5000);
+}
+
+// Check if this is the first visit and redirect to intro
+if (!sessionStorage.getItem('introCompleted')) {
+    console.log('First visit detected, redirecting to intro...');
+    window.location.href = 'hacker-intro.html';
+}
+
+// Initialize mail system
+initMailSystem();
+
+// Video Loading Optimization with proper cleanup
         function optimizeVideoLoading() {
             const video = document.getElementById('bgVideo');
             const loadingIndicator = document.getElementById('videoLoading');
-            const fallback = document.querySelector('.video-fallback');
+            const fallback = document.getElementById('videoFallback');
             
-            // Show loading indicator
-            loadingIndicator.style.display = 'block';
+            if (!video) {
+                console.log('Video element not found');
+                return;
+            }
+            
+            // Clear existing timers
+            clearVideoTimers();
+            
+            // Store event listeners for cleanup
+            const eventListeners = [];
+            
+            const addVideoListener = (event, handler) => {
+                video.addEventListener(event, handler);
+                eventListeners.push({ event, handler });
+            };
             
             // Optimize video loading
-            video.addEventListener('loadstart', () => {
+            addVideoListener('loadstart', () => {
                 console.log('Video loading started');
-                loadingIndicator.style.display = 'block';
+                if (loadingIndicator) loadingIndicator.style.display = 'block';
             });
             
-            video.addEventListener('canplay', () => {
+            addVideoListener('canplay', () => {
                 console.log('Video can play');
-                loadingIndicator.style.display = 'none';
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
             });
             
-            video.addEventListener('loadeddata', () => {
+            addVideoListener('loadeddata', () => {
                 console.log('Video data loaded');
-                loadingIndicator.style.display = 'none';
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
             });
             
-            video.addEventListener('error', (e) => {
+            addVideoListener('error', (e) => {
                 console.error('Video loading error:', e);
-                loadingIndicator.style.display = 'none';
+                if (loadingIndicator) loadingIndicator.style.display = 'none';
                 // Show fallback
-                fallback.style.display = 'block';
-                video.style.display = 'none';
+                if (fallback) fallback.style.display = 'block';
+                if (video) video.style.display = 'none';
             });
             
-            video.addEventListener('stalled', () => {
+            addVideoListener('stalled', () => {
                 console.log('Video stalled - buffering');
                 // Don't show loading indicator for brief stalls
             });
             
-            video.addEventListener('waiting', () => {
+            addVideoListener('waiting', () => {
                 console.log('Video waiting - buffering');
                 // Show loading indicator only if waiting for more than 1 second
-                setTimeout(() => {
-                    if (video.readyState < 4) {
-                        loadingIndicator.style.display = 'block';
+                const timerId = setTimeout(() => {
+                    if (video && video.readyState < 4) {
+                        if (loadingIndicator) loadingIndicator.style.display = 'block';
                     }
-                }, 1000);
+                }, CONSTANTS.VIDEO_BUFFERING_TIMEOUT);
+                videoTimers.push(timerId);
             });
             
             // Set video quality based on network
@@ -3126,19 +3266,31 @@ function showNotification(message, type = 'info') {
             video.play().catch(error => {
                 console.log('Video autoplay failed:', error);
                 // Show fallback if autoplay fails
-                setTimeout(() => {
-                    if (video.paused) {
-                        fallback.style.display = 'block';
-                        video.style.display = 'none';
+                const timerId = setTimeout(() => {
+                    if (video && video.paused) {
+                        if (fallback) fallback.style.display = 'block';
+                        if (video) video.style.display = 'none';
                     }
-                }, 3000);
+                }, CONSTANTS.VIDEO_LOADING_TIMEOUT);
+                videoTimers.push(timerId);
             });
+            
+            // Store cleanup function
+            video._cleanup = () => {
+                eventListeners.forEach(({ event, handler }) => {
+                    video.removeEventListener(event, handler);
+                });
+                clearVideoTimers();
+            };
         }
         
-        // Initialize video optimization
-        document.addEventListener('DOMContentLoaded', optimizeVideoLoading);
+        // Clear video timers
+        function clearVideoTimers() {
+            videoTimers.forEach(timerId => clearTimeout(timerId));
+            videoTimers = [];
+        }
         
-        // Sound Control Function
+        // Sound Control Function with null checks
         function toggleSound() {
             const video = document.getElementById('bgVideo');
             const soundBtn = document.getElementById('soundBtn');
@@ -3152,8 +3304,8 @@ function showNotification(message, type = 'info') {
             if (video.muted) {
                 // Unmute video
                 video.muted = false;
-                soundBtn.classList.add('sound-on');
-                soundIcon.className = 'fas fa-volume-up';
+                if (soundBtn) soundBtn.classList.add('sound-on');
+                if (soundIcon) soundIcon.className = 'fas fa-volume-up';
                 
                 // Try to play with sound (may need user interaction)
                 video.play().then(() => {
@@ -3161,15 +3313,17 @@ function showNotification(message, type = 'info') {
                 }).catch(error => {
                     console.log('Autoplay with sound blocked:', error);
                     // Show message to user
-                    showNotification('Click the video to enable sound', 'info');
+                    if (typeof showNotification === 'function') {
+                        showNotification('Click the video to enable sound', 'info');
+                    }
                     // Keep video unmuted but show user message
                     video.muted = false;
                 });
             } else {
                 // Mute video
                 video.muted = true;
-                soundBtn.classList.remove('sound-on');
-                soundIcon.className = 'fas fa-volume-mute';
+                if (soundBtn) soundBtn.classList.remove('sound-on');
+                if (soundIcon) soundIcon.className = 'fas fa-volume-mute';
                 console.log('Video muted');
             }
         }
@@ -3177,10 +3331,13 @@ function showNotification(message, type = 'info') {
         // Enable sound on first user interaction
         function enableSound() {
             const video = document.getElementById('bgVideo');
+            const soundBtn = document.getElementById('soundBtn');
+            const soundIcon = document.getElementById('soundIcon');
+            
             if (video && video.muted) {
                 video.muted = false;
-                document.getElementById('soundBtn').classList.add('sound-on');
-                document.getElementById('soundIcon').className = 'fas fa-volume-up';
+                if (soundBtn) soundBtn.classList.add('sound-on');
+                if (soundIcon) soundIcon.className = 'fas fa-volume-up';
                 
                 // Try to play with sound
                 video.play().then(() => {
@@ -3198,6 +3355,18 @@ function showNotification(message, type = 'info') {
                 enableSound();
             }
         }, { once: true });    // Remove listener after first interaction
+        
+        // Initialize video optimization
+        document.addEventListener('DOMContentLoaded', optimizeVideoLoading);
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            clearVideoTimers();
+            const video = document.getElementById('bgVideo');
+            if (video && video._cleanup) {
+                video._cleanup();
+            }
+        });
         
         // Password Recovery System
         let currentOTP = null;
@@ -3361,35 +3530,51 @@ function showNotification(message, type = 'info') {
             }
         }
         
-        function startOTPTimer(expiresAt) {
+        function startOTPTimer() {
+            // Clear existing timer
             if (otpTimer) {
                 clearInterval(otpTimer);
+                otpTimer = null;
             }
+            
+            const expiryTime = new Date();
+            expiryTime.setMinutes(expiryTime.getMinutes() + CONSTANTS.OTP_EXPIRY_MINUTES);
             
             otpTimer = setInterval(() => {
                 const now = new Date();
-                const expiry = new Date(expiresAt);
-                const timeLeft = expiry - now;
+                const timeLeft = expiryTime - now;
                 
                 if (timeLeft <= 0) {
                     clearInterval(otpTimer);
-                    document.getElementById('otpTimer').textContent = '00:00';
-                    document.getElementById('otpCode').textContent = 'EXPIRED';
+                    otpTimer = null;
+                    const otpTimerElement = document.getElementById('otpTimer');
+                    const otpCodeElement = document.getElementById('otpCode');
+                    if (otpTimerElement) otpTimerElement.textContent = '00:00';
+                    if (otpCodeElement) otpCodeElement.textContent = 'EXPIRED';
                     return;
                 }
                 
                 const minutes = Math.floor(timeLeft / (1000 * 60));
                 const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
                 
-                document.getElementById('otpTimer').textContent = 
-                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                const otpTimerElement = document.getElementById('otpTimer');
+                if (otpTimerElement) {
+                    otpTimerElement.textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
             }, 1000);
         }
         
         async function verifyOTP() {
-            const otpInput = document.getElementById('otpInput').value.trim();
-            
+            const otpInput = document.getElementById('otpInput');
             if (!otpInput) {
+                alert('OTP input field not found');
+                return;
+            }
+            
+            const otpValue = otpInput.value.trim();
+            
+            if (!otpValue) {
                 alert('Please enter OTP code');
                 return;
             }
@@ -3402,12 +3587,14 @@ function showNotification(message, type = 'info') {
             
             try {
                 // Verify OTP via API
-                const result = await API.verifyOTP(currentOTP.otp_id, otpInput);
+                const result = await API.verifyOTP(currentOTP.otp_id, otpValue);
                 
                 if (result.valid) {
                     // Show password reset step
-                    document.getElementById('recoveryStep2').style.display = 'none';
-                    document.getElementById('recoveryStep3').style.display = 'block';
+                    const recoveryStep2 = document.getElementById('recoveryStep2');
+                    const recoveryStep3 = document.getElementById('recoveryStep3');
+                    if (recoveryStep2) recoveryStep2.style.display = 'none';
+                    if (recoveryStep3) recoveryStep3.style.display = 'block';
                     
                     // Clear timer
                     if (otpTimer) {
@@ -3415,7 +3602,7 @@ function showNotification(message, type = 'info') {
                         otpTimer = null;
                     }
                 } else {
-                    alert(result.error);
+                    alert(result.error || 'Invalid OTP code');
                 }
             } catch (error) {
                 alert('Failed to verify OTP: ' + error.message);
@@ -3423,16 +3610,24 @@ function showNotification(message, type = 'info') {
         }
         
         function resetPassword() {
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            const newPasswordElement = document.getElementById('newPassword');
+            const confirmPasswordElement = document.getElementById('confirmPassword');
+            
+            if (!newPasswordElement || !confirmPasswordElement) {
+                alert('Password reset form not found');
+                return;
+            }
+            
+            const newPassword = newPasswordElement.value;
+            const confirmPassword = confirmPasswordElement.value;
             
             if (!newPassword || !confirmPassword) {
                 alert('Please fill all fields');
                 return;
             }
             
-            if (newPassword.length < 6) {
-                alert('Password must be at least 6 characters');
+            if (newPassword.length < CONSTANTS.PASSWORD_MIN_LENGTH) {
+                alert(`Password must be at least ${CONSTANTS.PASSWORD_MIN_LENGTH} characters`);
                 return;
             }
             
@@ -3447,7 +3642,7 @@ function showNotification(message, type = 'info') {
                 alert('Password reset successfully! You can now login with your new password.');
                 showMailLogin();
             } else {
-                alert(result.error);
+                alert(result.error || 'Password reset failed');
             }
         }
         
@@ -3458,6 +3653,11 @@ function showNotification(message, type = 'info') {
         }
         
         function cancelRecovery() {
+            // Clear timer
+            if (otpTimer) {
+                clearInterval(otpTimer);
+                otpTimer = null;
+            }
             showMailLogin();
         }
         
@@ -3469,16 +3669,17 @@ function showNotification(message, type = 'info') {
             if (otpId) {
                 // Auto-show recovery if coming from game
                 showRecovery();
-                document.getElementById('recoveryUsername').focus();
+                const recoveryUsernameElement = document.getElementById('recoveryUsername');
+                if (recoveryUsernameElement) recoveryUsernameElement.focus();
             }
         }
         
         // Initialize recovery system
         handleRecoveryURL();
         
-        // Clean up expired OTPs
-        setInterval(() => {
-            const otps = JSON.parse(localStorage.getItem('bgfOTPs') || '{}');
+        // Clean up expired OTPs with proper timer management
+        const cleanupTimer = setInterval(() => {
+            const otps = safeJSONParse(localStorage.getItem(CONSTANTS.OTP_STORAGE_KEY) || '{}');
             const now = new Date();
             let cleaned = false;
             
@@ -3490,9 +3691,20 @@ function showNotification(message, type = 'info') {
             }
             
             if (cleaned) {
-                localStorage.setItem('bgfOTPs', JSON.stringify(otps));
+                localStorage.setItem(CONSTANTS.OTP_STORAGE_KEY, JSON.stringify(otps));
             }
-        }, 60000); // Clean up every minute
+        }, CONSTANTS.CLEANUP_INTERVAL);
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (otpTimer) {
+                clearInterval(otpTimer);
+                otpTimer = null;
+            }
+            if (cleanupTimer) {
+                clearInterval(cleanupTimer);
+            }
+        });
     </script>
 </body>
 </html>
