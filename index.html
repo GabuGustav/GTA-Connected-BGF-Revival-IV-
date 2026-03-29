@@ -1584,7 +1584,7 @@
     <!-- Optimized Video Background -->
     <!-- OPTION 1: Local Video (Current - may buffer on slow connections) -->
     <video class="video-background" autoplay loop muted playsinline id="bgVideo" preload="metadata" poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080'%3E%3Crect width='1920' height='1080' fill='%23000'/%3E%3C/svg%3E">
-        <source src="BGF V2.mp4" type="video/mp4">
+        <source src="BGF FINAL.mp4" type="video/mp4">
         <!-- Fallback for browsers that don't support the video -->
         <div class="video-fallback"></div>
     </video>
@@ -1747,7 +1747,7 @@
                 <div class="mail-form">
                     <div class="input-group">
                         <input type="text" id="mailUsername" placeholder="username" class="mail-input hologram-input">
-                        <span class="mail-domain">@bgfr.connected</span>
+                        <span class="mail-domain">@bgf.connected</span>
                     </div>
                     <div class="password-group">
                         <input type="password" id="mailPassword" placeholder="password" class="mail-input hologram-input">
@@ -1783,7 +1783,7 @@
             <div class="mail-compose" id="mailCompose" style="display: none;">
                 <h3><i class="fas fa-pen"></i> Compose Mail</h3>
                 <div class="compose-form">
-                    <input type="text" id="composeTo" placeholder="To: username@bgfr.connected" class="mail-input">
+                    <input type="text" id="composeTo" placeholder="To: username@bgf.connected" class="mail-input">
                     <input type="text" id="composeSubject" placeholder="Subject" class="mail-input">
                     <textarea id="composeMessage" placeholder="Message" class="mail-textarea"></textarea>
                     <div class="compose-actions">
@@ -2055,8 +2055,8 @@
                     inbox: [
                         {
                             from: 'system',
-                            subject: 'Welcome to BGFR Mail!',
-                            message: `Welcome ${username}@bgfr.connected! Your account has been created successfully.`,
+                            subject: 'Welcome to BGF Mail!',
+                            message: `Welcome ${username}@bgf.connected! Your account has been created successfully.`,
                             date: new Date().toISOString(),
                             read: false
                         }
@@ -2064,7 +2064,7 @@
                     sent: []
                 };
                 saveMailData();
-                alert(`Account created for ${username}@bgfr.connected!`);
+                alert(`Account created for ${username}@bgf.connected!`);
             }
             
             if (mailData[username].password !== password) {
@@ -2101,7 +2101,7 @@
             mailList.innerHTML = inbox.map((mail, index) => `
                 <div class="mail-item" onclick="readMail(${index})">
                     <div class="mail-item-header">
-                        <span class="mail-from">${mail.from}@bgfr.connected</span>
+                        <span class="mail-from">${mail.from}@bgf.connected</span>
                         <span class="mail-date">${new Date(mail.date).toLocaleDateString()}</span>
                     </div>
                     <div class="mail-subject">${mail.subject}</div>
@@ -2139,8 +2139,8 @@
                 return;
             }
             
-            // Remove @bgfr.connected if present
-            const toUsername = to.replace('@bgfr.connected', '');
+            // Remove @bgf.connected if present
+            const toUsername = to.replace('@bgf.connected', '');
             
             if (!mailData[toUsername]) {
                 alert('User not found');
@@ -2170,7 +2170,7 @@
             saveMailData();
             
             // Show notification to sender
-            showNotification(`Message sent to ${toUsername}@bgfr.connected!`, 'success');
+            showNotification(`Message sent to ${toUsername}@bgf.connected!`, 'success');
             
             // If recipient is online (has the page open), show them a notification
             if (toUsername !== currentUser) {
@@ -2221,8 +2221,8 @@
                         inbox: [
                             {
                                 from: 'system',
-                                subject: 'Welcome to BGFR Mail!',
-                                message: `Welcome ${cleanUsername}@bgfr.connected! Your account has been created successfully.`,
+                                subject: 'Welcome to BGF Mail!',
+                                message: `Welcome ${cleanUsername}@bgf.connected! Your account has been created successfully.`,
                                 date: new Date().toISOString(),
                                 read: false
                             }
@@ -2231,7 +2231,7 @@
                     };
                     saveMailData();
                     
-                    alert(`Account created! Your email is: ${cleanUsername}@bgfr.connected\nYou can now login.`);
+                    alert(`Account created! Your email is: ${cleanUsername}@bgf.connected\nYou can now login.`);
                     
                     // Pre-fill login form
                     document.getElementById('mailUsername').value = cleanUsername;
@@ -2666,7 +2666,7 @@
                         <div class="register-form-content" style="display: flex; flex-direction: column; gap: 25px;">
                             <div class="input-group" style="display: flex; align-items: center; gap: 15px;">
                                 <input type="text" id="popupUsername" placeholder="Username" class="hologram-input" style="flex: 1; pointer-events: auto; font-size: 1.1rem;">
-                                <span class="mail-domain" style="color: #4CAF50; font-weight: bold; text-shadow: 0 0 8px rgba(76, 175, 80, 0.8); font-size: 1.1rem;">@bgfr.connected</span>
+                                <span class="mail-domain" style="color: #4CAF50; font-weight: bold; text-shadow: 0 0 8px rgba(76, 175, 80, 0.8); font-size: 1.1rem;">@bgf.connected</span>
                             </div>
                             <div class="password-group" style="display: flex; align-items: center; gap: 15px;">
                                 <input type="password" id="popupPassword" placeholder="Password" class="hologram-input" style="flex: 1; pointer-events: auto; font-size: 1.1rem;">
@@ -2897,17 +2897,107 @@
                         }
                     }, 500);
                     
-                    // Phase 2: Success message
-                    setTimeout(() => {
-                        transitionContainer.innerHTML = `
-                            <div style="text-align: center;">
-                                <div class="connection-established">CONNECTION ESTABLISHED</div>
-                                <div class="user-connected">User ${cleanUsername}@bgfr.connected has been connected to the BGFR Network</div>
-                                <div style="margin-top: 30px;">
-                                    <button onclick="finishRegistration()" style="
-                                        background: linear-gradient(145deg, #4CAF50, #45a049);
-                                        border: none;
-                                        color: white;
+                    @keyframes successExplosion {
+                        0% {
+                            transform: scale(0);
+                            opacity: 0;
+                        }
+                        50% {
+                            transform: scale(1.5);
+                            opacity: 1;
+                        }
+                        100% {
+                            transform: scale(2);
+                            opacity: 0;
+                        }
+                    }
+                    
+                    @keyframes confettiFall {
+                        0% {
+                            transform: translateY(-100vh) rotate(0deg);
+                            opacity: 1;
+                        }
+                        100% {
+                            transform: translateY(100vh) rotate(720deg);
+                            opacity: 0;
+                        }
+                    }
+                    
+                    @keyframes connectionEstablished {
+                        0% {
+                            transform: scale(0) rotate(0deg);
+                            opacity: 0;
+                        }
+                        50% {
+                            transform: scale(1.2) rotate(180deg);
+                            opacity: 1;
+                        }
+                        100% {
+                            transform: scale(1) rotate(360deg);
+                            opacity: 1;
+                        }
+                    }
+                    
+                    @keyframes rainbowGlow {
+                        0% { filter: brightness(1); }
+                        50% { filter: brightness(1.3); }
+                        100% { filter: brightness(1); }
+                    }
+                    
+                    .success-cube {
+                        width: 200px;
+                        height: 200px;
+                        background: linear-gradient(135deg, #4CAF50, #00ff00, #00ffff);
+                        border-radius: 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 3rem;
+                        font-weight: bold;
+                        color: white;
+                        text-shadow: 0 0 30px rgba(76, 175, 80, 0.8);
+                        animation: collapseCube 1s ease-in forwards;
+                        box-shadow: 0 0 50px rgba(76, 175, 80, 0.8);
+                    }
+                    
+                    .success-explosion {
+                        position: absolute;
+                        width: 300px;
+                        height: 300px;
+                        background: radial-gradient(circle, rgba(76, 175, 80, 0.8), transparent);
+                        border-radius: 50%;
+                        animation: successExplosion 1.5s ease-out forwards;
+                    }
+                    
+                    .confetti {
+                        position: absolute;
+                        width: 10px;
+                        height: 10px;
+                        animation: confettiFall 2s linear forwards;
+                    }
+                    
+                    .connection-established {
+                        font-size: 2rem;
+                        font-weight: bold;
+                        color: #4CAF50;
+                        text-shadow: 0 0 30px rgba(76, 175, 80, 0.8);
+                        animation: connectionEstablished 1s ease-out forwards;
+                        animation-delay: 1.5s;
+                        opacity: 0;
+                    }
+                    
+                    .user-connected {
+                        font-size: 1.5rem;
+                        color: white;
+                        text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+                        animation: fadeIn 1s ease-in forwards;
+                        animation-delay: 2.5s;
+                        opacity: 0;
+                    }
+                </style>
+                
+                <div class="success-cube">✓</div>
+                <div class="success-explosion"></div>
                                         padding: 15px 30px;
                                         font-size: 1.2rem;
                                         font-weight: bold;
@@ -2937,7 +3027,7 @@
             startNotificationCheck();
             
             // Show welcome notification
-            showNotification(`Welcome to BGFR Mail, ${currentUser}@bgfr.connected!`, 'success');
+            showNotification(`Welcome to BGF Mail, ${currentUser}@bgf.connected!`, 'success');
         }
         
         // Notification system
@@ -2969,7 +3059,7 @@
             popup.innerHTML = `
                 <div class="mail-popup">
                     <div class="mail-popup-header">
-                        <div class="mail-popup-from">${mail.from}@bgfr.connected</div>
+                        <div class="mail-popup-from">${mail.from}@bgf.connected</div>
                         <div class="mail-popup-date">${new Date(mail.date).toLocaleString()}</div>
                         <button class="mail-popup-close" onclick="this.closest('.mail-popup-overlay').remove()">
                             <i class="fas fa-times"></i>
@@ -3027,6 +3117,12 @@
         
         // Initialize mail system on page load
         initMailSystem();
+        
+        // Check if this is the first visit and redirect to intro
+        if (!sessionStorage.getItem('introCompleted')) {
+            console.log('First visit detected, redirecting to intro...');
+            window.location.href = 'hacker-intro.html';
+        }
         
         // Video Loading Optimization
         function optimizeVideoLoading() {

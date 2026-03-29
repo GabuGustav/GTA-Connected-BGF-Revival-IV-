@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BLACKSITE CONNECTION</title>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
     <style>
         * {
             margin: 0;
@@ -63,6 +70,7 @@
             box-shadow: 0 0 50px rgba(0, 255, 159, 0.3);
             z-index: 10;
             opacity: 1;
+            display: block;
             animation: terminalGlow 2s ease-in-out infinite alternate;
         }
 
@@ -182,7 +190,7 @@
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 4px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-shadow: 0 0 30px rgba(0, 255, 159, 0.8);
             animation: titlePulse 2s ease-in-out infinite;
         }
@@ -190,6 +198,13 @@
         @keyframes titlePulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
+        }
+
+        .laptop-subtitle {
+            font-size: 1rem;
+            color: #00ff9f;
+            margin-bottom: 30px;
+            opacity: 0.8;
         }
 
         .laptop-buttons {
@@ -293,11 +308,14 @@
 <body>
     <!-- Server Room Background -->
     <div class="server-room" id="serverRoom">
-        <!-- Binary Rain Canvas -->
-        <canvas id="binaryCanvas"></canvas>
+        <!-- Three.js 3D Scene Container -->
+        <div id="threejs-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;"></div>
         
-        <!-- Terminal Container -->
-        <div class="terminal-container" id="terminal">
+        <!-- Binary Rain Canvas (will be replaced by 3D) -->
+        <canvas id="binaryCanvas" style="display: none;"></canvas>
+        
+        <!-- Terminal Container (will overlay on 3D) -->
+        <div class="terminal-container" id="terminal" style="z-index: 10;">
             <div id="terminalOutput"></div>
             
             <!-- Loading Container -->
@@ -315,16 +333,276 @@
         <div class="laptop-frame">
             <div class="laptop-content">
                 <h1 class="laptop-title">BLACKSITE ACCESS</h1>
+                <div class="laptop-subtitle">Initializing main system...</div>
                 <div class="laptop-buttons">
                     <button class="laptop-btn" onclick="goToRegister()">CREATE ACCOUNT</button>
                     <button class="laptop-btn" onclick="goToLogin()">EXISTING USER</button>
+                    <button class="laptop-btn primary" onclick="goToMainSite()">ENTER SITE</button>
+                </div>
+                <div class="auto-redirect-info">
+                    <p>Auto-redirecting to main site in <span id="countdown">5</span> seconds...</p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Binary Rain Effect
+        // Three.js 3D Scene Manager
+        class ThreeJSScene {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.mixer = null;
+                this.model = null;
+                this.animationPhase = 'black'; // black, glitch, move, laptop, transition
+                this.clock = new THREE.Clock();
+                
+                this.init();
+            }
+            
+            init() {
+                // Scene setup
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x000000);
+                
+                // Camera setup
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera.position.set(0, 1.6, 5); // Human eye level
+                
+                // Renderer setup
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                
+                // Add to container
+                const container = document.getElementById('threejs-container');
+                container.appendChild(this.renderer.domElement);
+                
+                // Lighting
+                this.setupLighting();
+                
+                // Window resize handler
+                window.addEventListener('resize', () => this.onWindowResize());
+                
+                // Start animation loop
+                this.animate();
+                
+                // Start animation sequence
+                setTimeout(() => this.startAnimationSequence(), 1000);
+            }
+            
+            setupLighting() {
+                // Ambient light
+                const ambientLight = new THREE.AmbientLight(0x00ff9f, 0.2);
+                this.scene.add(ambientLight);
+                
+                // Point lights for server glow
+                const serverLight1 = new THREE.PointLight(0x00ff9f, 1, 10);
+                serverLight1.position.set(2, 2, 2);
+                serverLight1.castShadow = true;
+                this.scene.add(serverLight1);
+                
+                const serverLight2 = new THREE.PointLight(0x00ff9f, 0.5, 8);
+                serverLight2.position.set(-2, 1, -2);
+                this.scene.add(serverLight2);
+                
+                // Directional light for overall scene
+                const dirLight = new THREE.DirectionalLight(0x00ff9f, 0.3);
+                dirLight.position.set(5, 10, 5);
+                dirLight.castShadow = true;
+                this.scene.add(dirLight);
+            }
+            
+            loadGLBModel() {
+                const loader = new THREE.GLTFLoader();
+                
+                // Load your GLB animation here
+                loader.load(
+                    'server-room-animation.glb', // Your GLB file path
+                    (gltf) => {
+                        this.model = gltf.scene;
+                        this.scene.add(this.model);
+                        
+                        // Setup animation mixer
+                        if (gltf.animations.length > 0) {
+                            this.mixer = new THREE.AnimationMixer(this.model);
+                            const action = this.mixer.clipAction(gltf.animations[0]);
+                            action.play();
+                        }
+                        
+                        console.log('GLB model loaded successfully');
+                    },
+                    (progress) => {
+                        console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%');
+                    },
+                    (error) => {
+                        console.error('Error loading GLB model:', error);
+                        // Fallback to basic scene
+                        this.createFallbackScene();
+                    }
+                );
+            }
+            
+            createFallbackScene() {
+                // Create basic server room if GLB fails to load
+                const geometry = new THREE.BoxGeometry(1, 2, 0.1);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: 0x00ff9f, 
+                    emissive: 0x00ff9f, 
+                    emissiveIntensity: 0.2 
+                });
+                
+                // Create server racks
+                for (let i = 0; i < 5; i++) {
+                    const server = new THREE.Mesh(geometry, material);
+                    server.position.set(i * 2 - 4, 1, -3);
+                    this.scene.add(server);
+                }
+                
+                console.log('Fallback scene created');
+            }
+            
+            startAnimationSequence() {
+                console.log('Starting 3D animation sequence');
+                
+                // Phase 1: Black (1 second)
+                setTimeout(() => {
+                    this.animationPhase = 'glitch';
+                    this.addGlitchEffect();
+                }, 1000);
+                
+                // Phase 2: Load GLB and start glitch
+                this.loadGLBModel();
+                
+                // Phase 3: Camera movement (starts after 2 seconds)
+                setTimeout(() => {
+                    this.animationPhase = 'move';
+                    this.animateCameraMovement();
+                }, 3000);
+                
+                // Phase 4: Laptop reveal (starts after 5 seconds)
+                setTimeout(() => {
+                    this.animationPhase = 'laptop';
+                    this.revealLaptop();
+                }, 6000);
+                
+                // Phase 5: Transition to terminal (starts after 8 seconds)
+                setTimeout(() => {
+                    this.animationPhase = 'transition';
+                    this.transitionToTerminal();
+                }, 8000);
+            }
+            
+            addGlitchEffect() {
+                // Add glitch post-processing effect
+                console.log('Adding glitch effect');
+                
+                // Simple glitch simulation with light flickering
+                const lights = this.scene.children.filter(child => child instanceof THREE.Light);
+                lights.forEach(light => {
+                    if (light instanceof THREE.PointLight) {
+                        // Flicker effect
+                        const originalIntensity = light.intensity;
+                        light.intensity = originalIntensity * 0.1;
+                        
+                        const flickerInterval = setInterval(() => {
+                            light.intensity = originalIntensity * (Math.random() * 0.5 + 0.5);
+                        }, 100);
+                        
+                        setTimeout(() => {
+                            clearInterval(flickerInterval);
+                            light.intensity = originalIntensity;
+                        }, 2000);
+                    }
+                });
+            }
+            
+            animateCameraMovement() {
+                console.log('Starting camera movement');
+                
+                // Animate camera forward and turn left
+                const startPos = new THREE.Vector3(0, 1.6, 5);
+                const endPos = new THREE.Vector3(-3, 1.6, 2);
+                
+                let progress = 0;
+                const moveDuration = 3000; // 3 seconds
+                const startTime = Date.now();
+                
+                const moveCamera = () => {
+                    const elapsed = Date.now() - startTime;
+                    progress = Math.min(elapsed / moveDuration, 1);
+                    
+                    // Smooth easing
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    
+                    this.camera.position.lerpVectors(startPos, endPos, eased);
+                    this.camera.lookAt(0, 1.6, 0);
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(moveCamera);
+                    }
+                };
+                
+                moveCamera();
+            }
+            
+            revealLaptop() {
+                console.log('Revealing laptop');
+                
+                // This will be handled by your GLB animation
+                // But we can add effects here if needed
+                
+                // Fade to black for transition
+                setTimeout(() => {
+                    this.renderer.domElement.style.opacity = '0';
+                    this.renderer.domElement.style.transition = 'opacity 1s';
+                }, 1000);
+            }
+            
+            transitionToTerminal() {
+                console.log('Transitioning to terminal');
+                
+                // Hide 3D scene
+                const container = document.getElementById('threejs-container');
+                container.style.display = 'none';
+                
+                // Show terminal overlay
+                const terminal = document.getElementById('terminal');
+                terminal.style.display = 'block';
+                
+                // Start existing terminal sequence
+                if (window.hackerIntro) {
+                    window.hackerIntro.showTerminal();
+                }
+            }
+            
+            onWindowResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+            
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                const delta = this.clock.getDelta();
+                
+                // Update animations
+                if (this.mixer) {
+                    this.mixer.update(delta);
+                }
+                
+                // Render scene
+                if (this.renderer && this.scene && this.camera) {
+                    this.renderer.render(this.scene, this.camera);
+                }
+            }
+        }
+        
+        // Binary Rain Effect (will be replaced by 3D)
         class BinaryRain {
             constructor() {
                 this.canvas = document.getElementById('binaryCanvas');
@@ -563,6 +841,8 @@
                     
                     setTimeout(() => {
                         serverRoom.style.display = 'none';
+                        // Start auto-redirect after laptop screen appears
+                        autoRedirect();
                     }, 2000);
                 }, 500);
             }
@@ -577,15 +857,107 @@
             window.location.href = 'index.html#mail';
         }
         
+        function goToMainSite() {
+            // Mark intro as completed
+            sessionStorage.setItem('introCompleted', 'true');
+            console.log('Intro marked as completed, redirecting to main site...');
+            window.location.href = 'index.html';
+        }
+        
+        // Auto-redirect after intro completes
+        function autoRedirect() {
+            console.log('Intro sequence completed, redirecting to main site...');
+            
+            // Start countdown
+            let countdown = 5;
+            const countdownEl = document.getElementById('countdown');
+            
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdownEl) {
+                    countdownEl.textContent = countdown;
+                }
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    console.log('Mail system should be initialized, redirecting...');
+                    goToMainSite();
+                }
+            }, 1000);
+        }
+        
         // Initialize Intro
         document.addEventListener('DOMContentLoaded', () => {
             console.log('DOM Content Loaded - Starting Hacker Intro');
-            try {
-                new HackerIntro();
-                console.log('Hacker Intro initialized successfully');
-            } catch (error) {
-                console.error('Error initializing Hacker Intro:', error);
-            }
+            
+            // Initialize Three.js scene
+            const threeScene = new ThreeJSScene();
+            
+            // Initialize HackerIntro system (for terminal overlay)
+            window.hackerIntro = new HackerIntro();
+            
+            // Fallback: Show terminal immediately if initialization fails
+            setTimeout(() => {
+                const terminal = document.getElementById('terminal');
+                const output = document.getElementById('terminalOutput');
+                
+                if (terminal && output) {
+                    terminal.classList.add('show');
+                    output.innerHTML = `
+                        <div class="terminal-line success">> BOOTING BLACKSITE SYSTEM...</div>
+                        <div class="terminal-line">> CONNECTING TO 192.168.42.77...</div>
+                        <div class="terminal-line">> AUTHENTICATING...</div>
+                        <div class="terminal-line">> ESTABLISHING SECURE CHANNEL...</div>
+                        <div class="terminal-line">> LOADING SECURITY PROTOCOLS...</div>
+                        <div class="terminal-line warning">> QUANTUM_ENCRYPTION... ACTIVE</div>
+                        <div class="terminal-line">> DECRYPTING NODE...</div>
+                        <div class="terminal-line success">> ACCESS GRANTED</div>
+                        <div class="terminal-line success">> WELCOME TO BLACKSITE NETWORK</div>
+                    `;
+                    console.log('Fallback terminal shown');
+                }
+            }, 100);
+            
+            // Auto-start loading sequence as backup
+            setTimeout(() => {
+                const loadingContainer = document.getElementById('loadingContainer');
+                const loadingProgress = document.getElementById('loadingProgress');
+                const loadingText = document.getElementById('loadingText');
+                
+                if (loadingContainer && loadingProgress && loadingText) {
+                    loadingContainer.style.opacity = '1';
+                    let progress = 0;
+                    const loadingInterval = setInterval(() => {
+                        progress += Math.random() * 15 + 5;
+                        if (progress >= 100) {
+                            progress = 100;
+                            clearInterval(loadingInterval);
+                            
+                            // Transition to laptop screen
+                            setTimeout(() => {
+                                const serverRoom = document.getElementById('serverRoom');
+                                const laptopScreen = document.getElementById('laptopScreen');
+                                
+                                if (serverRoom && laptopScreen) {
+                                    serverRoom.classList.add('fade-out');
+                                    laptopScreen.classList.add('active');
+                                    
+                                    setTimeout(() => {
+                                        serverRoom.style.display = 'none';
+                                        // Start auto-redirect after laptop screen appears
+                                        autoRedirect();
+                                    }, 2000);
+                                }
+                            }, 1000);
+                        }
+                        
+                        loadingProgress.style.width = `${progress}%`;
+                        loadingText.textContent = `INITIALIZING... ${Math.floor(progress)}%`;
+                    }, 200);
+                }
+            }, 3000);
+            
+            console.log('3D Intro system initialized successfully');
         });
     </script>
 </body>
