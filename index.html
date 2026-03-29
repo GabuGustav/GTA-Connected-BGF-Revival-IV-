@@ -2379,13 +2379,16 @@
         // Send email via Brevo API
         async function sendEmailViaBrevo(to, subject, message) {
             try {
+                // Convert username to email format if needed
+                const emailAddress = to.includes('@') ? to : `${to}@bgf.connected`;
+                
                 const response = await fetch('/.netlify/functions/send-email', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        to: to,
+                        to: emailAddress,
                         subject: subject,
                         message: `
                             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #1a1a1a; color: #fff;">
