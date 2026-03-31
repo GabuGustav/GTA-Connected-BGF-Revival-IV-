@@ -22,7 +22,9 @@ exports.handler = async (event) => {
         
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(to)) {
+        
+        // Accept BGF domain format
+        if (!emailRegex.test(to) && !to.endsWith('@bgf.connected')) {
             return {
                 statusCode: 400,
                 body: JSON.stringify({ error: 'Invalid email format' })
