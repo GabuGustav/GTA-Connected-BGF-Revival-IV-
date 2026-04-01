@@ -355,6 +355,7 @@
                 this.renderer = null;
                 this.mixer = null;
                 this.model = null;
+                this.cameraAnimation = null; // Initialize camera animation
                 this.animationPhase = 'black'; // black, glitch, move, laptop, transition
                 this.clock = new THREE.Clock();
                 
@@ -427,11 +428,26 @@
                         this.scene.add(this.model);
                         
                         // Setup animation mixer
-                        if (gltf.animations.length > 0) {
+                        if (gltf.animations && gltf.animations.length > 0) {
+                            console.log(`Found ${gltf.animations.length} animations:`, gltf.animations.map(anim => anim.name));
+                            
                             this.mixer = new THREE.AnimationMixer(this.model);
-                            const action = this.mixer.clipAction(gltf.animations[0]);
-                            action.play();
+                            
+                            // Play all animations
+                            gltf.animations.forEach((clip, index) => {
+                                const action = this.mixer.clipAction(clip);
+                                action.setLoop(THREE.LoopRepeat, Infinity); // Loop forever
+                                action.clampWhenFinished = false;
+                                action.play();
+                                console.log(`Playing animation ${index}: ${clip.name}`);
+                            });
+                        } else {
+                            console.log('No animations found in GLB file');
                         }
+                        
+                        // Scale and position the model if needed
+                        this.model.scale.set(1, 1, 1);
+                        this.model.position.set(0, 0, 0);
                         
                         console.log('GLB model loaded successfully');
                     },
@@ -523,30 +539,16 @@
             animateCameraMovement() {
                 console.log('Starting camera movement');
                 
-                // Animate camera forward and turn left
-                const startPos = new THREE.Vector3(0, 1.6, 5);
-                const endPos = new THREE.Vector3(-3, 1.6, 2);
-                
-                let progress = 0;
-                const moveDuration = 3000; // 3 seconds
-                const startTime = Date.now();
-                
-                const moveCamera = () => {
-                    const elapsed = Date.now() - startTime;
-                    progress = Math.min(elapsed / moveDuration, 1);
-                    
-                    // Smooth easing
-                    const eased = 1 - Math.pow(1 - progress, 3);
-                    
-                    this.camera.position.lerpVectors(startPos, endPos, eased);
-                    this.camera.lookAt(0, 1.6, 0);
-                    
-                    if (progress < 1) {
-                        requestAnimationFrame(moveCamera);
-                    }
+                // Set camera animation parameters
+                this.cameraAnimation = {
+                    startPos: new THREE.Vector3(0, 1.6, 5),
+                    endPos: new THREE.Vector3(-3, 1.6, 2),
+                    startLookAt: new THREE.Vector3(0, 1.6, 0),
+                    endLookAt: new THREE.Vector3(-2, 1.6, -1),
+                    duration: 3000, // 3 seconds
+                    startTime: Date.now(),
+                    active: true
                 };
-                
-                moveCamera();
             }
             
             revealLaptop() {
@@ -593,6 +595,37 @@
                 // Update animations
                 if (this.mixer) {
                     this.mixer.update(delta);
+                    
+                    // Debug: Log animation state every few seconds
+                    if (Math.random() < 0.01) { // 1% chance each frame
+                        console.log('Animation mixer is running, delta:', delta);
+                    }
+                }
+                
+                // Update camera movement if active
+                if (this.cameraAnimation && this.cameraAnimation.active) {
+                    const elapsed = Date.now() - this.cameraAnimation.startTime;
+                    const progress = Math.min(elapsed / this.cameraAnimation.duration, 1);
+                    
+                    // Smooth easing
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    
+                    // Interpolate camera position
+                    this.camera.position.lerpVectors(this.cameraAnimation.startPos, this.cameraAnimation.endPos, eased);
+                    
+                    // Interpolate look-at position
+                    const currentLookAt = new THREE.Vector3().lerpVectors(
+                        this.cameraAnimation.startLookAt, 
+                        this.cameraAnimation.endLookAt, 
+                        eased
+                    );
+                    this.camera.lookAt(currentLookAt);
+                    
+                    // Check if animation is complete
+                    if (progress >= 1) {
+                        this.cameraAnimation.active = false;
+                        console.log('Camera movement completed');
+                    }
                 }
                 
                 // Render scene

@@ -1564,6 +1564,86 @@
             font-weight: bold;
         }
         
+        .youtube-channels {
+            flex: 1;
+        }
+        
+        .channels-title {
+            color: #FF0000;
+            font-size: 1.3rem;
+            margin: 0 0 20px 0;
+            text-align: center;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
+        
+        .channel-links {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .channel-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            border-radius: 12px;
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            width: 100%;
+            max-width: 320px;
+        }
+        
+        .channel-link:hover {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: rgba(255, 0, 0, 0.6);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 0, 0, 0.4);
+        }
+        
+        .channel-link:hover[style*="border-color: rgba(155, 89, 182, 0.3)"] {
+            background: rgba(155, 89, 182, 0.2);
+            border-color: rgba(155, 89, 182, 0.6);
+            box-shadow: 0 8px 25px rgba(155, 89, 182, 0.4);
+        }
+        
+        .channel-profile {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF0000, #CC0000);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .channel-profile i {
+            color: #fff;
+            font-size: 1.4rem;
+        }
+        
+        .channel-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        
+        .channel-link i {
+            color: #FF0000;
+            font-size: 1.2rem;
+        }
+        
+        .channel-link span {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
         @media (max-width: 768px) {
             .credits-section {
                 margin: 20px;
@@ -1576,6 +1656,29 @@
             
             .credits-text {
                 font-size: 1.1rem;
+            }
+            
+            .channels-title {
+                font-size: 1.1rem;
+            }
+            
+            .channel-link {
+                padding: 15px 20px;
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .channel-profile {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .channel-profile i {
+                font-size: 1.2rem;
+            }
+            
+            .channel-link span {
+                font-size: 1rem;
             }
         }
     </style>
@@ -1663,8 +1766,8 @@
                 <p>Cooperative team battles</p>
             </div>
             <div class="gamemode-card">
-                <i class="fas fa-crosshairs"></i>
-                <h3>Capture the Flag</h3>
+                <i class="fas fa-car-side"></i>
+                <h3>Busted</h3>
                 <p>Strategic flag capture gameplay</p>
             </div>
             <div class="gamemode-card">
@@ -1739,6 +1842,9 @@
                     <p class="credits-text">
                         <span class="highlight">Thanks to Stilo</span> for the incredible video background that brings our world to life.
                     </p>
+                    <p class="credits-text">
+                        <span class="highlight">Project Status:</span> BGF Revival IV serves as a tribute to the original BGF community. While the original BGF server is currently inactive, this revival preserves the spirit and memories of our shared gaming experience. We're excited to announce that BGF 2.0 is currently in development, promising to bring new life to our community with enhanced features and modern gameplay.
+                    </p>
                     <p class="credits-signature">
                         With gratitude and appreciation,<br>
                         <span class="signature">Lots of love ❤️</span>
@@ -1749,6 +1855,49 @@
                     <p class="credits-note">
                         BGF Revival IV - GTA Connected Server<br>
                         <span class="credits-year">© 2026</span>
+                    </p>
+                </div>
+                <div class="credits-divider"></div>
+                <div class="youtube-channels">
+                    <h4 class="channels-title">
+                        <i class="fab fa-youtube"></i> Group YT Channels
+                    </h4>
+                    <div class="channel-links">
+                        <a href="https://www.youtube.com/@BGFvideos" target="_blank" class="channel-link">
+                            <div class="channel-profile">
+                                <i class="fab fa-youtube"></i>
+                            </div>
+                            <div class="channel-content">
+                                <span>BGF Videos</span>
+                            </div>
+                        </a>
+                        <a href="https://www.youtube.com/@BGFR2.0videosmadebywindows95" target="_blank" class="channel-link">
+                            <div class="channel-profile">
+                                <i class="fab fa-youtube"></i>
+                            </div>
+                            <div class="channel-content">
+                                <span>BGFR 2.0 Videos</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="credits-divider"></div>
+                <div class="youtube-channels">
+                    <h4 class="channels-title" style="color: #9b59b6; text-shadow: 0 0 15px rgba(155, 89, 182, 0.5);">
+                        <i class="fas fa-gamepad"></i> Personal Gaming Channel
+                    </h4>
+                    <div class="channel-links">
+                        <a href="https://www.youtube.com/@StickzUp" target="_blank" class="channel-link" style="border-color: rgba(155, 89, 182, 0.3);">
+                            <div class="channel-profile" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                            <div class="channel-content">
+                                <span>StickzUp Gaming</span>
+                            </div>
+                        </a>
+                    </div>
+                    <p class="credits-text" style="text-align: center; margin-top: 15px; font-size: 0.9rem; color: rgba(255, 255, 255, 0.7);">
+                        A personal gaming channel featuring various titles I enjoy playing. Content creation follows an irregular schedule with no guaranteed upload frequency. Feel free to explore at your leisure.
                     </p>
                 </div>
             </div>
@@ -1828,6 +1977,71 @@
                     <a href="https://gtaconnected.com/downloads/client/GTAC-1.7.18.zip" target="_blank" class="download-btn">
                         <i class="fas fa-download"></i> Download GTA Connected
                     </a>
+                </div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">1.5</div>
+                <div class="step-content">
+                    <h3>Configure Game Installation</h3>
+                    <p style="font-size: 1rem; color: #e0e0e0;"><strong>Choose ONE of the following options:</strong></p>
+                    
+                    <div style="margin: 20px 0;">
+                        <h4 style="color: #4CAF50; margin-bottom: 12px; font-size: 1.1rem; text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);">Option 1: Install ZMenu (Recommended)</h4>
+                        <p style="font-size: 0.95rem; margin-bottom: 12px; color: #f0f0f0;">Install ZMenu directly in the root of your GTA IV folder:</p>
+                        <a href="https://zolika1351.pages.dev/mods/ivmenu" target="_blank" class="download-btn" style="background: rgba(76, 175, 80, 0.2); border-color: rgba(76, 175, 80, 0.5);">
+                            <i class="fas fa-download"></i> Download ZMenu
+                        </a>
+                        <ol style="font-size: 0.95rem; margin: 12px 0; padding-left: 25px; line-height: 1.6; color: #e8e8e8;">
+                            <li>Open the GTA Connected launcher</li>
+                            <li>Go to <strong style="color: #ffffff;">Tools → Game Settings</strong></li>
+                            <li>Select <strong style="color: #ffffff;">Grand Theft Auto IV</strong> from the game dropdown</li>
+                            <li>Click <strong style="color: #ffffff;">Browse</strong> next to Game EXE Path</li>
+                            <li>Select <strong style="color: #ffffff;">GTAIV.exe</strong> inside the root folder</li>
+                        </ol>
+                    </div>
+                    
+                    <div style="margin: 20px 0;">
+                        <h4 style="color: #FF9800; margin-bottom: 12px; font-size: 1.1rem; text-shadow: 0 0 10px rgba(255, 152, 0, 0.5);">Option 2: Use Retail Version</h4>
+                        <p style="font-size: 0.95rem; margin-bottom: 12px; color: #f0f0f0;">Download and extract retail version to your root folder:</p>
+                        <div style="display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
+                            <a href="https://wiki.gtaconnected.com/downloads/Retail-1080.zip" target="_blank" class="download-btn" style="background: rgba(255, 152, 0, 0.2); border-color: rgba(255, 152, 0, 0.5); font-size: 0.9rem; padding: 10px 15px;">
+                                <i class="fas fa-download"></i> Retail 1080 (Recommended)
+                            </a>
+                            <a href="https://wiki.gtaconnected.com/downloads/Retail-1070.zip" target="_blank" class="download-btn" style="background: rgba(255, 152, 0, 0.2); border-color: rgba(255, 152, 0, 0.5); font-size: 0.9rem; padding: 10px 15px;">
+                                <i class="fas fa-download"></i> Retail 1070
+                            </a>
+                        </div>
+                        <ol style="font-size: 0.95rem; margin: 12px 0; padding-left: 25px; line-height: 1.6; color: #e8e8e8;">
+                            <li>Extract the retail version to your GTA IV root folder</li>
+                            <li>Open the GTA Connected launcher</li>
+                            <li>Go to <strong style="color: #ffffff;">Tools → Game Settings</strong></li>
+                            <li>Select <strong style="color: #ffffff;">Grand Theft Auto IV</strong> from the game dropdown</li>
+                            <li>Click <strong style="color: #ffffff;">Browse</strong> next to Game EXE Path</li>
+                            <li>Select <strong style="color: #ffffff;">GTAIV.exe</strong> inside the new <strong style="color: #ffffff;">Retail</strong> folder</li>
+                        </ol>
+                        <p style="font-size: 0.9rem; color: #d0d0d0; margin: 12px 0; line-height: 1.5; text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);">
+                            <strong style="color: #ffffff;">Default path:</strong> C:\Program Files (x86)\Steam\steamapps\common\Grand Theft Auto IV\GTAIV\Retail\GTAIV.exe
+                        </p>
+                    </div>
+                    
+                    <div style="margin: 20px 0; padding: 18px; background: rgba(33, 150, 243, 0.1); border: 1px solid rgba(33, 150, 243, 0.3); border-radius: 8px;">
+                        <h4 style="color: #2196F3; margin-bottom: 12px; font-size: 1.1rem; text-shadow: 0 0 10px rgba(33, 150, 243, 0.5);">Final Setup</h4>
+                        <ol style="font-size: 0.95rem; margin: 0; padding-left: 25px; line-height: 1.6; color: #e8e8e8;">
+                            <li>Go to <strong style="color: #ffffff;">Tools → Launcher Settings</strong></li>
+                            <li>Set your <strong style="color: #ffffff;">player name</strong></li>
+                            <li><strong style="color: #ffffff;">Double-click</strong> a server in the server browser to connect</li>
+                        </ol>
+                    </div>
+                    
+                    <div style="margin: 20px 0; text-align: center;">
+                        <p style="font-size: 0.95rem; color: #d0d0d0; margin-bottom: 12px; line-height: 1.5; text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);">
+                            <i class="fas fa-question-circle"></i> Need help? Watch our installation tutorial:
+                        </p>
+                        <a href="https://youtu.be/hLUrUefMo8Y?t=8" target="_blank" class="download-btn" style="background: rgba(255, 0, 0, 0.2); border-color: rgba(255, 0, 0, 0.5); font-size: 0.95rem; padding: 12px 20px;">
+                            <i class="fab fa-youtube"></i> Watch Tutorial Video
+                        </a>
+                    </div>
                 </div>
             </div>
             
@@ -3283,6 +3497,9 @@ initMailSystem();
             addVideoListener('canplay', () => {
                 console.log('Video can play');
                 if (loadingIndicator) loadingIndicator.style.display = 'none';
+                
+                // Start video opacity fade sequence
+                fadeVideoBackground();
             });
             
             addVideoListener('loadeddata', () => {
@@ -3346,6 +3563,26 @@ initMailSystem();
                 });
                 clearVideoTimers();
             };
+        }
+        
+        // Video opacity fade after time elapsed
+        function fadeVideoBackground() {
+            const video = document.getElementById('bgVideo');
+            if (!video) return;
+            
+            // Set initial opacity to 0.3 (more transparent)
+            video.style.opacity = '0.3';
+            video.style.transition = 'opacity 3s ease-in-out';
+            
+            // After 5 seconds, fade to full opacity
+            setTimeout(() => {
+                video.style.opacity = '0.8';
+            }, 5000);
+            
+            // After another 3 seconds, fade to full opacity
+            setTimeout(() => {
+                video.style.opacity = '1';
+            }, 8000);
         }
         
         // Clear video timers
