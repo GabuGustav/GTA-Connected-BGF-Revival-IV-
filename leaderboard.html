@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BGF Revival IV - Leaderboard</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ff00;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #00ff00;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 3em;
+            text-shadow: 0 0 10px #00ff00;
+            margin-bottom: 10px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #00ff00; }
+            to { text-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00; }
+        }
+
+        .nav-links {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            padding: 15px 30px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(0, 255, 159, 0.3);
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            margin: 20px 0;
+        }
+
+        .nav-links a {
+            color: #00ff9f;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 159, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .nav-links a:hover::before {
+            left: 100%;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+            background: rgba(0, 255, 159, 0.1);
+            border: 1px solid rgba(0, 255, 159, 0.5);
+            text-shadow: 0 0 10px rgba(0, 255, 159, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 159, 0.3);
+        }
+        
+        .nav-links a.active {
+            background: rgba(0, 255, 159, 0.2);
+            border: 1px solid rgba(0, 255, 159, 0.6);
+            color: #ffffff;
+            text-shadow: 0 0 15px rgba(0, 255, 159, 0.8);
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                flex-direction: column;
+                gap: 10px;
+                padding: 20px;
+                border-radius: 20px;
+            }
+            
+            .nav-links a {
+                font-size: 1rem;
+                padding: 10px 20px;
+            }
+        }
+
+        .job-selector {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .job-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .job-tab {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+            font-size: 1.1em;
+        }
+
+        .job-tab:hover {
+            background: rgba(0, 255, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .job-tab.active {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .page-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .page-button {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .page-button:hover:not(:disabled) {
+            background: rgba(0, 255, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        .page-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            font-size: 1.1em;
+        }
+
+        .limit-selector {
+            margin-top: 10px;
+        }
+
+        .limit-selector select {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 5px 10px;
+            font-size: 1em;
+            border-radius: 5px;
+        }
+
+        .leaderboard-container {
+            background: rgba(0, 255, 0, 0.05);
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .leaderboard-header {
+            display: grid;
+            grid-template-columns: 60px 2fr 1fr 1fr 2fr 1fr;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #00ff00;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #00ffff;
+        }
+
+        .leaderboard-row {
+            display: grid;
+            grid-template-columns: 60px 2fr 1fr 1fr 2fr 1fr;
+            gap: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .leaderboard-row:hover {
+            background: rgba(0, 255, 0, 0.1);
+            transform: translateX(5px);
+        }
+
+        .rank {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .rank.top-1 {
+            color: #ffd700;
+            text-shadow: 0 0 10px #ffd700;
+        }
+
+        .rank.top-2 {
+            color: #c0c0c0;
+            text-shadow: 0 0 10px #c0c0c0;
+        }
+
+        .rank.top-3 {
+            color: #cd7f32;
+            text-shadow: 0 0 10px #cd7f32;
+        }
+
+        .player-name {
+            font-weight: bold;
+            color: #00ffff;
+        }
+
+        .level-badge {
+            background: #00ff00;
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .experience {
+            text-align: right;
+        }
+
+        .job-title {
+            color: #00ffff;
+        }
+
+        .last-active {
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+
+        .error {
+            color: #ff0000;
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff0000;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #00ffff;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #00ff00;
+        }
+
+        @media (max-width: 768px) {
+            .leaderboard-header,
+            .leaderboard-row {
+                grid-template-columns: 40px 1fr 1fr;
+                gap: 10px;
+            }
+
+            .leaderboard-header > *:nth-child(4),
+            .leaderboard-header > *:nth-child(5),
+            .leaderboard-header > *:nth-child(6),
+            .leaderboard-row > *:nth-child(4),
+            .leaderboard-row > *:nth-child(5),
+            .leaderboard-row > *:nth-child(6) {
+                display: none;
+            }
+
+            .job-tabs {
+                flex-wrap: wrap;
+            }
+
+            .page-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Audio Elements -->
+    <audio id="generalMusic" loop>
+        <source src="rahulbhardwaj603-dark-tales-147852.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="easyMusic" loop>
+        <source src="joelfazhari-dark-mysterious-true-crime-music-loopable-235870.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="hardMusic" loop>
+        <source src="nickpanekaiassets-synthwave-for-hackerz-217852.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="hellMusic" loop>
+        <source src="4379051-hacker-alarm-124960.mp3" type="audio/mpeg">
+    </audio>
+    
+    <div class="container">
+        <header>
+            <h1>BGF Revival IV</h1>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">
+                    <i class="fas fa-home"></i> Home
+                </a>
+                <a href="profile.html" class="nav-link">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a href="leaderboard.html" class="nav-link active">
+                    <i class="fas fa-trophy"></i> Leaderboard
+                </a>
+            </div>
+        </header>
+
+        <div class="job-selector">
+            <div class="job-tabs">
+                <div class="job-tab active" data-job="police">🚔 Police</div>
+                <div class="job-tab" data-job="medic">🚑 Medic</div>
+                <div class="job-tab" data-job="mechanic">🔧 Mechanic</div>
+                <div class="job-tab" data-job="civilian">👤 Civilian</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="page-controls">
+                <button class="page-button" id="prevButton" onclick="previousPage()">← Previous</button>
+                <div class="page-info">
+                    Page <span id="currentPage">1</span> of <span id="totalPages">1</span>
+                </div>
+                <button class="page-button" id="nextButton" onclick="nextPage()">Next →</button>
+            </div>
+            <div class="limit-selector">
+                <label>Players per page: </label>
+                <select id="limitSelect" onchange="changeLimit()">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            Loading leaderboard data...
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="leaderboardContent" style="display: none;">
+            <div class="stats-summary" id="statsSummary">
+                <!-- Stats summary will be inserted here -->
+            </div>
+
+            <div class="leaderboard-container">
+                <div class="leaderboard-header">
+                    <div>Rank</div>
+                    <div>Player</div>
+                    <div>Level</div>
+                    <div>Experience</div>
+                    <div>Title</div>
+                    <div>Last Active</div>
+                </div>
+                <div id="leaderboardRows">
+                    <!-- Leaderboard rows will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        
+        let currentJob = 'police';
+        let currentPage = 1;
+        let currentLimit = 25;
+        let totalPages = 1;
+
+        // Job tab selection
+        document.querySelectorAll('.job-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.job-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentJob = this.dataset.job;
+                currentPage = 1;
+                loadLeaderboard();
+            });
+        });
+
+        async function loadLeaderboard() {
+            showLoading(true);
+            hideError();
+            hideLeaderboard();
+
+            try {
+                const response = await fetch(`${API_BASE}/leaderboard/${currentJob}?limit=${currentLimit}&offset=${(currentPage - 1) * currentLimit}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                totalPages = data.totalPages;
+                currentPage = data.currentPage;
+
+                displayLeaderboard(data);
+                updatePageControls();
+                
+            } catch (error) {
+                showError('Failed to load leaderboard: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayLeaderboard(data) {
+            // Update stats summary
+            displayStatsSummary(data);
+
+            // Display leaderboard rows
+            const rowsContainer = document.getElementById('leaderboardRows');
+            rowsContainer.innerHTML = '';
+
+            if (data.leaderboard.length === 0) {
+                rowsContainer.innerHTML = '<div style="text-align: center; padding: 20px;">No players found for this job type</div>';
+                showLeaderboard();
+                return;
+            }
+
+            data.leaderboard.forEach((player, index) => {
+                const row = createLeaderboardRow(player, (currentPage - 1) * currentLimit + index + 1);
+                rowsContainer.appendChild(row);
+            });
+
+            showLeaderboard();
+        }
+
+        function displayStatsSummary(data) {
+            const summaryContainer = document.getElementById('statsSummary');
+            
+            // Calculate some stats
+            const totalPlayers = data.totalPlayers;
+            const avgLevel = data.leaderboard.length > 0 
+                ? (data.leaderboard.reduce((sum, p) => sum + p.level, 0) / data.leaderboard.length).toFixed(1)
+                : 0;
+            const avgExperience = data.leaderboard.length > 0
+                ? Math.floor(data.leaderboard.reduce((sum, p) => sum + p.experience, 0) / data.leaderboard.length)
+                : 0;
+            
+            const topPlayer = data.leaderboard[0];
+
+            summaryContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalPlayers}</div>
+                    <div class="stat-label">Total Players</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${avgLevel}</div>
+                    <div class="stat-label">Average Level</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${avgExperience.toLocaleString()}</div>
+                    <div class="stat-label">Average XP</div>
+                </div>
+                ${topPlayer ? `
+                <div class="stat-card">
+                    <div class="stat-value" style="font-size: 1.2em;">${topPlayer.player_name}</div>
+                    <div class="stat-label">Top Player</div>
+                </div>
+                ` : ''}
+            `;
+        }
+
+        function createLeaderboardRow(player, rank) {
+            const row = document.createElement('div');
+            row.className = 'leaderboard-row';
+
+            const rankClass = rank <= 3 ? `top-${rank}` : '';
+            const lastActive = formatDate(player.last_active);
+
+            row.innerHTML = `
+                <div class="rank ${rankClass}">#${rank}</div>
+                <div class="player-name">${player.player_name}</div>
+                <div class="level-badge">${player.level}</div>
+                <div class="experience">${player.experience.toLocaleString()} XP</div>
+                <div class="job-title">${player.title}</div>
+                <div class="last-active">${lastActive}</div>
+            `;
+
+            return row;
+        }
+
+        function updatePageControls() {
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = totalPages;
+            
+            document.getElementById('prevButton').disabled = currentPage <= 1;
+            document.getElementById('nextButton').disabled = currentPage >= totalPages;
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadLeaderboard();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadLeaderboard();
+            }
+        }
+
+        function changeLimit() {
+            currentLimit = parseInt(document.getElementById('limitSelect').value);
+            currentPage = 1;
+            loadLeaderboard();
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'Never';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            
+            if (diffHours < 1) {
+                return 'Just now';
+            } else if (diffHours < 24) {
+                return `${diffHours}h ago`;
+            } else if (diffHours < 168) {
+                return `${Math.floor(diffHours / 24)}d ago`;
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function showLeaderboard() {
+            document.getElementById('leaderboardContent').style.display = 'block';
+        }
+
+        function hideLeaderboard() {
+            document.getElementById('leaderboardContent').style.display = 'none';
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (document.getElementById('leaderboardContent').style.display !== 'none') {
+                loadLeaderboard();
+            }
+        }, 30000);
+
+        // Load initial leaderboard
+        window.addEventListener('load', function() {
+            loadLeaderboard();
+            // Start sequential background music
+            audioManager.startSequential();
+        });
+
+        // Audio Manager for Background Music
+        class AudioManager {
+            constructor() {
+                this.generalMusic = document.getElementById('generalMusic');
+                this.easyMusic = document.getElementById('easyMusic');
+                this.hardMusic = document.getElementById('hardMusic');
+                this.hellMusic = document.getElementById('hellMusic');
+                this.currentTrack = null;
+                this.volume = 0.2; // Lower volume for background
+                this.tracks = ['general', 'easy', 'hard', 'hell'];
+                this.currentTrackIndex = 0;
+                this.isPlaying = false;
+                
+                // Sync with other tabs
+                this.setupStorageSync();
+                this.loadSyncState();
+            }
+            
+            setupStorageSync() {
+                // Listen for storage events from other tabs
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'bgfMusicSync') {
+                        this.loadSyncState();
+                    }
+                });
+                
+                // Notify other tabs when track changes
+                window.addEventListener('beforeunload', () => {
+                    this.saveSyncState();
+                });
+                
+                // Continuous sync updates every 2 seconds
+                this.syncInterval = setInterval(() => {
+                    if (this.isPlaying) {
+                        this.saveSyncState();
+                    }
+                }, 2000);
+            }
+            
+            saveSyncState() {
+                const currentAudio = this.currentTrack ? this[this.currentTrack + 'Music'] : null;
+                const syncData = {
+                    currentTrack: this.currentTrack,
+                    trackIndex: this.currentTrackIndex,
+                    isPlaying: this.isPlaying,
+                    currentTime: currentAudio ? currentAudio.currentTime : 0,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('bgfMusicSync', JSON.stringify(syncData));
+            }
+            
+            loadSyncState() {
+                try {
+                    const saved = localStorage.getItem('bgfMusicSync');
+                    if (saved) {
+                        const syncData = JSON.parse(saved);
+                        // Only sync if data is recent (within 5 seconds)
+                        if (Date.now() - syncData.timestamp < 5000) {
+                            this.currentTrackIndex = syncData.trackIndex || 0;
+                            if (syncData.isPlaying && syncData.currentTrack) {
+                                this.playTrack(syncData.currentTrack, true, syncData.currentTime); // pass current time
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.log('Failed to load sync state:', e);
+                }
+            }
+            
+            stopAll() {
+                [this.generalMusic, this.easyMusic, this.hardMusic, this.hellMusic].forEach(audio => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                });
+                this.currentTrack = null;
+                this.isPlaying = false;
+                
+                // Clear sync interval
+                if (this.syncInterval) {
+                    clearInterval(this.syncInterval);
+                    this.syncInterval = null;
+                }
+                
+                this.saveSyncState();
+            }
+            
+            playTrack(trackName, silent = false, currentTime = 0) {
+                // If we're trying to play the same track that's already playing, just sync the time
+                if (this.currentTrack === trackName && this.isPlaying) {
+                    const currentAudio = this[trackName + 'Music'];
+                    if (currentAudio && Math.abs(currentAudio.currentTime - currentTime) > 0.5) {
+                        currentAudio.currentTime = currentTime;
+                    }
+                    return;
+                }
+                
+                this.stopAll();
+                const audio = this[trackName + 'Music'];
+                if (audio) {
+                    setTimeout(() => {
+                        audio.volume = this.volume;
+                        audio.currentTime = currentTime; // Set the saved time
+                        audio.play().catch(e => {
+                            if (!silent) console.log(`${trackName} music play failed:`, e);
+                        });
+                        this.currentTrack = trackName;
+                        this.isPlaying = true;
+                        this.saveSyncState();
+                        
+                        // Set up track end listener
+                        audio.onended = () => {
+                            this.playNextTrack();
+                        };
+                    }, 50);
+                }
+            }
+            
+            playNextTrack() {
+                this.currentTrackIndex = (this.currentTrackIndex + 1) % this.tracks.length;
+                const nextTrack = this.tracks[this.currentTrackIndex];
+                this.playTrack(nextTrack);
+                console.log(`Playing next track: ${nextTrack}`);
+            }
+            
+            startSequential() {
+                // Start with current track index
+                const trackName = this.tracks[this.currentTrackIndex];
+                this.playTrack(trackName);
+                console.log(`Starting sequential playback with: ${trackName}`);
+            }
+            
+            stopSequential() {
+                this.stopAll();
+            }
+            
+            setVolume(level) {
+                this.volume = Math.max(0, Math.min(1, level));
+                if (this.currentTrack && this[this.currentTrack + 'Music']) {
+                    this[this.currentTrack + 'Music'].volume = this.volume;
+                }
+            }
+        }
+
+        // Initialize audio manager
+        const audioManager = new AudioManager();
+    </script>
+</body>
+</html>

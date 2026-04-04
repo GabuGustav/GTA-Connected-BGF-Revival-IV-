@@ -16,5 +16,89 @@
     "password": "password123",
     "inbox": [],
     "sent": []
+  },
+  "testplayer": {
+    "password": "$2b$10$/eULGqxV5mW8snfb295s9Ot4dh.u9twhrMNMfTMNS9CMWK80eW2q.",
+    "gta_linked": true,
+    "gta_account_id": "testplayer",
+    "created_from_game": true,
+    "created_at": "2026-04-02T14:29:13.149Z",
+    "player_name": "Test Player",
+    "last_ip": "127.0.0.1",
+    "ranks": {
+      "police": {
+        "level": 2,
+        "experience": 150,
+        "next_level_xp": 200,
+        "title": "Officer",
+        "stats": {
+          "arrests_made": 5,
+          "tickets_issued": 10,
+          "pursuits_completed": 0,
+          "time_in_service": 2.5
+        }
+      },
+      "medic": {
+        "level": 1,
+        "experience": 0,
+        "next_level_xp": 100,
+        "title": "Trainee Medic",
+        "stats": {
+          "patients_treated": 0,
+          "lives_saved": 0,
+          "response_time_avg": 0,
+          "time_in_service": 0
+        }
+      },
+      "mechanic": {
+        "level": 1,
+        "experience": 0,
+        "next_level_xp": 100,
+        "title": "Apprentice Mechanic",
+        "stats": {
+          "vehicles_repaired": 0,
+          "custom_jobs": 0,
+          "avg_repair_time": 0,
+          "time_in_service": 0
+        }
+      },
+      "civilian": {
+        "level": 1,
+        "experience": 0,
+        "next_level_xp": 100,
+        "title": "Newcomer",
+        "stats": {
+          "missions_completed": 0,
+          "properties_owned": 0,
+          "wealth_earned": 0,
+          "time_played": 0
+        }
+      }
+    },
+    "global_stats": {
+      "total_playtime": 0,
+      "last_active": "2026-04-02T14:29:13.157Z",
+      "achievements_unlocked": 1,
+      "total_achievements": 25
+    },
+    "achievements": [
+      {
+        "id": "first_arrest",
+        "name": "First Arrest",
+        "description": "Make your first arrest as a police officer",
+        "job_type": "police",
+        "unlocked_at": "2026-04-02T14:29:13.177Z"
+      }
+    ],
+    "inbox": [
+      {
+        "from": "system",
+        "subject": "Welcome to BGF Revival IV!",
+        "message": "Welcome Test Player! Your account has been created from the GTA server. Start playing to build your rank and unlock achievements!",
+        "date": "2026-04-02T14:29:13.149Z",
+        "read": false
+      }
+    ],
+    "sent": []
   }
 }
