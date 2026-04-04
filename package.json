@@ -13,8 +13,7 @@
     "cors": "^2.8.5",
     "node-fetch": "^2.6.7",
     "bcrypt": "^5.1.0",
-    "express-rate-limit": "^6.7.0",
-    "serverless-http": "^3.2.0"
+    "express-rate-limit": "^6.7.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

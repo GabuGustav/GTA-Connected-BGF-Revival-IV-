@@ -640,8 +640,15 @@
         // Load initial leaderboard
         window.addEventListener('load', function() {
             loadLeaderboard();
-            // Start sequential background music
-            audioManager.startSequential();
+        });
+
+        window.addEventListener('load', () => {
+            // Add a click listener to start music after user interaction
+            document.addEventListener('click', () => {
+                if (!audioManager.isPlaying) {
+                    audioManager.startSequential();
+                }
+            }, { once: true });
         });
 
         // Audio Manager for Background Music

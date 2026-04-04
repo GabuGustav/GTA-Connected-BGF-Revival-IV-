@@ -1,23 +1,13 @@
-const express = require('express');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const serverless = require('serverless-http');
 
 // Data storage (in production, use a real database)
-const dataFile = path.join(__dirname, '..', 'data.json');
+const dataFile = path.join(__dirname, '..', '..', 'data.json');
 
 function loadData() {
     if (fs.existsSync(dataFile)) {
         return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-    }
-    return {};
-}
-
-function loadOTPs() {
-    const otpFile = path.join(__dirname, '..', 'otps.json');
-    if (fs.existsSync(otpFile)) {
-        return JSON.parse(fs.readFileSync(otpFile, 'utf8'));
     }
     return {};
 }
@@ -31,10 +21,12 @@ function verifySignature(payload, signature, secret) {
 }
 
 exports.handler = async (event, context) => {
-    const { jobType } = event.pathParameters;
-    const { limit = 50, offset = 0 } = event.queryStringParameters;
+    // Extract jobType from pathParameters
+    const pathParts = event.path.split('/');
+    const jobType = pathParts[pathParts.length - 1];
+    const { limit = 50, offset = 0 } = event.queryStringParameters || {};
     
-    if (!jobType) {
+    if (!jobType || jobType === 'leaderboard') {
         return {
             statusCode: 400,
             headers: {
@@ -79,7 +71,7 @@ exports.handler = async (event, context) => {
                 experience: user.ranks[jobType].experience,
                 title: user.ranks[jobType].title,
                 stats: user.ranks[jobType].stats,
-                last_active: user.global_stats.last_active
+                last_active: user.global_stats?.last_active || null
             });
         }
     }

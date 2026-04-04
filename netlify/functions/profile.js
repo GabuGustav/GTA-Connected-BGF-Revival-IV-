@@ -1,11 +1,9 @@
-const express = require('express');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const serverless = require('serverless-http');
 
 // Data storage (in production, use a real database)
-const dataFile = path.join(__dirname, '..', 'data.json');
+const dataFile = path.join(__dirname, '..', '..', 'data.json');
 
 function loadData() {
     if (fs.existsSync(dataFile)) {
@@ -23,9 +21,11 @@ function verifySignature(payload, signature, secret) {
 }
 
 exports.handler = async (event, context) => {
-    const { username } = event.pathParameters;
+    // Extract username from pathParameters
+    const pathParts = event.path.split('/');
+    const username = pathParts[pathParts.length - 1];
     
-    if (!username) {
+    if (!username || username === 'profile') {
         return {
             statusCode: 400,
             headers: {

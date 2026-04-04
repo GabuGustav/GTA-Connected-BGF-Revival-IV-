@@ -660,8 +660,15 @@
         // Profile page is ready for user input
         window.addEventListener('load', function() {
             console.log('Profile page loaded - ready for user input');
-            // Start sequential background music
-            audioManager.startSequential();
+        });
+
+        window.addEventListener('load', () => {
+            // Add a click listener to start music after user interaction
+            document.addEventListener('click', () => {
+                if (!audioManager.isPlaying) {
+                    audioManager.startSequential();
+                }
+            }, { once: true });
         });
 
         // Audio Manager for Background Music
