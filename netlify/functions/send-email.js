@@ -1,4 +1,20 @@
-const fetch = require('node-fetch');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+
+// Data storage (in production, use a real database)
+const dataFile = path.join(__dirname, '..', '..', 'data.json');
+
+function loadData() {
+    if (fs.existsSync(dataFile)) {
+        return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+    }
+    return {};
+}
+
+function saveData(data) {
+    fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+}
 
 exports.handler = async (event) => {
     // Only allow POST requests
@@ -20,17 +36,6 @@ exports.handler = async (event) => {
             };
         }
         
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        
-        // Accept BGF domain format
-        if (!emailRegex.test(to) && !to.endsWith('@bgf.connected')) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({ error: 'Invalid email format' })
-            };
-        }
-        
         // Sanitize input to prevent XSS
         const sanitizeHtml = (str) => {
             return str
@@ -45,68 +50,75 @@ exports.handler = async (event) => {
         const sanitizedSubject = sanitizeHtml(subject);
         const sanitizedMessage = sanitizeHtml(message);
 
-        // Brevo API call with environment variable
-        const apiKey = process.env.BREVO_API_KEY;
-        if (!apiKey) {
-            return {
-                statusCode: 500,
-                body: JSON.stringify({ error: 'API key not configured' })
-            };
-        }
-
-        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-                'api-key': apiKey,
-                'content-type': 'application/json',
-                'accept': 'application/json'
-            },
-            body: JSON.stringify({
-                sender: {
-                    email: from || 'noreply@bgf.connected',
-                    name: 'BGF Mail System'
-                },
-                to: [{ email: to }],
-                subject: sanitizedSubject,
-                htmlContent: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #1a1a1a; color: #fff;">
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <h1 style="color: #00ff9f; text-shadow: 0 0 10px rgba(0, 255, 159, 0.5);">BGF Mail</h1>
-                            <p style="color: #888;">Official BGF Connected Mail System</p>
-                        </div>
-                        <div style="background: #2a2a2a; padding: 20px; border-radius: 10px; border: 1px solid #00ff9f;">
-                            <h2 style="color: #00ff9f; margin-bottom: 15px;">${sanitizedSubject}</h2>
-                            <div style="color: #fff; line-height: 1.6;">${sanitizedMessage.replace(/\n/g, '<br>')}</div>
-                        </div>
-                        <div style="margin-top: 30px; text-align: center; color: #888; font-size: 12px;">
-                            <p>Sent from BGF Connected Mail System</p>
-                            <p>Time: ${new Date().toLocaleString()}</p>
-                            <p>This is an automated message</p>
-                        </div>
-                    </div>
-                `,
-                textContent: `BGF Mail\n\n${sanitizedSubject}\n\n${sanitizedMessage}\n\nSent from BGF Connected Mail System\nTime: ${new Date().toLocaleString()}`
-            })
-        });
-
-        const data = await response.json();
+        // Load user data
+        const users = loadData();
         
-        if (!response.ok) {
+        // Normalize recipient username (remove @bgf.connected if present)
+        let toUsername = to.replace('@bgf.connected', '').toLowerCase().trim();
+        
+        // Check if recipient exists
+        if (!users[toUsername]) {
             return {
-                statusCode: response.status,
+                statusCode: 404,
                 body: JSON.stringify({ 
-                    error: 'Brevo API error',
-                    details: data 
+                    error: 'User not found',
+                    message: `User '${toUsername}' is not registered in the BGF system`,
+                    availableUsers: Object.keys(users).map(u => `${u}@bgf.connected`)
                 })
             };
         }
-
+        
+        // Initialize mail arrays if they don't exist
+        if (!users[toUsername].inbox) {
+            users[toUsername].inbox = [];
+        }
+        if (!users[toUsername].sent) {
+            users[toUsername].sent = [];
+        }
+        
+        // Also initialize sender's mail arrays if they exist
+        if (from && users[from]) {
+            if (!users[from].inbox) {
+                users[from].inbox = [];
+            }
+            if (!users[from].sent) {
+                users[from].sent = [];
+            }
+        }
+        
+        // Create message object
+        const messageData = {
+            from: from || 'system',
+            to: toUsername,
+            subject: sanitizedSubject,
+            message: sanitizedMessage,
+            date: new Date().toISOString(),
+            read: false,
+            id: crypto.randomUUID()
+        };
+        
+        // Add to recipient's inbox
+        users[toUsername].inbox.unshift(messageData);
+        
+        // Add to sender's sent items (if sender is a registered user)
+        if (from && users[from]) {
+            users[from].sent.unshift({
+                ...messageData,
+                to: toUsername
+            });
+        }
+        
+        // Save data
+        saveData(users);
+        
         return {
             statusCode: 200,
             body: JSON.stringify({ 
                 success: true,
-                messageId: data.messageId,
-                details: data 
+                message: 'Mail sent successfully',
+                messageId: messageData.id,
+                recipient: toUsername,
+                subject: sanitizedSubject
             })
         };
 
