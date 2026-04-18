@@ -100,5 +100,23 @@
       }
     ],
     "sent": []
+  },
+  "noob_player": {
+    "password": "$2b$10$fbLk68X.KiZh/eI0CBMLaeqZdJrj4O/NiqW7F3yX497veyNadDn.2",
+    "email": "Arcaneauthors@gmail.com",
+    "created_at": "2026-04-18T02:56:20.529Z",
+    "created_from_game": false,
+    "gta_linked": false,
+    "inbox": [
+      {
+        "from": "system",
+        "subject": "Welcome to BGF Mail!",
+        "message": "Welcome noob_player@bgf.connected! Your account has been created successfully.",
+        "date": "2026-04-18T02:56:20.529Z",
+        "read": false
+      }
+    ],
+    "sent": [],
+    "achievements": []
   }
 }

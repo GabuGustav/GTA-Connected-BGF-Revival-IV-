@@ -445,7 +445,9 @@
     </div>
 
     <script>
-        const API_BASE = '/.netlify/functions'; // Use Netlify functions
+        const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+            ? 'http://127.0.0.1:3001/api'
+            : '/.netlify/functions';
         
         let currentJob = 'police';
         let currentPage = 1;

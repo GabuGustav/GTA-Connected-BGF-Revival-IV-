@@ -11,7 +11,14 @@ const port = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'],
+    origin: [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:8000',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:3001',
+        'http://127.0.0.1:8000'
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true
@@ -57,6 +64,79 @@ function loadOTPs() {
 
 function saveOTPs(otps) {
     fs.writeFileSync(otpFile, JSON.stringify(otps, null, 2));
+}
+
+function findUserByIdentifier(users, identifier) {
+    if (!identifier) {
+        return null;
+    }
+
+    const normalized = identifier.toLowerCase();
+    if (users[normalized]) {
+        return {
+            username: normalized,
+            user: users[normalized]
+        };
+    }
+
+    for (const [username, user] of Object.entries(users)) {
+        const playerName = String(user.player_name || '').toLowerCase();
+        if (playerName && playerName === normalized) {
+            return {
+                username,
+                user
+            };
+        }
+    }
+
+    return null;
+}
+
+function normalizeUsername(value) {
+    return String(value || '').toLowerCase().trim();
+}
+
+function buildUserProfile(username, user) {
+    return {
+        username,
+        playerName: user.player_name || username,
+        gta_linked: !!user.gta_linked,
+        created_from_game: !!user.created_from_game,
+        created_at: user.created_at || null,
+        inbox: user.inbox || [],
+        sent: user.sent || [],
+        achievements: user.achievements || [],
+        global_stats: user.global_stats || null,
+        ranks: user.ranks || null
+    };
+}
+
+function decodeBridgePayload(encodedPayload) {
+    if (!encodedPayload) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(encodedPayload);
+    } catch (jsonError) {
+        try {
+            return JSON.parse(Buffer.from(encodedPayload, 'base64').toString('utf8'));
+        } catch (base64Error) {
+            return null;
+        }
+    }
+}
+
+function getBridgePayload(req) {
+    if (req.method === 'GET') {
+        return decodeBridgePayload(req.query.payload);
+    }
+
+    if (req.body && typeof req.body === 'object') {
+        return req.body;
+    }
+
+    return null;
 }
 
 // Clean expired OTPs
@@ -203,6 +283,181 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
+app.post('/api/auth-login', async (req, res) => {
+    const { username, password } = req.body || {};
+    const normalizedUsername = normalizeUsername(username);
+
+    if (!normalizedUsername || !password) {
+        return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    const users = loadData();
+    const match = findUserByIdentifier(users, normalizedUsername);
+    if (!match) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    const storedUser = match.user;
+    const storedPassword = storedUser.password || '';
+
+    let passwordMatches = false;
+    if (typeof storedPassword === 'string' && storedPassword.startsWith('$2')) {
+        passwordMatches = await bcrypt.compare(password, storedPassword);
+    } else {
+        passwordMatches = storedPassword === password;
+    }
+
+    if (!passwordMatches) {
+        return res.status(401).json({ error: 'Incorrect password' });
+    }
+
+    storedUser.inbox = storedUser.inbox || [];
+    storedUser.sent = storedUser.sent || [];
+    saveData(users);
+
+    res.json({
+        success: true,
+        user: buildUserProfile(match.username, storedUser)
+    });
+});
+
+app.post('/api/auth-register', async (req, res) => {
+    const { username, email, password } = req.body || {};
+    const normalizedUsername = normalizeUsername(username).replace(/[^a-z0-9_]/g, '');
+
+    if (!normalizedUsername || normalizedUsername.length < 3) {
+        return res.status(400).json({ error: 'Username must be at least 3 valid characters' });
+    }
+
+    if (!password || password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    const users = loadData();
+    if (users[normalizedUsername]) {
+        return res.status(409).json({ error: 'Username already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    users[normalizedUsername] = {
+        password: hashedPassword,
+        email: email || '',
+        created_at: new Date().toISOString(),
+        created_from_game: false,
+        gta_linked: false,
+        inbox: [
+            {
+                from: 'system',
+                subject: 'Welcome to BGF Mail!',
+                message: `Welcome ${normalizedUsername}@bgf.connected! Your account has been created successfully.`,
+                date: new Date().toISOString(),
+                read: false
+            }
+        ],
+        sent: [],
+        achievements: []
+    };
+
+    saveData(users);
+
+    res.status(201).json({
+        success: true,
+        user: buildUserProfile(normalizedUsername, users[normalizedUsername])
+    });
+});
+
+app.get('/api/profile/:username', (req, res) => {
+    const { username } = req.params;
+    const users = loadData();
+    const match = findUserByIdentifier(users, username);
+
+    if (!match) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+        username: match.username,
+        player_name: match.user.player_name || match.username,
+        gta_linked: !!match.user.gta_linked,
+        created_from_game: !!match.user.created_from_game,
+        created_at: match.user.created_at || null,
+        global_stats: match.user.global_stats || null,
+        ranks: match.user.ranks || null,
+        achievements: match.user.achievements || [],
+        inbox: match.user.inbox || [],
+        sent: match.user.sent || []
+    });
+});
+
+app.post('/api/send-email', (req, res) => {
+    const { to, subject, message, from } = req.body || {};
+
+    if (!to || !subject || !message) {
+        return res.status(400).json({ error: 'Missing required fields: to, subject, message' });
+    }
+
+    const sanitizeHtml = (str) => {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#x27;')
+            .replace(/\//g, '&#x2F;');
+    };
+
+    const users = loadData();
+    const recipientIdentifier = normalizeUsername(String(to).replace('@bgf.connected', ''));
+    const recipientMatch = findUserByIdentifier(users, recipientIdentifier);
+
+    if (!recipientMatch) {
+        return res.status(404).json({
+            error: 'User not found',
+            message: `User '${recipientIdentifier}' is not registered in the BGF system`
+        });
+    }
+
+    const recipientUsername = recipientMatch.username;
+    const senderUsername = normalizeUsername(from);
+
+    users[recipientUsername].inbox = users[recipientUsername].inbox || [];
+    users[recipientUsername].sent = users[recipientUsername].sent || [];
+
+    if (senderUsername && users[senderUsername]) {
+        users[senderUsername].inbox = users[senderUsername].inbox || [];
+        users[senderUsername].sent = users[senderUsername].sent || [];
+    }
+
+    const messageData = {
+        from: senderUsername || 'system',
+        to: recipientUsername,
+        subject: sanitizeHtml(subject),
+        message: sanitizeHtml(message),
+        date: new Date().toISOString(),
+        read: false,
+        id: crypto.randomUUID()
+    };
+
+    users[recipientUsername].inbox.unshift(messageData);
+
+    if (senderUsername && users[senderUsername]) {
+        users[senderUsername].sent.unshift({
+            ...messageData,
+            to: recipientUsername
+        });
+    }
+
+    saveData(users);
+
+    res.json({
+        success: true,
+        message: 'Mail sent successfully',
+        messageId: messageData.id,
+        recipient: recipientUsername,
+        subject: messageData.subject
+    });
+});
+
 // GTA Integration API Routes
 
 // Verify API signature
@@ -217,6 +472,14 @@ function verifySignature(payload, signature, timestamp) {
 
 // Middleware for GTA API authentication
 function authenticateGTA(req, res, next) {
+    if (req.method === 'GET') {
+        const bridgeApiKey = req.query.api_key;
+        if (bridgeApiKey !== GTA_API_KEY) {
+            return res.status(401).json({ error: 'Invalid bridge API key' });
+        }
+        return next();
+    }
+
     const signature = req.headers['x-signature'];
     const timestamp = req.headers['x-timestamp'];
     
@@ -240,8 +503,9 @@ function authenticateGTA(req, res, next) {
 }
 
 // Create account from game registration
-app.post('/api/create-account-from-game', authenticateGTA, (req, res) => {
-    const { username, password, playerName, playerIp } = req.body;
+app.all('/api/create-account-from-game', authenticateGTA, (req, res) => {
+    const payload = getBridgePayload(req) || {};
+    const { username, password, playerName, playerIp } = payload;
     
     if (!username || !password) {
         return res.status(400).json({ error: 'Username and password required' });
@@ -359,8 +623,9 @@ app.post('/api/create-account-from-game', authenticateGTA, (req, res) => {
 });
 
 // Batch sync player statistics
-app.post('/api/batch-sync-stats', authenticateGTA, (req, res) => {
-    const { playerUpdates } = req.body;
+app.all('/api/batch-sync-stats', authenticateGTA, (req, res) => {
+    const payload = getBridgePayload(req) || {};
+    const { playerUpdates } = payload;
     
     if (!Array.isArray(playerUpdates)) {
         return res.status(400).json({ error: 'playerUpdates must be an array' });
@@ -443,12 +708,14 @@ app.get('/api/player-rank/:accountId/:jobType', (req, res) => {
     }
     
     const users = loadData();
-    const normalizedUsername = accountId.toLowerCase();
-    const user = users[normalizedUsername];
+    const match = findUserByIdentifier(users, accountId);
     
-    if (!user) {
+    if (!match) {
         return res.status(404).json({ error: 'User not found' });
     }
+
+    const normalizedUsername = match.username;
+    const user = match.user;
     
     const rankData = user.ranks && user.ranks[jobType];
     if (!rankData) {
@@ -457,6 +724,7 @@ app.get('/api/player-rank/:accountId/:jobType', (req, res) => {
     
     res.json({
         username: normalizedUsername,
+        playerName: user.player_name || normalizedUsername,
         jobType,
         rank: rankData,
         globalStats: user.global_stats
@@ -517,15 +785,18 @@ app.get('/api/player-achievements/:accountId', (req, res) => {
     }
     
     const users = loadData();
-    const normalizedUsername = accountId.toLowerCase();
-    const user = users[normalizedUsername];
+    const match = findUserByIdentifier(users, accountId);
     
-    if (!user) {
+    if (!match) {
         return res.status(404).json({ error: 'User not found' });
     }
+
+    const normalizedUsername = match.username;
+    const user = match.user;
     
     res.json({
         username: normalizedUsername,
+        playerName: user.player_name || normalizedUsername,
         achievements: user.achievements || [],
         totalAchievements: user.global_stats?.total_achievements || 25,
         unlockedAchievements: user.global_stats?.achievements_unlocked || 0
@@ -533,8 +804,9 @@ app.get('/api/player-achievements/:accountId', (req, res) => {
 });
 
 // Update achievements
-app.post('/api/update-achievements', authenticateGTA, (req, res) => {
-    const { username, newAchievements } = req.body;
+app.all('/api/update-achievements', authenticateGTA, (req, res) => {
+    const payload = getBridgePayload(req) || {};
+    const { username, newAchievements } = payload;
     
     if (!username || !Array.isArray(newAchievements)) {
         return res.status(400).json({ error: 'Username and achievements array required' });
@@ -583,7 +855,7 @@ app.post('/api/update-achievements', authenticateGTA, (req, res) => {
 setInterval(cleanExpiredOTPs, 5 * 60 * 1000);
 
 // Start server
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     console.log(`BGF Mail API Server running on port ${port}`);
     console.log(`API endpoints available at http://localhost:${port}/api`);
 });

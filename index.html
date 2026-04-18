@@ -2297,7 +2297,8 @@
             VIDEO_BUFFERING_TIMEOUT: 1000,
             CLEANUP_INTERVAL: 60000,
             STORAGE_KEY: 'bgfMailData',
-            OTP_STORAGE_KEY: 'bgfOTPs'
+            OTP_STORAGE_KEY: 'bgfOTPs',
+            SESSION_KEY: 'bgfCurrentUser'
         };
         
         // Global state management
@@ -2387,6 +2388,8 @@
                     }
                 }
             });
+
+            restoreSession();
             
             console.log('BGF Mail system initialized successfully');
         }
@@ -2398,6 +2401,96 @@
             } catch (error) {
                 console.error('JSON parse error:', error);
                 return fallback;
+            }
+        }
+
+        function getMailApiBase() {
+            if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+                return 'http://127.0.0.1:3001/api';
+            }
+            return '/.netlify/functions';
+        }
+
+        async function loginViaBackend(username, password) {
+            const response = await fetch(`${getMailApiBase()}/auth-login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || 'Login failed');
+            }
+
+            return result.user;
+        }
+
+        async function registerViaBackend(username, email, password) {
+            const response = await fetch(`${getMailApiBase()}/auth-register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || 'Registration failed');
+            }
+
+            return result.user;
+        }
+
+        async function fetchUserProfile(username) {
+            const response = await fetch(`${getMailApiBase()}/profile/${encodeURIComponent(username)}`);
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to load profile');
+            }
+
+            return result;
+        }
+
+        function persistSession(username) {
+            localStorage.setItem(CONSTANTS.SESSION_KEY, username);
+        }
+
+        function clearSession() {
+            localStorage.removeItem(CONSTANTS.SESSION_KEY);
+        }
+
+        async function syncCurrentUserFromServer(username) {
+            const profile = await fetchUserProfile(username);
+            const normalizedUsername = String(profile.username || username).toLowerCase();
+            mailData[normalizedUsername] = {
+                password: mailData[normalizedUsername]?.password || '',
+                inbox: profile.inbox || [],
+                sent: profile.sent || [],
+                player_name: profile.player_name || normalizedUsername
+            };
+            saveMailData();
+            return normalizedUsername;
+        }
+
+        async function restoreSession() {
+            const savedUser = localStorage.getItem(CONSTANTS.SESSION_KEY);
+            if (!savedUser) {
+                return;
+            }
+
+            try {
+                currentUser = await syncCurrentUserFromServer(savedUser);
+                showInbox();
+                startNotificationCheck();
+            } catch (error) {
+                console.warn('Failed to restore session:', error.message);
+                clearSession();
+                currentUser = null;
             }
         }
         
@@ -2437,7 +2530,7 @@
             }
         }
         
-        function loginMail() {
+        async function loginMail() {
             console.log('Login function called');
             
             const username = document.getElementById('mailUsername').value.toLowerCase().trim();
@@ -2451,40 +2544,24 @@
                 return;
             }
             
-            if (!mailData) {
-                alert('Mail system not initialized. Please refresh the page.');
-                return;
-            }
-            
-            if (!mailData[username]) {
-                // Auto-register new user
-                console.log('Creating new user:', username);
-                mailData[username] = {
-                    password: password,
-                    inbox: [
-                        {
-                            from: 'system',
-                            subject: 'Welcome to BGF Mail!',
-                            message: `Welcome ${username}@bgf.connected! Your account has been created successfully.`,
-                            date: new Date().toISOString(),
-                            read: false
-                        }
-                    ],
-                    sent: []
+            try {
+                const user = await loginViaBackend(username, password);
+                currentUser = String(user.username || username).toLowerCase();
+                mailData[currentUser] = {
+                    password: '',
+                    inbox: user.inbox || [],
+                    sent: user.sent || [],
+                    player_name: user.playerName || currentUser
                 };
+                persistSession(currentUser);
                 saveMailData();
-                alert(`Account created for ${username}@bgf.connected!`);
-            }
-            
-            if (mailData[username].password !== password) {
-                alert('Incorrect password');
+                console.log('Login successful for:', currentUser);
+                showInbox();
+                startNotificationCheck();
+            } catch (error) {
+                alert(error.message || 'Login failed');
                 return;
             }
-            
-            currentUser = username;
-            console.log('Login successful for:', currentUser);
-            showInbox();
-            startNotificationCheck();
         }
         
         function startNotificationCheck() {
@@ -2573,7 +2650,7 @@
             document.getElementById('composeMessage').value = '';
         }
         
-        function sendMail() {
+        async function sendMail() {
             const to = document.getElementById('composeTo').value.toLowerCase().trim();
             const subject = document.getElementById('composeSubject').value.trim();
             const message = document.getElementById('composeMessage').value.trim();
@@ -2594,92 +2671,26 @@
             // Remove @bgf.connected if present and normalize
             let toUsername = to.replace('@bgf.connected', '');
             
-            // Try exact match first
-            console.log('Looking for user:', toUsername);
-            console.log('User exists:', mailData[toUsername] ? 'YES' : 'NO');
-            
-            if (!mailData[toUsername]) {
-                // Try without underscores (noob_player -> noobplayer)
-                const normalizedUsername = toUsername.replace(/_/g, '');
-                console.log('Trying normalized user:', normalizedUsername);
-                console.log('Normalized user exists:', mailData[normalizedUsername] ? 'YES' : 'NO');
-                
-                if (mailData[normalizedUsername]) {
-                    toUsername = normalizedUsername;
-                }
-            }
-            
-            if (!mailData[toUsername]) {
-                // Try with underscores (noobplayer -> noob_player)
-                const underscoreUsername = toUsername.replace(/([a-z])([a-z])/g, '$1_$2');
-                console.log('Trying underscore user:', underscoreUsername);
-                console.log('Underscore user exists:', mailData[underscoreUsername] ? 'YES' : 'NO');
-                
-                if (mailData[underscoreUsername]) {
-                    toUsername = underscoreUsername;
-                }
-            }
-            
-            console.log('Final username:', toUsername);
-            console.log('Final user exists:', mailData[toUsername] ? 'YES' : 'NO');
-            
-            if (!mailData[toUsername]) {
-                alert(`User not found: ${to}. Available users: ${Object.keys(mailData).map(u => u + '@bgf.connected').join(', ')}`);
-                return;
-            }
-            
-            // Send via Brevo API first
-            sendEmailViaBrevo(to, subject, message).then(result => {
-                handleMailSendResult(result, toUsername, subject, message);
-            }).catch(error => {
+            try {
+                const result = await sendEmailViaBrevo(to, subject, message);
+                await handleMailSendResult(result, toUsername, subject, message);
+            } catch (error) {
                 console.error('Email sending error:', error);
-                handleMailSendResult({ success: false, error: error.message }, toUsername, subject, message);
-            });
+                alert(error.message || 'Failed to send message');
+            }
         }
         
         // Centralized mail send result handler
-        function handleMailSendResult(result, toUsername, subject, message) {
-            const messageData = {
-                from: currentUser,
-                subject: subject,
-                message: message,
-                date: new Date().toISOString(),
-                read: false
-            };
-            
-            // Add Brevo message ID if available
-            if (result.success && result.messageId) {
-                messageData.brevoMessageId = result.messageId;
+        async function handleMailSendResult(result, toUsername, subject, message) {
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to send message');
             }
-            
-            // Add to recipient's inbox
-            if (!mailData[toUsername].inbox) {
-                mailData[toUsername].inbox = [];
-            }
-            mailData[toUsername].inbox.unshift(messageData);
-            
-            // Add to sent items
-            if (!mailData[currentUser].sent) {
-                mailData[currentUser].sent = [];
-            }
-            mailData[currentUser].sent.unshift({
-                ...messageData,
-                to: toUsername
-            });
-            
-            // Save data
-            saveMailData();
-            
-            // Show appropriate notification
-            if (result.success) {
-                console.log('Brevo email sent successfully:', result.messageId);
-                showNotification(`Message sent to ${toUsername}@bgf.connected!`, 'success');
-                alert('Message sent successfully!');
-            } else {
-                console.error('Brevo API failed:', result.error);
-                showNotification(`Message sent to ${toUsername}@bgf.connected! (Local only)`, 'warning');
-                alert('Message sent locally (API unavailable)');
-            }
+
+            await syncCurrentUserFromServer(currentUser);
+            loadInbox();
+            console.log('Mail sent successfully:', result.messageId);
+            showNotification(`Message sent to ${toUsername}@bgf.connected!`, 'success');
+            alert('Message sent successfully!');
             
             // Trigger recipient notification
             if (toUsername !== currentUser) {
@@ -2696,7 +2707,7 @@
                 // Convert username to email format if needed
                 const emailAddress = to.includes('@') ? to : `${to}@bgf.connected`;
                 
-                const response = await fetch('/.netlify/functions/send-email', {
+                const response = await fetch(`${getMailApiBase()}/send-email`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2706,13 +2717,6 @@
                         subject: subject,
                         message: message,
                         from: currentUser
-                                <div style="margin-top: 30px; text-align: center; color: #888; font-size: 12px;">
-                                    <p>Sent from: ${currentUser}@bgf.connected</p>
-                                    <p>Time: ${new Date().toLocaleString()}</p>
-                                    <p>This is an automated message from BGF Connected Mail System</p>
-                                </div>
-                            </div>
-                        `
                     })
                 });
                 
@@ -2737,6 +2741,7 @@
         
         function logoutMail() {
             currentUser = null;
+            clearSession();
             document.getElementById('mailInbox').style.display = 'none';
             document.getElementById('mailCompose').style.display = 'none';
             document.querySelector('.mail-login').style.display = 'block';
@@ -2757,33 +2762,22 @@
                     return;
                 }
                 
-                if (mailData[cleanUsername]) {
-                    alert('Username already taken');
-                    return;
-                }
-                
                 const password = prompt('Set your password:');
                 if (password && password.length >= 6) {
-                    mailData[cleanUsername] = {
-                        password: password,
-                        inbox: [
-                            {
-                                from: 'system',
-                                subject: 'Welcome to BGF Mail!',
-                                message: `Welcome ${cleanUsername}@bgf.connected! Your account has been created successfully.`,
-                                date: new Date().toISOString(),
-                                read: false
-                            }
-                        ],
-                        sent: []
-                    };
-                    saveMailData();
-                    
-                    alert(`Account created! Your email is: ${cleanUsername}@bgf.connected\nYou can now login.`);
-                    
-                    // Pre-fill login form
-                    document.getElementById('mailUsername').value = cleanUsername;
-                    document.getElementById('mailPassword').focus();
+                    registerViaBackend(cleanUsername, '', password).then((user) => {
+                        mailData[cleanUsername] = {
+                            password: '',
+                            inbox: user.inbox || [],
+                            sent: user.sent || [],
+                            player_name: user.playerName || cleanUsername
+                        };
+                        saveMailData();
+                        alert(`Account created! Your email is: ${cleanUsername}@bgf.connected\nYou can now login.`);
+                        document.getElementById('mailUsername').value = cleanUsername;
+                        document.getElementById('mailPassword').focus();
+                    }).catch((error) => {
+                        alert(error.message || 'Registration failed');
+                    });
                 } else {
                     alert('Password must be at least 6 characters');
                 }

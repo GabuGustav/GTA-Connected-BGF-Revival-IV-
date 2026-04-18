@@ -2365,6 +2365,9 @@
                 const username = document.getElementById('username').value;
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
+                const apiBase = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+                    ? 'http://127.0.0.1:3001/api'
+                    : '/.netlify/functions';
                 
                 // Disable form
                 document.getElementById('submitBtn').disabled = true;
@@ -2421,11 +2424,29 @@
                     }
                 }
                 
+                try {
+                    const response = await fetch(`${apiBase}/auth-register`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username, email, password })
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.error || 'Registration failed');
+                    }
+                } catch (error) {
+                    loadingOverlay.classList.remove('active');
+                    document.getElementById('submitBtn').disabled = false;
+                    document.querySelectorAll('.form-input').forEach(input => input.disabled = false);
+                    alert(error.message || 'Registration failed');
+                    return;
+                }
+
                 // Success
                 this.showResult('ACCESS GRANTED', 'Welcome to the Network');
-                
-                // Store data
-                console.log('User registered:', { username, email, password });
                 
                 // Redirect
                 setTimeout(() => {
