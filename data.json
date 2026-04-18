@@ -1,6 +1,81 @@
 {
+  "1111": {
+    "password": "$2b$10$3skxO6cO4Vq2BCMgsNzL4ew/PWB1xS5XGAKgBEcR4yfdQ77rB1fDe",
+    "gta_linked": true,
+    "gta_account_id": "gta_4e31f288-63cb-4dfe-85d3-e5aabc443724",
+    "created_from_game": true,
+    "created_at": "2026-04-18T22:42:50.603Z",
+    "player_name": "Gabu",
+    "ranks": {
+      "police": {
+        "level": 1,
+        "experience": 0,
+        "next_level_xp": 100,
+        "title": "Recruit",
+        "stats": {
+          "arrests_made": 0,
+          "tickets_issued": 0,
+          "pursuits_completed": 0,
+          "time_in_service": 0
+        }
+      },
+      "medic": {
+        "level": 1,
+        "experience": 0,
+        "next_level_xp": 100,
+        "title": "Trainee Medic",
+        "stats": {
+          "patients_treated": 0,
+          "lives_saved": 0,
+          "response_time_avg": 0,
+          "time_in_service": 0
+        }
+      },
+      "mechanic": {
+        "level": 1,
+        "experience": 0,
+        "next_level_xp": 100,
+        "title": "Apprentice Mechanic",
+        "stats": {
+          "vehicles_repaired": 0,
+          "custom_jobs": 0,
+          "avg_repair_time": 0,
+          "time_in_service": 0
+        }
+      },
+      "civilian": {
+        "level": 1,
+        "experience": 0,
+        "next_level_xp": 100,
+        "title": "Newcomer",
+        "stats": {
+          "missions_completed": 0,
+          "properties_owned": 0,
+          "wealth_earned": 0,
+          "time_played": 0
+        }
+      }
+    },
+    "global_stats": {
+      "total_playtime": 0,
+      "last_active": "2026-04-18T22:42:50.603Z",
+      "achievements_unlocked": 0,
+      "total_achievements": 25
+    },
+    "achievements": [],
+    "inbox": [
+      {
+        "from": "system",
+        "subject": "Welcome to BGF Revival IV!",
+        "message": "Welcome Gabu! Your account has been created from the GTA server. Start playing to build your rank and unlock achievements!",
+        "date": "2026-04-18T22:42:50.603Z",
+        "read": false
+      }
+    ],
+    "sent": []
+  },
   "admin": {
-    "password": "admin123",
+    "password": "$2b$10$lpHHREE/k7zhKgPO9a9zcuFV0EXJTcbVHYyEYIsrsgAYCxDt1KYHa",
     "inbox": [
       {
         "from": "system",
@@ -13,18 +88,17 @@
     "sent": []
   },
   "testuser": {
-    "password": "password123",
+    "password": "$2b$10$TT.rb8oQe8I8Z1i8BTnwpOZ5WnhUGj.JE318ZFpSutIfWNZnIfH2O",
     "inbox": [],
     "sent": []
   },
   "testplayer": {
     "password": "$2b$10$/eULGqxV5mW8snfb295s9Ot4dh.u9twhrMNMfTMNS9CMWK80eW2q.",
     "gta_linked": true,
-    "gta_account_id": "testplayer",
+    "gta_account_id": "gta_98a66fcf-68f8-485a-991a-4dcd946d053e",
     "created_from_game": true,
     "created_at": "2026-04-02T14:29:13.149Z",
     "player_name": "Test Player",
-    "last_ip": "127.0.0.1",
     "ranks": {
       "police": {
         "level": 2,
