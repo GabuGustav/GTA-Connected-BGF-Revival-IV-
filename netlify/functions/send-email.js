@@ -17,10 +17,28 @@ function saveData(data) {
 }
 
 exports.handler = async (event) => {
+    // Add CORS headers
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Content-Type': 'application/json'
+    };
+    
+    // Handle preflight OPTIONS request
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: headers,
+            body: ''
+        };
+    }
+    
     // Only allow POST requests
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405,
+            headers: headers,
             body: JSON.stringify({ error: 'Method not allowed' })
         };
     }
@@ -32,6 +50,7 @@ exports.handler = async (event) => {
         if (!to || !subject || !message) {
             return {
                 statusCode: 400,
+                headers: headers,
                 body: JSON.stringify({ error: 'Missing required fields: to, subject, message' })
             };
         }
@@ -60,6 +79,7 @@ exports.handler = async (event) => {
         if (!users[toUsername]) {
             return {
                 statusCode: 404,
+                headers: headers,
                 body: JSON.stringify({ 
                     error: 'User not found',
                     message: `User '${toUsername}' is not registered in the BGF system`,
@@ -113,6 +133,7 @@ exports.handler = async (event) => {
         
         return {
             statusCode: 200,
+            headers: headers,
             body: JSON.stringify({ 
                 success: true,
                 message: 'Mail sent successfully',
@@ -126,6 +147,7 @@ exports.handler = async (event) => {
         console.error('Function error:', error);
         return {
             statusCode: 500,
+            headers: headers,
             body: JSON.stringify({ 
                 error: 'Internal server error',
                 message: error.message 

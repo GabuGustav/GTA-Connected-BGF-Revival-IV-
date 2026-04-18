@@ -21,6 +21,23 @@ function verifySignature(payload, signature, secret) {
 }
 
 exports.handler = async (event, context) => {
+    // Add CORS headers
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Content-Type': 'application/json'
+    };
+    
+    // Handle preflight OPTIONS request
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: headers,
+            body: ''
+        };
+    }
+    
     // Extract username from pathParameters
     const pathParts = event.path.split('/');
     const username = pathParts[pathParts.length - 1];
@@ -28,12 +45,7 @@ exports.handler = async (event, context) => {
     if (!username || username === 'profile') {
         return {
             statusCode: 400,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                'Content-Type': 'application/json'
-            },
+            headers: headers,
             body: JSON.stringify({ error: 'Username required' })
         };
     }
