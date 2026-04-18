@@ -16,6 +16,8 @@ function findUserByIdentifier(users, identifier) {
     }
 
     const normalized = identifier.toLowerCase();
+    
+    // First try direct username match
     if (users[normalized]) {
         return {
             username: normalized,
@@ -23,9 +25,21 @@ function findUserByIdentifier(users, identifier) {
         };
     }
 
+    // Then try player_name match
     for (const [username, user] of Object.entries(users)) {
         const playerName = String(user.player_name || '').toLowerCase();
         if (playerName && playerName === normalized) {
+            return {
+                username,
+                user
+            };
+        }
+    }
+
+    // Then try gta_account_id match
+    for (const [username, user] of Object.entries(users)) {
+        const gtaAccountId = String(user.gta_account_id || '').toLowerCase();
+        if (gtaAccountId && gtaAccountId === normalized) {
             return {
                 username,
                 user
