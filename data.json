@@ -192,5 +192,81 @@
     ],
     "sent": [],
     "achievements": []
+  },
+  "legwiji": {
+    "password": "$2b$10$mG4GbpBnoyuhyrxOCLYHMO0h3pqNE4qxV2ZEGVVEgK3GU7IlkiQJ.",
+    "gta_linked": true,
+    "gta_account_id": "legwiji",
+    "created_from_game": true,
+    "created_at": "2026-04-19T00:05:15.799Z",
+    "player_name": "Legwigi",
+    "last_ip": "102.208.180.248",
+    "ranks": {
+      "police": {
+        "level": 1,
+        "experience": 0,
+        "next_level_xp": 100,
+        "title": "Recruit",
+        "stats": {
+          "arrests_made": 0,
+          "tickets_issued": 0,
+          "pursuits_completed": 0,
+          "time_in_service": 0
+        }
+      },
+      "medic": {
+        "level": 1,
+        "experience": 0,
+        "next_level_xp": 100,
+        "title": "Trainee Medic",
+        "stats": {
+          "patients_treated": 0,
+          "lives_saved": 0,
+          "response_time_avg": 0,
+          "time_in_service": 0
+        }
+      },
+      "mechanic": {
+        "level": 1,
+        "experience": 0,
+        "next_level_xp": 100,
+        "title": "Apprentice Mechanic",
+        "stats": {
+          "vehicles_repaired": 0,
+          "custom_jobs": 0,
+          "avg_repair_time": 0,
+          "time_in_service": 0
+        }
+      },
+      "civilian": {
+        "level": 1,
+        "experience": 0,
+        "next_level_xp": 100,
+        "title": "Newcomer",
+        "stats": {
+          "missions_completed": 0,
+          "properties_owned": 0,
+          "wealth_earned": 0,
+          "time_played": 0
+        }
+      }
+    },
+    "global_stats": {
+      "total_playtime": 0,
+      "last_active": "2026-04-19T00:05:15.799Z",
+      "achievements_unlocked": 0,
+      "total_achievements": 25
+    },
+    "achievements": [],
+    "inbox": [
+      {
+        "from": "system",
+        "subject": "Welcome to BGF Revival IV!",
+        "message": "Welcome Legwigi! Your account has been created from the GTA server. Start playing to build your rank and unlock achievements!",
+        "date": "2026-04-19T00:05:15.799Z",
+        "read": false
+      }
+    ],
+    "sent": []
   }
 }
