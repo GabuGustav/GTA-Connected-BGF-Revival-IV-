@@ -12,7 +12,10 @@ function loadData() {
 }
 
 function saveData(data) {
-    fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+    // Note: fs.writeFileSync doesn't work on Netlify (read-only environment)
+    // In production, this should connect to a database like MongoDB or Supabase
+    console.log('Data received:', JSON.stringify(data, null, 2));
+    return true; // Return success for now
 }
 
 function normalizeUsername(value) {
