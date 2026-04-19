@@ -66,8 +66,8 @@ exports.handler = async function(event) {
         };
     }
     
-    // Only accept POST requests
-    if (event.httpMethod !== 'POST') {
+    // Change the method check to allow both GET and POST
+    if (event.httpMethod !== 'POST' && event.httpMethod !== 'GET') {
         return {
             statusCode: 405,
             headers: headers,
@@ -76,8 +76,26 @@ exports.handler = async function(event) {
     }
     
     try {
-        // Parse and validate request
-        const { playerUpdates } = JSON.parse(event.body);
+        let payload;
+        
+        // 1. Try to get data from the URL query string (common in GTA bridges)
+        if (event.queryStringParameters && event.queryStringParameters.payload) {
+            payload = JSON.parse(event.queryStringParameters.payload);
+        } 
+        // 2. Fallback to checking the request body
+        else if (event.body) {
+            payload = JSON.parse(event.body);
+        }
+
+        if (!payload || !Array.isArray(payload.playerUpdates)) {
+            return {
+                statusCode: 400,
+                headers: headers,
+                body: JSON.stringify({ error: 'playerUpdates must be an array' })
+            };
+        }
+
+        const { playerUpdates } = payload;
         
         if (!Array.isArray(playerUpdates)) {
             return {
