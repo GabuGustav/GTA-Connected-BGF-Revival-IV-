@@ -48,7 +48,7 @@ function getTitleForLevel(level, jobType) {
     return jobTitles[index];
 }
 
-exports.handler = async (event) => {
+exports.handler = async function(event) {
     // Add CORS headers
     const headers = {
         'Access-Control-Allow-Origin': '*',
