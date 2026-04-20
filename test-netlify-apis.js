@@ -1,7 +1,7 @@
 // Test script for Netlify API endpoints
 // Run this to verify your APIs are working after deployment
 
-const BASE_URL = 'https://your-netlify-site.netlify.app'; // Replace with your actual Netlify URL
+const BASE_URL = 'https://bgfr-gta-connected.netlify.app'; // Your actual Netlify URL
 
 async function testAPIs() {
     console.log('=== Testing Netlify API Endpoints ===\n');
