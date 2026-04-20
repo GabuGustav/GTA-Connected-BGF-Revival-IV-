@@ -1,20 +1,5 @@
 const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
-
-// Data storage (in production, use a real database)
-const dataFile = path.join(__dirname, '..', '..', 'data.json');
-
-function loadData() {
-    if (fs.existsSync(dataFile)) {
-        return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-    }
-    return {};
-}
-
-function saveData(data) {
-    fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
-}
+const { findUserByIdentifier, sendMailMessage } = require('../../supabase-client');
 
 exports.handler = async (event) => {
     // Add CORS headers
@@ -69,41 +54,20 @@ exports.handler = async (event) => {
         const sanitizedSubject = sanitizeHtml(subject);
         const sanitizedMessage = sanitizeHtml(message);
 
-        // Load user data
-        const users = loadData();
-        
         // Normalize recipient username (remove @bgf.connected if present)
         let toUsername = to.replace('@bgf.connected', '').toLowerCase().trim();
         
-        // Check if recipient exists
-        if (!users[toUsername]) {
+        // Check if recipient exists in Supabase
+        const recipientUser = await findUserByIdentifier(toUsername);
+        if (!recipientUser) {
             return {
                 statusCode: 404,
                 headers: headers,
                 body: JSON.stringify({ 
                     error: 'User not found',
-                    message: `User '${toUsername}' is not registered in the BGF system`,
-                    availableUsers: Object.keys(users).map(u => `${u}@bgf.connected`)
+                    message: `User '${toUsername}' is not registered in the BGF system`
                 })
             };
-        }
-        
-        // Initialize mail arrays if they don't exist
-        if (!users[toUsername].inbox) {
-            users[toUsername].inbox = [];
-        }
-        if (!users[toUsername].sent) {
-            users[toUsername].sent = [];
-        }
-        
-        // Also initialize sender's mail arrays if they exist
-        if (from && users[from]) {
-            if (!users[from].inbox) {
-                users[from].inbox = [];
-            }
-            if (!users[from].sent) {
-                users[from].sent = [];
-            }
         }
         
         // Create message object
@@ -111,25 +75,11 @@ exports.handler = async (event) => {
             from: from || 'system',
             to: toUsername,
             subject: sanitizedSubject,
-            message: sanitizedMessage,
-            date: new Date().toISOString(),
-            read: false,
-            id: crypto.randomUUID()
+            message: sanitizedMessage
         };
         
-        // Add to recipient's inbox
-        users[toUsername].inbox.unshift(messageData);
-        
-        // Add to sender's sent items (if sender is a registered user)
-        if (from && users[from]) {
-            users[from].sent.unshift({
-                ...messageData,
-                to: toUsername
-            });
-        }
-        
-        // Save data
-        saveData(users);
+        // Send mail using Supabase
+        const result = await sendMailMessage(messageData);
         
         return {
             statusCode: 200,
@@ -137,7 +87,7 @@ exports.handler = async (event) => {
             body: JSON.stringify({ 
                 success: true,
                 message: 'Mail sent successfully',
-                messageId: messageData.id,
+                messageId: result.inbox.id,
                 recipient: toUsername,
                 subject: sanitizedSubject
             })

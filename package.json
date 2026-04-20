@@ -9,8 +9,10 @@
     "netlify": "netlify dev"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.103.3",
     "bcrypt": "^5.1.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^4.18.2",
     "express-rate-limit": "^6.7.0",
     "node-fetch": "^2.6.7",
