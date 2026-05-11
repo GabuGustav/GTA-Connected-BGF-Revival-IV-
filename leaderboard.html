@@ -361,16 +361,20 @@
 <body>
     <!-- Audio Elements -->
     <audio id="generalMusic" loop>
-        <source src="rahulbhardwaj603-dark-tales-147852.mp3" type="audio/mpeg">
+        <source src="http://localhost:3001/rahulbhardwaj603-dark-tales-147852.mp3" type="audio/mpeg">
+        <source src="http://localhost:3001/rahulbhardwaj603-dark-tales-147852.ogg" type="audio/ogg">
     </audio>
     <audio id="easyMusic" loop>
-        <source src="joelfazhari-dark-mysterious-true-crime-music-loopable-235870.mp3" type="audio/mpeg">
+        <source src="http://localhost:3001/joelfazhari-dark-mysterious-true-crime-music-loopable-235870.mp3" type="audio/mpeg">
+        <source src="http://localhost:3001/joelfazhari-dark-mysterious-true-crime-music-loopable-235870.ogg" type="audio/ogg">
     </audio>
     <audio id="hardMusic" loop>
-        <source src="nickpanekaiassets-synthwave-for-hackerz-217852.mp3" type="audio/mpeg">
+        <source src="http://localhost:3001/nickpanekaiassets-synthwave-for-hackerz-217852.mp3" type="audio/mpeg">
+        <source src="http://localhost:3001/nickpanekaiassets-synthwave-for-hackerz-217852.ogg" type="audio/ogg">
     </audio>
     <audio id="hellMusic" loop>
-        <source src="4379051-hacker-alarm-124960.mp3" type="audio/mpeg">
+        <source src="http://localhost:3001/4379051-hacker-alarm-124960.mp3" type="audio/mpeg">
+        <source src="http://localhost:3001/4379051-hacker-alarm-124960.ogg" type="audio/ogg">
     </audio>
     
     <div class="container">
@@ -385,6 +389,9 @@
                 </a>
                 <a href="leaderboard.html" class="nav-link active">
                     <i class="fas fa-trophy"></i> Leaderboard
+                </a>
+                <a href="downloads.html" class="nav-link">
+                    <i class="fas fa-download"></i> Downloads
                 </a>
             </div>
         </header>
@@ -649,15 +656,6 @@
             loadLeaderboard();
         });
 
-        window.addEventListener('load', () => {
-            // Add a click listener to start music after user interaction
-            document.addEventListener('click', () => {
-                if (!audioManager.isPlaying) {
-                    audioManager.startSequential();
-                }
-            }, { once: true });
-        });
-
         // Audio Manager for Background Music
         class AudioManager {
             constructor() {
@@ -769,27 +767,34 @@
                         
                         // Set up track end listener
                         audio.onended = () => {
-                            this.playNextTrack();
+                            this.playNextRandomTrack();
                         };
                     }, 50);
                 }
             }
             
-            playNextTrack() {
-                this.currentTrackIndex = (this.currentTrackIndex + 1) % this.tracks.length;
+            playNextRandomTrack() {
+                // Generate random index different from current
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * this.tracks.length);
+                } while (randomIndex === this.currentTrackIndex);
+                
+                this.currentTrackIndex = randomIndex;
                 const nextTrack = this.tracks[this.currentTrackIndex];
                 this.playTrack(nextTrack);
-                console.log(`Playing next track: ${nextTrack}`);
+                console.log(`Playing random track: ${nextTrack}`);
             }
             
-            startSequential() {
-                // Start with current track index
+            startRandom() {
+                // Start with random track
+                this.currentTrackIndex = Math.floor(Math.random() * this.tracks.length);
                 const trackName = this.tracks[this.currentTrackIndex];
                 this.playTrack(trackName);
-                console.log(`Starting sequential playback with: ${trackName}`);
+                console.log(`Starting random playback with: ${trackName}`);
             }
             
-            stopSequential() {
+            stopRandom() {
                 this.stopAll();
             }
             
@@ -803,6 +808,18 @@
 
         // Initialize audio manager
         const audioManager = new AudioManager();
+
+        function ensureBackgroundMusicStarted() {
+            if (!audioManager.isPlaying) {
+                audioManager.startRandom();
+            }
+        }
+
+        window.addEventListener('load', () => {
+            document.addEventListener('pointerdown', ensureBackgroundMusicStarted, { once: true });
+            document.addEventListener('keydown', ensureBackgroundMusicStarted, { once: true });
+            document.addEventListener('touchstart', ensureBackgroundMusicStarted, { once: true });
+        });
     </script>
 </body>
 </html>

@@ -851,6 +851,253 @@ app.all('/api/update-achievements', authenticateGTA, (req, res) => {
     });
 });
 
+// Downloads API endpoints
+app.get('/api/downloads/:category', async (req, res) => {
+    const { category } = req.params;
+    
+    // Validate category
+    if (!['downloadable-files', 'misc'].includes(category)) {
+        return res.status(400).json({ error: 'Invalid category' });
+    }
+    
+    const categoryPath = path.join(__dirname, category);
+    
+    try {
+        // Check if directory exists
+        if (!fs.existsSync(categoryPath)) {
+            return res.json([]);
+        }
+        
+        // Read directory contents
+        const files = fs.readdirSync(categoryPath);
+        const fileList = [];
+        
+        for (const file of files) {
+            const filePath = path.join(categoryPath, file);
+            const stats = fs.statSync(filePath);
+            
+            if (stats.isFile()) {
+                fileList.push({
+                    name: file,
+                    size: stats.size,
+                    category: category,
+                    description: getFileDescription(file),
+                    lastModified: stats.mtime
+                });
+            }
+        }
+        
+        // Sort files by name
+        fileList.sort((a, b) => a.name.localeCompare(b.name));
+        
+        res.json(fileList);
+    } catch (error) {
+        console.error('Error reading download directory:', error);
+        res.status(500).json({ error: 'Failed to load files' });
+    }
+});
+
+// Serve download files
+app.get('/downloads/:category/:filename', (req, res) => {
+    const { category, filename } = req.params;
+    
+    // Validate category
+    if (!['downloadable-files', 'misc'].includes(category)) {
+        return res.status(400).json({ error: 'Invalid category' });
+    }
+    
+    const filePath = path.join(__dirname, category, filename);
+    
+    // Security check: ensure file exists and is within the expected directory
+    if (!fs.existsSync(filePath) || !filePath.startsWith(path.join(__dirname, category))) {
+        return res.status(404).json({ error: 'File not found' });
+    }
+    
+    // Set appropriate headers for download
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    
+    // Send file
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.error('Error sending file:', err);
+            if (!res.headersSent) {
+                res.status(500).json({ error: 'Failed to download file' });
+            }
+        } else {
+            console.log(`File downloaded: ${filename} from ${category}`);
+        }
+    });
+});
+
+// Helper function to get file descriptions
+function getFileDescription(filename) {
+    const descriptions = {
+        'bgf-mod-pack.zip': 'Complete BGF Revival IV mod pack with all necessary files',
+        'texture-pack.zip': 'High-quality texture pack for enhanced visuals',
+        'sound-pack.zip': 'Custom sound effects and music pack',
+        'map-pack.zip': 'Additional maps and locations',
+        'vehicle-pack.zip': 'Custom vehicles and car mods',
+        'weapon-pack.zip': 'Enhanced weapons and combat mods',
+        'script-pack.zip': 'Custom scripts and game modes',
+        'config-files.zip': 'Configuration files and settings',
+        'documentation.pdf': 'Complete BGF Revival IV documentation and guides',
+        'installation-guide.pdf': 'Step-by-step installation instructions',
+        'changelog.txt': 'Latest updates and patch notes',
+        'readme.txt': 'Important information and getting started guide'
+    };
+    
+    const lowerFilename = filename.toLowerCase();
+    for (const [key, description] of Object.entries(descriptions)) {
+        if (lowerFilename.includes(key.toLowerCase())) {
+            return description;
+        }
+    }
+    
+    return `Download file: ${filename}`;
+}
+
+function formatFileSize(bytes) {
+    if (!Number.isFinite(bytes) || bytes < 0) return '0 B';
+    if (bytes === 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    const value = bytes / Math.pow(1024, exponent);
+    return `${value.toFixed(exponent === 0 ? 0 : 2)} ${units[exponent]}`;
+}
+
+// ZIP preview endpoint
+app.get('/api/downloads/:category/:filename([^/]+)/preview', async (req, res) => {
+    const { category, filename } = req.params;
+    
+    // Validate category
+    if (!['downloadable-files', 'misc'].includes(category)) {
+        return res.status(400).json({ error: 'Invalid category' });
+    }
+    
+    const filePath = path.join(__dirname, category, filename);
+    
+    // Security check: ensure file exists and is within expected directory
+    if (!fs.existsSync(filePath) || !filePath.startsWith(path.join(__dirname, category))) {
+        return res.status(404).json({ error: 'File not found' });
+    }
+    
+    // Check if file is a ZIP
+    if (!filename.toLowerCase().endsWith('.zip')) {
+        return res.status(400).json({ error: 'File is not a ZIP archive' });
+    }
+    
+    try {
+        const stats = fs.statSync(filePath);
+        
+        // Return basic file information without extracting contents
+        res.json({
+            filename: filename,
+            category: category,
+            files: [{
+                name: filename,
+                size: stats.size,
+                formattedSize: formatFileSize(stats.size),
+                date: stats.mtime.toISOString().split('T')[0],
+                type: 'archive'
+            }],
+            totalFiles: 1,
+            totalSize: stats.size,
+            basic: true,
+            message: 'ZIP preview not available - 7z command not found on server'
+        });
+    } catch (error) {
+        console.error('Error reading ZIP file:', error);
+        res.status(500).json({ error: 'Failed to read ZIP file' });
+    }
+});
+
+// Helper function to parse ZIP listing output
+function parseZipOutput(output, zipFilename) {
+    const files = [];
+    
+    if (process.platform === 'win32') {
+        // Parse 7z output
+        const lines = output.split('\n');
+        let inFileList = false;
+        
+        for (const line of lines) {
+            if (line.includes('----') || line.includes('Path')) {
+                inFileList = true;
+                continue;
+            }
+            
+            if (inFileList && line.trim()) {
+                const parts = line.trim().split(/\s+/);
+                if (parts.length >= 6) {
+                    const filename = parts[5];
+                    const size = parseInt(parts[3]) || 0;
+                    const date = parts[2] + ' ' + parts[3];
+                    
+                    files.push({
+                        name: filename,
+                        size: size,
+                        formattedSize: formatFileSize(size),
+                        date: date,
+                        type: getFileType(filename)
+                    });
+                }
+            }
+        }
+    } else {
+        // Parse unzip output
+        const lines = output.split('\n');
+        for (const line of lines) {
+            if (line.trim() && !line.startsWith('Archive:') && !line.startsWith('Length')) {
+                const match = line.match(/^\s*(\d+)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})\s+(.+)$/);
+                if (match) {
+                    const [, size, date, filename] = match;
+                    files.push({
+                        name: filename.trim(),
+                        size: parseInt(size),
+                        formattedSize: formatFileSize(size),
+                        date: date,
+                        type: getFileType(filename.trim())
+                    });
+                }
+            }
+        }
+    }
+    
+    return files;
+}
+
+// Helper function to get file type
+function getFileType(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    const typeMap = {
+        'txt': 'text',
+        'pdf': 'document',
+        'doc': 'document',
+        'docx': 'document',
+        'jpg': 'image',
+        'jpeg': 'image',
+        'png': 'image',
+        'gif': 'image',
+        'mp3': 'audio',
+        'ogg': 'audio',
+        'wav': 'audio',
+        'mp4': 'video',
+        'avi': 'video',
+        'mkv': 'video',
+        'exe': 'executable',
+        'msi': 'executable',
+        'zip': 'archive',
+        'rar': 'archive',
+        '7z': 'archive',
+        'js': 'code',
+        'html': 'code',
+        'css': 'code',
+        'json': 'data'
+    };
+    return typeMap[ext] || 'unknown';
+}
+
 // Clean expired OTPs every 5 minutes
 setInterval(cleanExpiredOTPs, 5 * 60 * 1000);
 
