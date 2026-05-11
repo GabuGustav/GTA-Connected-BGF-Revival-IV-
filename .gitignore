@@ -72,3 +72,8 @@ jspm_packages/
 
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
+
+# Large ZIP files (GitHub has 100MB file size limit)
+*.zip
+downloadable-files/
+misc/
