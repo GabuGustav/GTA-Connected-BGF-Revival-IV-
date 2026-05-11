@@ -709,20 +709,20 @@
 
     <!-- Audio Elements -->
     <audio id="generalMusic" loop>
-        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/rahulbhardwaj603-dark-tales-147852.mp3" type="audio/mpeg">
-        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/rahulbhardwaj603-dark-tales-147852.ogg" type="audio/ogg">
+        <source src="" type="audio/mpeg">
+        <source src="" type="audio/ogg">
     </audio>
     <audio id="easyMusic" loop>
-        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/joelfazhari-dark-mysterious-true-crime-music-loopable-235870.mp3" type="audio/mpeg">
-        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/joelfazhari-dark-mysterious-true-crime-music-loopable-235870.ogg" type="audio/ogg">
+        <source src="" type="audio/mpeg">
+        <source src="" type="audio/ogg">
     </audio>
     <audio id="hardMusic" loop>
-        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/nickpanekaiassets-synthwave-for-hackerz-217852.mp3" type="audio/mpeg">
-        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/nickpanekaiassets-synthwave-for-hackerz-217852.ogg" type="audio/ogg">
+        <source src="" type="audio/mpeg">
+        <source src="" type="audio/ogg">
     </audio>
     <audio id="hellMusic" loop>
-        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/4379051-hacker-alarm-124960.mp3" type="audio/mpeg">
-        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/4379051-hacker-alarm-124960.ogg" type="audio/ogg">
+        <source src="" type="audio/mpeg">
+        <source src="" type="audio/ogg">
     </audio>
 
     <div class="container">
@@ -909,23 +909,18 @@
         try {
             // Determine if we're in production or development
             const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-            let apiUrl;
-            
-            if (isProduction) {
-                // In production, use static data (no backend needed)
-                apiUrl = null;
-            } else {
-                // In development, use local backend
-                apiUrl = `http://localhost:3001/api/downloads/${category}`;
-            }
+            console.log(`Environment detection: hostname=${window.location.hostname}, isProduction=${isProduction}`);
             
             let files;
             
             if (isProduction) {
-                // Production: Use static file list
+                // Production: Use static file list (no backend needed)
+                console.log('Using production static data');
                 files = getProductionFiles(category);
             } else {
                 // Development: Fetch from backend
+                console.log('Using development backend');
+                const apiUrl = `http://localhost:3001/api/downloads/${category}`;
                 const response = await fetch(apiUrl);
                 files = await response.json();
             }
@@ -1199,6 +1194,36 @@
         // Initialize audio manager
         const audioManager = new AudioManager();
 
+        // Set audio URLs based on environment
+        function setAudioUrls() {
+            const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+            console.log(`Setting audio URLs: hostname=${window.location.hostname}, isProduction=${isProduction}`);
+            
+            const audioFiles = {
+                generalMusic: ['rahulbhardwaj603-dark-tales-147852.mp3', 'rahulbhardwaj603-dark-tales-147852.ogg'],
+                easyMusic: ['joelfazhari-dark-mysterious-true-crime-music-loopable-235870.mp3', 'joelfazhari-dark-mysterious-true-crime-music-loopable-235870.ogg'],
+                hardMusic: ['nickpanekaiassets-synthwave-for-hackerz-217852.mp3', 'nickpanekaiassets-synthwave-for-hackerz-217852.ogg'],
+                hellMusic: ['4379051-hacker-alarm-124960.mp3', '4379051-hacker-alarm-124960.ogg']
+            };
+            
+            for (const [audioId, files] of Object.entries(audioFiles)) {
+                const audioElement = document.getElementById(audioId);
+                if (audioElement) {
+                    const sources = audioElement.querySelectorAll('source');
+                    if (isProduction) {
+                        // Production: Use GitHub Releases URLs
+                        sources[0].src = `https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/${files[0]}`;
+                        sources[1].src = `https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/${files[1]}`;
+                    } else {
+                        // Development: Use localhost URLs
+                        sources[0].src = `http://localhost:3001/${files[0]}`;
+                        sources[1].src = `http://localhost:3001/${files[1]}`;
+                    }
+                    console.log(`Set ${audioId} URLs:`, sources[0].src, sources[1].src);
+                }
+            }
+        }
+
         // Production file data (no backend needed)
         function getProductionFiles(category) {
             if (category === 'downloadable-files') {
@@ -1273,6 +1298,9 @@
         }
 
         window.addEventListener('load', () => {
+            // Set audio URLs based on environment
+            setAudioUrls();
+            
             document.addEventListener('pointerdown', ensureBackgroundMusicStarted, { once: true });
             document.addEventListener('keydown', ensureBackgroundMusicStarted, { once: true });
             document.addEventListener('touchstart', ensureBackgroundMusicStarted, { once: true });
