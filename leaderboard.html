@@ -361,20 +361,16 @@
 <body>
     <!-- Audio Elements -->
     <audio id="generalMusic" loop>
-        <source src="http://localhost:3001/rahulbhardwaj603-dark-tales-147852.mp3" type="audio/mpeg">
-        <source src="http://localhost:3001/rahulbhardwaj603-dark-tales-147852.ogg" type="audio/ogg">
+        <source src="rahulbhardwaj603-dark-tales-147852.mp3" type="audio/mpeg">
     </audio>
     <audio id="easyMusic" loop>
-        <source src="http://localhost:3001/joelfazhari-dark-mysterious-true-crime-music-loopable-235870.mp3" type="audio/mpeg">
-        <source src="http://localhost:3001/joelfazhari-dark-mysterious-true-crime-music-loopable-235870.ogg" type="audio/ogg">
+        <source src="joelfazhari-dark-mysterious-true-crime-music-loopable-235870.mp3" type="audio/mpeg">
     </audio>
     <audio id="hardMusic" loop>
-        <source src="http://localhost:3001/nickpanekaiassets-synthwave-for-hackerz-217852.mp3" type="audio/mpeg">
-        <source src="http://localhost:3001/nickpanekaiassets-synthwave-for-hackerz-217852.ogg" type="audio/ogg">
+        <source src="nickpanekaiassets-synthwave-for-hackerz-217852.mp3" type="audio/mpeg">
     </audio>
     <audio id="hellMusic" loop>
-        <source src="http://localhost:3001/4379051-hacker-alarm-124960.mp3" type="audio/mpeg">
-        <source src="http://localhost:3001/4379051-hacker-alarm-124960.ogg" type="audio/ogg">
+        <source src="4379051-hacker-alarm-124960.mp3" type="audio/mpeg">
     </audio>
     
     <div class="container">
@@ -452,9 +448,10 @@
     </div>
 
     <script>
-        const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-            ? 'http://127.0.0.1:3001/api'
-            : '/.netlify/functions';
+        // Detect environment: use local API server when running locally,
+        // otherwise use Netlify Functions (no trailing slash, job passed as query param)
+        const IS_LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        const API_BASE = IS_LOCAL ? 'http://127.0.0.1:3001/api' : '/.netlify/functions';
         
         let currentJob = 'civilian';
         let currentPage = 1;
@@ -478,14 +475,25 @@
             hideLeaderboard();
 
             try {
-                const response = await fetch(`${API_BASE}/leaderboard/${currentJob}?limit=${currentLimit}&offset=${(currentPage - 1) * currentLimit}`);
+                // Local dev uses path-based routing (/api/leaderboard/:job)
+                // Netlify uses query-param routing (/.netlify/functions/leaderboard?job=:job)
+                const offset = (currentPage - 1) * currentLimit;
+                const url = IS_LOCAL
+                    ? `${API_BASE}/leaderboard/${currentJob}?limit=${currentLimit}&offset=${offset}`
+                    : `${API_BASE}/leaderboard?job=${currentJob}&limit=${currentLimit}&offset=${offset}`;
+
+                const response = await fetch(url);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const data = await response.json();
-                
+                const raw = await response.json();
+
+                // Normalise the response — the Netlify function returns { players: [...], total: N }
+                // while the local API returns { leaderboard: [...], totalPages, currentPage, totalPlayers }
+                const data = normaliseResponse(raw);
+
                 totalPages = data.totalPages;
                 currentPage = data.currentPage;
 
@@ -499,6 +507,30 @@
             }
         }
 
+        // Normalise both API shapes into a single consistent object
+        function normaliseResponse(raw) {
+            // Netlify function shape: { success, players: [{username, playerName, rank:{level,experience,title,...}}], total }
+            if (Array.isArray(raw.players)) {
+                const players = raw.players.map(p => ({
+                    player_name: p.playerName || p.username || 'Unknown',
+                    level:       p.rank ? p.rank.level       : (p.level       || 0),
+                    experience:  p.rank ? p.rank.experience  : (p.experience  || 0),
+                    title:       p.rank ? p.rank.title       : (p.title       || ''),
+                    last_active: p.last_active || null
+                }));
+                const total = raw.total || players.length;
+                const pages = Math.max(1, Math.ceil(total / currentLimit));
+                return {
+                    leaderboard:  players,
+                    totalPlayers: total,
+                    totalPages:   pages,
+                    currentPage:  currentPage
+                };
+            }
+            // Local API shape already matches — return as-is
+            return raw;
+        }
+
         function displayLeaderboard(data) {
             // Update stats summary
             displayStatsSummary(data);
@@ -507,7 +539,7 @@
             const rowsContainer = document.getElementById('leaderboardRows');
             rowsContainer.innerHTML = '';
 
-            if (data.leaderboard.length === 0) {
+            if (!data.leaderboard || data.leaderboard.length === 0) {
                 rowsContainer.innerHTML = '<div style="text-align: center; padding: 20px;">No players found for this job type</div>';
                 showLeaderboard();
                 return;
@@ -524,16 +556,16 @@
         function displayStatsSummary(data) {
             const summaryContainer = document.getElementById('statsSummary');
             
-            // Calculate some stats
-            const totalPlayers = data.totalPlayers;
-            const avgLevel = data.leaderboard.length > 0 
-                ? (data.leaderboard.reduce((sum, p) => sum + p.level, 0) / data.leaderboard.length).toFixed(1)
+            const leaderboard = data.leaderboard || [];
+            const totalPlayers = data.totalPlayers || leaderboard.length;
+            const avgLevel = leaderboard.length > 0 
+                ? (leaderboard.reduce((sum, p) => sum + (p.level || 0), 0) / leaderboard.length).toFixed(1)
                 : 0;
-            const avgExperience = data.leaderboard.length > 0
-                ? Math.floor(data.leaderboard.reduce((sum, p) => sum + p.experience, 0) / data.leaderboard.length)
+            const avgExperience = leaderboard.length > 0
+                ? Math.floor(leaderboard.reduce((sum, p) => sum + (p.experience || 0), 0) / leaderboard.length)
                 : 0;
             
-            const topPlayer = data.leaderboard[0];
+            const topPlayer = leaderboard[0];
 
             summaryContainer.innerHTML = `
                 <div class="stat-card">
@@ -568,8 +600,8 @@
                 <div class="rank ${rankClass}">#${rank}</div>
                 <div class="player-name">${player.player_name}</div>
                 <div class="level-badge">${player.level}</div>
-                <div class="experience">${player.experience.toLocaleString()} XP</div>
-                <div class="job-title">${player.title}</div>
+                <div class="experience">${(player.experience || 0).toLocaleString()} XP</div>
+                <div class="job-title">${player.title || ''}</div>
                 <div class="last-active">${lastActive}</div>
             `;
 

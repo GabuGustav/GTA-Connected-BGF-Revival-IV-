@@ -19,16 +19,18 @@ exports.handler = async (event) => {
         };
     }
 
-    // Extract jobType from pathParameters
-    const pathParts = event.path.split('/');
-    const jobType = pathParts[pathParts.length - 1];
-    const { limit = 50, offset = 0 } = event.queryStringParameters || {};
+    // Extract jobType: prefer ?job= query param (Netlify), fall back to last path segment (local dev)
+    const queryParams = event.queryStringParameters || {};
+    const pathParts = (event.path || '').split('/');
+    const pathJobType = pathParts[pathParts.length - 1];
+    const jobType = queryParams.job || (pathJobType !== 'leaderboard' ? pathJobType : null);
+    const { limit = 50, offset = 0 } = queryParams;
 
-    if (!jobType || jobType === 'leaderboard') {
+    if (!jobType) {
         return {
             statusCode: 400,
             headers: headers,
-            body: JSON.stringify({ error: 'Job type required' })
+            body: JSON.stringify({ error: 'Job type required. Pass ?job=police|medic|mechanic|civilian' })
         };
     }
 

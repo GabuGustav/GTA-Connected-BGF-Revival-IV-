@@ -1,16 +1,14 @@
 [build]
   command = "echo 'No build needed'"
   functions = "netlify/functions"
-  
-[dev]
-  command = "netlify dev"
 
-[dependencies]
-  netlify-cli = "^17.0.0"
+# Exclude Netlify function paths from the catch-all SPA redirect
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
-[dev-dependencies]
-  netlify-cli = "^17.0.0"
-
+# SPA fallback: serve index.html for all other routes
 [[redirects]]
   from = "/*"
   to = "/index.html"
