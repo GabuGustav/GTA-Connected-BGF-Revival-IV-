@@ -823,6 +823,80 @@
     </div>
 
     <script>
+        const RELEASE_BASE_URL = 'https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/download/OG_files';
+        const LOCAL_API_BASE_URL = 'http://localhost:3001';
+
+        function getRuntimeConfig() {
+            const hostname = window.location.hostname;
+            const query = new URLSearchParams(window.location.search);
+            const forcedMode = query.get('source'); // local | netlify | static
+
+            const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+            const isNetlifyHost = hostname.includes('netlify.app');
+            const netlifyFunctionsBase = `${window.location.origin}/.netlify/functions`;
+
+            if (forcedMode === 'local') {
+                return {
+                    mode: 'local',
+                    apiBase: LOCAL_API_BASE_URL,
+                    releaseBase: RELEASE_BASE_URL
+                };
+            }
+
+            if (forcedMode === 'netlify') {
+                return {
+                    mode: 'netlify',
+                    apiBase: netlifyFunctionsBase,
+                    releaseBase: RELEASE_BASE_URL
+                };
+            }
+
+            if (forcedMode === 'static') {
+                return {
+                    mode: 'static',
+                    apiBase: null,
+                    releaseBase: RELEASE_BASE_URL
+                };
+            }
+
+            if (isLocalHost) {
+                return {
+                    mode: 'local',
+                    apiBase: LOCAL_API_BASE_URL,
+                    releaseBase: RELEASE_BASE_URL
+                };
+            }
+
+            if (isNetlifyHost) {
+                return {
+                    mode: 'netlify',
+                    apiBase: netlifyFunctionsBase,
+                    releaseBase: RELEASE_BASE_URL
+                };
+            }
+
+            return {
+                mode: 'static',
+                apiBase: null,
+                releaseBase: RELEASE_BASE_URL
+            };
+        }
+
+        function buildApiUrl(config, path) {
+            if (!config.apiBase) return null;
+            if (config.mode === 'netlify') {
+                return `${config.apiBase}/${path}`;
+            }
+            return `${config.apiBase}/api/${path}`;
+        }
+
+        function buildDownloadUrl(config, category, filename) {
+            if (config.mode === 'static') {
+                return `${config.releaseBase}/${encodeURIComponent(filename)}`;
+            }
+            return `${config.apiBase}/downloads/${category}/${encodeURIComponent(filename)}`;
+        }
+
         // Tab switching functionality
         function switchTab(tabName, buttonElement) {
             // Remove active class from all tabs and buttons
@@ -855,116 +929,100 @@
         async function loadFiles(category) {
             console.log(`Loading files for category: ${category}`);
             
-            // Wait a bit for DOM to be ready
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            // Map category to correct element IDs
             const idMap = {
                 'downloadable-files': 'downloadable',
                 'misc': 'misc'
             };
-            
+
             const elementPrefix = idMap[category];
             if (!elementPrefix) {
                 console.error(`Unknown category: ${category}`);
                 return;
             }
-            
-            // Find tab pane first, then search within it
+
             const tabPane = document.getElementById(category);
-            let loadingElement, gridElement, emptyElement;
-            
-            if (tabPane) {
-                // Search within tab pane
-                loadingElement = tabPane.querySelector('.loading');
-                gridElement = tabPane.querySelector('.file-grid');
-                emptyElement = tabPane.querySelector('.empty-state');
-            } else {
-                // Fallback to global search with correct IDs
-                loadingElement = document.querySelector(`#${elementPrefix}-loading`);
-                gridElement = document.querySelector(`#${elementPrefix}-grid`);
-                emptyElement = document.querySelector(`#${elementPrefix}-empty`);
-            }
+            const loadingElement = document.getElementById(`${elementPrefix}-loading`);
+            const gridElement = document.getElementById(`${elementPrefix}-grid`);
+            const emptyElement = document.getElementById(`${elementPrefix}-empty`);
 
-        // Wait a bit for the tab to become visible, then load files
-        setTimeout(() => {
-            loadFiles(tabName);
-        }, 50);
-    }
-
-    // Load files from API
-    async function loadFiles(category) {
-        console.log(`Loading files for category: ${category}`);
-        
-        const loadingElement = document.getElementById(`${category}-loading`);
-        const gridElement = document.getElementById(`${category}-grid`);
-        const emptyElement = document.getElementById(`${category}-empty`);
-        const tabPane = document.getElementById(`${category}-tab`);
-        
-        // Show loading state
-        if (loadingElement) loadingElement.style.display = 'block';
-        if (gridElement) gridElement.style.display = 'none';
-        if (emptyElement) emptyElement.style.display = 'none';
-        
-        try {
-            // Determine if we're in production or development
-            const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-            console.log(`Environment detection: hostname=${window.location.hostname}, isProduction=${isProduction}`);
-            
-            let files;
-            
-            if (isProduction) {
-                // Production: Use static file list (no backend needed)
-                console.log('Using production static data');
-                files = getProductionFiles(category);
-            } else {
-                // Development: Fetch from backend
-                console.log('Using development backend');
-                const apiUrl = `http://localhost:3001/api/downloads/${category}`;
-                const response = await fetch(apiUrl);
-                files = await response.json();
+            if (!gridElement) {
+                console.error(`Grid element not found for category: ${category}`);
+                return;
             }
             
-            if (loadingElement) loadingElement.style.display = 'none';
+            // Show loading state
+            if (loadingElement) loadingElement.style.display = 'block';
+            gridElement.style.display = 'none';
+            if (emptyElement) emptyElement.style.display = 'none';
             
-            if (files.length === 0) {
-                if (emptyElement) emptyElement.style.display = 'block';
-            } else {
-                if (gridElement) gridElement.style.display = 'grid';
-                renderFiles(files, gridElement);
-            }
-        } catch (error) {
-            console.error('Error loading files:', error);
-            if (loadingElement) loadingElement.style.display = 'none';
-            if (emptyElement) {
-                emptyElement.style.display = 'block';
-                emptyElement.innerHTML = `
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>Error loading files</h3>
-                    <p>Please try again later</p>
-                `;
+            try {
+                const runtime = getRuntimeConfig();
+                console.log(`Environment detection: hostname=${window.location.hostname}, mode=${runtime.mode}`);
+                
+                let files;
+                
+                if (runtime.mode === 'static') {
+                    // Static hosting: use bundled file list and release asset URLs
+                    console.log('Using static production data');
+                    files = getProductionFiles(category);
+                } else {
+                    // Local or Netlify functions: fetch live metadata
+                    console.log(`Using API backend: ${runtime.mode}`);
+                    const apiUrl = buildApiUrl(runtime, `downloads/${category}`);
+                    const response = await fetch(apiUrl);
+                    files = await response.json();
+                }
+                
+                if (loadingElement) loadingElement.style.display = 'none';
+                
+                if (files.length === 0) {
+                    if (emptyElement) emptyElement.style.display = 'block';
+                } else {
+                    gridElement.style.display = 'grid';
+                    renderFiles(files, gridElement);
+                }
+            } catch (error) {
+                console.error('Error loading files:', error);
+                if (loadingElement) loadingElement.style.display = 'none';
+                if (emptyElement) {
+                    emptyElement.style.display = 'block';
+                    emptyElement.innerHTML = `
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error loading files</h3>
+                        <p>Please try again later</p>
+                    `;
+                }
             }
         }
-    }
 
     // Render files in the grid
     function renderFiles(files, gridElement) {
-        gridElement.innerHTML = files.map(file => createFileItem(file)).join('');
+        if (!gridElement) {
+            console.error('renderFiles called without a valid grid element');
+            // Attempt to create a fallback container inside the main .container
+            const container = document.querySelector('.container');
+            if (container) {
+                const fallback = document.createElement('div');
+                fallback.className = 'file-grid fallback-grid';
+                container.appendChild(fallback);
+                gridElement = fallback;
+            } else {
+                // If even container is missing, abort safely
+                return;
+            }
+        }
+        // Safe guard against unexpected element types
+        if (typeof gridElement.innerHTML !== 'undefined') {
+            gridElement.innerHTML = files.map(file => createFileItem(file)).join('');
+        } else {
+            console.error('renderFiles: gridElement does not support innerHTML');
+        }
     }
 
     function createFileItem(file) {
-        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-        let downloadUrl;
-        
-        if (isProduction) {
-            // Production: Use GitHub Releases URL
-            downloadUrl = `https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/${file.name}`;
-        } else {
-            // Development: Use local server
-            downloadUrl = file.downloadUrl || `http://localhost:3001/downloads/${file.category}/${encodeURIComponent(file.name)}`;
-        }
-        
-        const cloudBadge = isProduction ? '<span class="cloud-badge"><i class="fas fa-cloud"></i> Cloud</span>' : '';
+        const runtime = getRuntimeConfig();
+        const downloadUrl = file.downloadUrl || buildDownloadUrl(runtime, file.category, file.name);
+        const cloudBadge = runtime.mode === 'static' ? '<span class="cloud-badge"><i class="fas fa-cloud"></i> Cloud</span>' : '';
         
         return `
             <div class="file-item">
@@ -1196,8 +1254,8 @@
 
         // Set audio URLs based on environment
         function setAudioUrls() {
-            const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-            console.log(`Setting audio URLs: hostname=${window.location.hostname}, isProduction=${isProduction}`);
+            const runtime = getRuntimeConfig();
+            console.log(`Setting audio URLs: hostname=${window.location.hostname}, mode=${runtime.mode}`);
             
             const audioFiles = {
                 generalMusic: ['rahulbhardwaj603-dark-tales-147852.mp3', 'rahulbhardwaj603-dark-tales-147852.ogg'],
@@ -1210,14 +1268,12 @@
                 const audioElement = document.getElementById(audioId);
                 if (audioElement) {
                     const sources = audioElement.querySelectorAll('source');
-                    if (isProduction) {
-                        // Production: Use GitHub Releases URLs
-                        sources[0].src = `https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/${files[0]}`;
-                        sources[1].src = `https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/${files[1]}`;
+                    if (runtime.mode === 'static') {
+                        sources[0].src = `${runtime.releaseBase}/${encodeURIComponent(files[0])}`;
+                        sources[1].src = `${runtime.releaseBase}/${encodeURIComponent(files[1])}`;
                     } else {
-                        // Development: Use localhost URLs
-                        sources[0].src = `http://localhost:3001/${files[0]}`;
-                        sources[1].src = `http://localhost:3001/${files[1]}`;
+                        sources[0].src = `${runtime.apiBase}/${encodeURIComponent(files[0])}`;
+                        sources[1].src = `${runtime.apiBase}/${encodeURIComponent(files[1])}`;
                     }
                     console.log(`Set ${audioId} URLs:`, sources[0].src, sources[1].src);
                 }
@@ -1323,7 +1379,12 @@
 
             try {
                 const encodedFilename = encodeURIComponent(filename);
-                const response = await fetch(`http://localhost:3001/api/downloads/${category}/${encodedFilename}/preview`);
+                const runtime = getRuntimeConfig();
+                const previewUrl = buildApiUrl(runtime, `downloads/${category}/${encodedFilename}/preview`);
+                if (!previewUrl) {
+                    throw new Error('Archive preview is unavailable in static mode');
+                }
+                const response = await fetch(previewUrl);
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
@@ -1470,7 +1531,8 @@
 
         function downloadFullArchive() {
             if (!currentZipData) return;
-            const downloadUrl = `http://localhost:3001/downloads/${currentZipData.category}/${encodeURIComponent(currentZipData.filename)}`;
+            const runtime = getRuntimeConfig();
+            const downloadUrl = buildDownloadUrl(runtime, currentZipData.category, currentZipData.filename);
             const link = document.createElement('a');
             link.href = downloadUrl;
             link.download = currentZipData.filename;
