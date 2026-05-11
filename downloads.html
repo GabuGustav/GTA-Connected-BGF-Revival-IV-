@@ -961,17 +961,28 @@
                 
                 let files;
                 
-                if (runtime.mode === 'static') {
-                    // Static hosting: use bundled file list and release asset URLs
-                    console.log('Using static production data');
-                    files = getProductionFiles(category);
-                } else {
-                    // Local or Netlify functions: fetch live metadata
-                    console.log(`Using API backend: ${runtime.mode}`);
-                    const apiUrl = buildApiUrl(runtime, `downloads/${category}`);
-                    const response = await fetch(apiUrl);
-                    files = await response.json();
-                }
+if (runtime.mode === 'static') {
+    // Static hosting: use bundled file list and release asset URLs
+    console.log('Using static production data');
+    files = getProductionFiles(category);
+} else {
+    // Local or Netlify functions: fetch live metadata
+    console.log(`Using API backend: ${runtime.mode}`);
+    const apiUrl = buildApiUrl(runtime, `downloads/${category}`);
+    try {
+        const response = await fetch(apiUrl);
+        const contentType = response.headers.get('content-type');
+        if (response.ok && contentType && contentType.includes('application/json')) {
+            files = await response.json();
+        } else {
+            console.warn('API response not JSON or error, falling back to static data');
+            files = getProductionFiles(category);
+        }
+    } catch (e) {
+        console.error('Fetch error, falling back to static data:', e);
+        files = getProductionFiles(category);
+    }
+}
                 
                 if (loadingElement) loadingElement.style.display = 'none';
                 
@@ -1264,20 +1275,22 @@
                 hellMusic: ['4379051-hacker-alarm-124960.mp3', '4379051-hacker-alarm-124960.ogg']
             };
             
-            for (const [audioId, files] of Object.entries(audioFiles)) {
-                const audioElement = document.getElementById(audioId);
-                if (audioElement) {
-                    const sources = audioElement.querySelectorAll('source');
-                    if (runtime.mode === 'static') {
-                        sources[0].src = `${runtime.releaseBase}/${encodeURIComponent(files[0])}`;
-                        sources[1].src = `${runtime.releaseBase}/${encodeURIComponent(files[1])}`;
-                    } else {
-                        sources[0].src = `${runtime.apiBase}/${encodeURIComponent(files[0])}`;
-                        sources[1].src = `${runtime.apiBase}/${encodeURIComponent(files[1])}`;
-                    }
-                    console.log(`Set ${audioId} URLs:`, sources[0].src, sources[1].src);
+        for (const [audioId, files] of Object.entries(audioFiles)) {
+            const audioElement = document.getElementById(audioId);
+            if (audioElement) {
+                const sources = audioElement.querySelectorAll('source');
+                if (runtime.mode === 'static' || runtime.mode === 'netlify') {
+                    // Serve audio directly from release assets in static or Netlify mode
+                    sources[0].src = `${runtime.releaseBase}/${encodeURIComponent(files[0])}`;
+                    sources[1].src = `${runtime.releaseBase}/${encodeURIComponent(files[1])}`;
+                } else {
+                    // Use API base for local development
+                    sources[0].src = `${runtime.apiBase}/${encodeURIComponent(files[0])}`;
+                    sources[1].src = `${runtime.apiBase}/${encodeURIComponent(files[1])}`;
                 }
+                console.log(`Set ${audioId} URLs:`, sources[0].src, sources[1].src);
             }
+        }
         }
 
         // Production file data (no backend needed)
