@@ -860,39 +860,80 @@ app.get('/api/downloads/:category', async (req, res) => {
         return res.status(400).json({ error: 'Invalid category' });
     }
     
-    const categoryPath = path.join(__dirname, category);
-    
     try {
-        // Check if directory exists
-        if (!fs.existsSync(categoryPath)) {
-            return res.json([]);
-        }
-        
-        // Read directory contents
-        const files = fs.readdirSync(categoryPath);
-        const fileList = [];
-        
-        for (const file of files) {
-            const filePath = path.join(categoryPath, file);
-            const stats = fs.statSync(filePath);
-            
-            if (stats.isFile()) {
-                fileList.push({
-                    name: file,
-                    size: stats.size,
-                    category: category,
-                    description: getFileDescription(file),
-                    lastModified: stats.mtime
-                });
+        // For production, return static list of files with cloud URLs
+        const fileList = [
+            {
+                name: 'componentpeds.img.zip',
+                size: 1090729219,
+                category: category,
+                description: getFileDescription('componentpeds.img.zip'),
+                lastModified: new Date('2026-05-10T09:37:06.758Z'),
+                downloadUrl: getCloudDownloadUrl('componentpeds.img.zip'),
+                cloudHosted: true
+            },
+            {
+                name: 'pedprops.img.zip',
+                size: 48339238,
+                category: category,
+                description: getFileDescription('pedprops.img.zip'),
+                lastModified: new Date('2026-05-10T09:37:35.736Z'),
+                downloadUrl: getCloudDownloadUrl('pedprops.img.zip'),
+                cloudHosted: true
+            },
+            {
+                name: 'radar.img.zip',
+                size: 1309807,
+                category: category,
+                description: getFileDescription('radar.img.zip'),
+                lastModified: new Date('2026-05-10T09:37:42.660Z'),
+                downloadUrl: getCloudDownloadUrl('radar.img.zip'),
+                cloudHosted: true
+            },
+            {
+                name: 'Vehicle.img.zip',
+                size: 138258916,
+                category: category,
+                description: getFileDescription('Vehicle.img.zip'),
+                lastModified: new Date('2026-05-10T09:37:52.628Z'),
+                downloadUrl: getCloudDownloadUrl('Vehicle.img.zip'),
+                cloudHosted: true
+            },
+            {
+                name: 'weapons.img.zip',
+                size: 5366198,
+                category: category,
+                description: getFileDescription('weapons.img.zip'),
+                lastModified: new Date('2026-05-10T09:38:11.956Z'),
+                downloadUrl: getCloudDownloadUrl('weapons.img.zip'),
+                cloudHosted: true
+            },
+            {
+                name: 'weapons_e1.img.zip',
+                size: 10854730,
+                category: category,
+                description: getFileDescription('weapons_e1.img.zip'),
+                lastModified: new Date('2026-05-10T09:37:59.451Z'),
+                downloadUrl: getCloudDownloadUrl('weapons_e1.img.zip'),
+                cloudHosted: true
+            },
+            {
+                name: 'weapons_e2.img.zip',
+                size: 3766619,
+                category: category,
+                description: getFileDescription('weapons_e2.img.zip'),
+                lastModified: new Date('2026-05-10T09:38:05.270Z'),
+                downloadUrl: getCloudDownloadUrl('weapons_e2.img.zip'),
+                cloudHosted: true
             }
-        }
+        ];
         
         // Sort files by name
         fileList.sort((a, b) => a.name.localeCompare(b.name));
         
         res.json(fileList);
     } catch (error) {
-        console.error('Error reading download directory:', error);
+        console.error('Error loading download files:', error);
         res.status(500).json({ error: 'Failed to load files' });
     }
 });
@@ -933,18 +974,13 @@ app.get('/downloads/:category/:filename', (req, res) => {
 // Helper function to get file descriptions
 function getFileDescription(filename) {
     const descriptions = {
-        'bgf-mod-pack.zip': 'Complete BGF Revival IV mod pack with all necessary files',
-        'texture-pack.zip': 'High-quality texture pack for enhanced visuals',
-        'sound-pack.zip': 'Custom sound effects and music pack',
-        'map-pack.zip': 'Additional maps and locations',
-        'vehicle-pack.zip': 'Custom vehicles and car mods',
-        'weapon-pack.zip': 'Enhanced weapons and combat mods',
-        'script-pack.zip': 'Custom scripts and game modes',
-        'config-files.zip': 'Configuration files and settings',
-        'documentation.pdf': 'Complete BGF Revival IV documentation and guides',
-        'installation-guide.pdf': 'Step-by-step installation instructions',
-        'changelog.txt': 'Latest updates and patch notes',
-        'readme.txt': 'Important information and getting started guide'
+        'componentpeds.img.zip': 'Character and pedestrian models for GTA IV',
+        'pedprops.img.zip': 'Pedestrian props and accessories',
+        'radar.img.zip': 'Radar and minimap textures',
+        'Vehicle.img.zip': 'Vehicle models and textures',
+        'weapons.img.zip': 'Weapon models and textures',
+        'weapons_e1.img.zip': 'Enhanced weapons pack 1',
+        'weapons_e2.img.zip': 'Enhanced weapons pack 2'
     };
     
     const lowerFilename = filename.toLowerCase();
@@ -955,6 +991,14 @@ function getFileDescription(filename) {
     }
     
     return `Download file: ${filename}`;
+}
+
+// Helper function to get cloud download URL
+function getCloudDownloadUrl(filename) {
+    const githubRepo = 'GabuGustav/GTA-Connected-BGF-Revival-IV-';
+    const baseUrl = `https://github.com/${githubRepo}/releases/latest/download`;
+    
+    return `${baseUrl}/${filename}`;
 }
 
 function formatFileSize(bytes) {

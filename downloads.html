@@ -505,6 +505,27 @@
             flex: 1;
         }
 
+        .file-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .file-meta .size, .file-meta .date {
+            color: #888888;
+            font-size: 0.9rem;
+        }
+
+        .cloud-badge {
+            background: rgba(0, 255, 159, 0.2);
+            color: #00ff9f;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 10px;
+            border: 1px solid rgba(0, 255, 159, 0.3);
+        }
+
         .file-list-name {
             color: #ffffff;
             font-weight: bold;
@@ -914,26 +935,38 @@
 
         // Render files in the grid
         function renderFiles(files, gridElement) {
-            gridElement.innerHTML = files.map(file => `
+            gridElement.innerHTML = files.map(file => createFileItem(file)).join('');
+        }
+
+        function createFileItem(file) {
+            const downloadUrl = file.downloadUrl || `http://localhost:3001/downloads/${file.category}/${encodeURIComponent(file.name)}`;
+            const cloudBadge = file.cloudHosted ? '<span class="cloud-badge"><i class="fas fa-cloud"></i> Cloud</span>' : '';
+            
+            return `
                 <div class="file-item">
                     <div class="file-icon">
                         <i class="fas ${getFileIcon(file.name)}"></i>
                     </div>
-                    <div class="file-name">${file.name}</div>
-                    <div class="file-size">${formatFileSize(file.size)}</div>
-                    <div class="file-description">${file.description || 'No description available'}</div>
+                    <div class="file-info">
+                        <h3>${file.name} ${cloudBadge}</h3>
+                        <p>${file.description}</p>
+                        <div class="file-meta">
+                            <span class="size">${formatFileSize(file.size)}</span>
+                            <span class="date">${new Date(file.lastModified).toLocaleDateString()}</span>
+                        </div>
+                    </div>
                     <div class="file-actions">
-                        ${file.name.toLowerCase().endsWith('.zip') ? 
-                            `<button class="preview-btn" onclick="showZipPreview('${file.category}', '${file.name}')">
+                        ${file.name.toLowerCase().endsWith('.zip') ? `
+                            <button class="preview-btn" onclick="showZipPreview('${file.category}', '${file.name}')">
                                 <i class="fas fa-eye"></i> Preview
-                            </button>` : ''
-                        }
-                        <a href="http://localhost:3001/downloads/${file.category}/${file.name}" class="download-btn" download>
+                            </button>
+                        ` : ''}
+                        <a href="${downloadUrl}" class="download-btn" download>
                             <i class="fas fa-download"></i> Download
                         </a>
                     </div>
                 </div>
-            `).join('');
+            `;
         }
 
         // Get file icon based on extension
