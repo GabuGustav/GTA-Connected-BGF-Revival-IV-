@@ -709,20 +709,20 @@
 
     <!-- Audio Elements -->
     <audio id="generalMusic" loop>
-        <source src="http://localhost:3001/rahulbhardwaj603-dark-tales-147852.mp3" type="audio/mpeg">
-        <source src="http://localhost:3001/rahulbhardwaj603-dark-tales-147852.ogg" type="audio/ogg">
+        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/rahulbhardwaj603-dark-tales-147852.mp3" type="audio/mpeg">
+        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/rahulbhardwaj603-dark-tales-147852.ogg" type="audio/ogg">
     </audio>
     <audio id="easyMusic" loop>
-        <source src="http://localhost:3001/joelfazhari-dark-mysterious-true-crime-music-loopable-235870.mp3" type="audio/mpeg">
-        <source src="http://localhost:3001/joelfazhari-dark-mysterious-true-crime-music-loopable-235870.ogg" type="audio/ogg">
+        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/joelfazhari-dark-mysterious-true-crime-music-loopable-235870.mp3" type="audio/mpeg">
+        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/joelfazhari-dark-mysterious-true-crime-music-loopable-235870.ogg" type="audio/ogg">
     </audio>
     <audio id="hardMusic" loop>
-        <source src="http://localhost:3001/nickpanekaiassets-synthwave-for-hackerz-217852.mp3" type="audio/mpeg">
-        <source src="http://localhost:3001/nickpanekaiassets-synthwave-for-hackerz-217852.ogg" type="audio/ogg">
+        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/nickpanekaiassets-synthwave-for-hackerz-217852.mp3" type="audio/mpeg">
+        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/nickpanekaiassets-synthwave-for-hackerz-217852.ogg" type="audio/ogg">
     </audio>
     <audio id="hellMusic" loop>
-        <source src="http://localhost:3001/4379051-hacker-alarm-124960.mp3" type="audio/mpeg">
-        <source src="http://localhost:3001/4379051-hacker-alarm-124960.ogg" type="audio/ogg">
+        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/4379051-hacker-alarm-124960.mp3" type="audio/mpeg">
+        <source src="https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/4379051-hacker-alarm-124960.ogg" type="audio/ogg">
     </audio>
 
     <div class="container">
@@ -886,45 +886,63 @@
                 emptyElement = document.querySelector(`#${elementPrefix}-empty`);
             }
 
-            console.log(`Elements found:`, {
-                loading: !!loadingElement,
-                grid: !!gridElement,
-                empty: !!emptyElement,
-                category: category,
-                tabPane: !!tabPane
-            });
+        // Wait a bit for the tab to become visible, then load files
+        setTimeout(() => {
+            loadFiles(tabName);
+        }, 50);
+    }
 
-            // Check if elements exist
-            if (!loadingElement || !gridElement || !emptyElement) {
-                console.error(`Elements not found for category: ${category}`);
-                console.log('Available elements:', document.querySelectorAll('[id$="-loading"], [id$="-grid"], [id$="-empty"]'));
-                return;
+    // Load files from API
+    async function loadFiles(category) {
+        console.log(`Loading files for category: ${category}`);
+        
+        const loadingElement = document.getElementById(`${category}-loading`);
+        const gridElement = document.getElementById(`${category}-grid`);
+        const emptyElement = document.getElementById(`${category}-empty`);
+        const tabPane = document.getElementById(`${category}-tab`);
+        
+        // Show loading state
+        if (loadingElement) loadingElement.style.display = 'block';
+        if (gridElement) gridElement.style.display = 'none';
+        if (emptyElement) emptyElement.style.display = 'none';
+        
+        try {
+            // Determine if we're in production or development
+            const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+            let apiUrl;
+            
+            if (isProduction) {
+                // In production, use static data (no backend needed)
+                apiUrl = null;
+            } else {
+                // In development, use local backend
+                apiUrl = `http://localhost:3001/api/downloads/${category}`;
             }
-
-            // Show loading state
-            loadingElement.style.display = 'block';
-            gridElement.style.display = 'none';
-            emptyElement.style.display = 'none';
-
-            try {
-                const response = await fetch(`http://localhost:3001/api/downloads/${category}`);
-                const files = await response.json();
-
-                // Hide loading state
-                loadingElement.style.display = 'none';
-
-                if (files.length === 0) {
-                    emptyElement.style.display = 'block';
-                } else {
-                    gridElement.style.display = 'grid';
-                    renderFiles(files, gridElement);
-                }
-            } catch (error) {
-                console.error('Error loading files:', error);
-                loadingElement.style.display = 'none';
+            
+            let files;
+            
+            if (isProduction) {
+                // Production: Use static file list
+                files = getProductionFiles(category);
+            } else {
+                // Development: Fetch from backend
+                const response = await fetch(apiUrl);
+                files = await response.json();
+            }
+            
+            if (loadingElement) loadingElement.style.display = 'none';
+            
+            if (files.length === 0) {
+                if (emptyElement) emptyElement.style.display = 'block';
+            } else {
+                if (gridElement) gridElement.style.display = 'grid';
+                renderFiles(files, gridElement);
+            }
+        } catch (error) {
+            console.error('Error loading files:', error);
+            if (loadingElement) loadingElement.style.display = 'none';
+            if (emptyElement) {
                 emptyElement.style.display = 'block';
-                
-                // Update empty state message
                 emptyElement.innerHTML = `
                     <i class="fas fa-exclamation-triangle"></i>
                     <h3>Error loading files</h3>
@@ -932,23 +950,34 @@
                 `;
             }
         }
+    }
 
-        // Render files in the grid
-        function renderFiles(files, gridElement) {
-            gridElement.innerHTML = files.map(file => createFileItem(file)).join('');
+    // Render files in the grid
+    function renderFiles(files, gridElement) {
+        gridElement.innerHTML = files.map(file => createFileItem(file)).join('');
+    }
+
+    function createFileItem(file) {
+        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        let downloadUrl;
+        
+        if (isProduction) {
+            // Production: Use GitHub Releases URL
+            downloadUrl = `https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/latest/download/${file.name}`;
+        } else {
+            // Development: Use local server
+            downloadUrl = file.downloadUrl || `http://localhost:3001/downloads/${file.category}/${encodeURIComponent(file.name)}`;
         }
-
-        function createFileItem(file) {
-            const downloadUrl = file.downloadUrl || `http://localhost:3001/downloads/${file.category}/${encodeURIComponent(file.name)}`;
-            const cloudBadge = file.cloudHosted ? '<span class="cloud-badge"><i class="fas fa-cloud"></i> Cloud</span>' : '';
-            
-            return `
-                <div class="file-item">
-                    <div class="file-icon">
-                        <i class="fas ${getFileIcon(file.name)}"></i>
-                    </div>
-                    <div class="file-info">
-                        <h3>${file.name} ${cloudBadge}</h3>
+        
+        const cloudBadge = isProduction ? '<span class="cloud-badge"><i class="fas fa-cloud"></i> Cloud</span>' : '';
+        
+        return `
+            <div class="file-item">
+                <div class="file-icon">
+                    <i class="fas ${getFileIcon(file.name)}"></i>
+                </div>
+                <div class="file-info">
+                    <h3>${file.name} ${cloudBadge}</h3>
                         <p>${file.description}</p>
                         <div class="file-meta">
                             <span class="size">${formatFileSize(file.size)}</span>
@@ -1169,6 +1198,73 @@
 
         // Initialize audio manager
         const audioManager = new AudioManager();
+
+        // Production file data (no backend needed)
+        function getProductionFiles(category) {
+            if (category === 'downloadable-files') {
+                return [
+                    {
+                        name: 'componentpeds.img.zip',
+                        size: 1090729219,
+                        category: category,
+                        description: 'Character and pedestrian models for GTA IV',
+                        lastModified: new Date('2026-05-10T09:37:06.758Z'),
+                        cloudHosted: true
+                    },
+                    {
+                        name: 'pedprops.img.zip',
+                        size: 48339238,
+                        category: category,
+                        description: 'Pedestrian props and accessories',
+                        lastModified: new Date('2026-05-10T09:37:35.736Z'),
+                        cloudHosted: true
+                    },
+                    {
+                        name: 'radar.img.zip',
+                        size: 1309807,
+                        category: category,
+                        description: 'Radar and minimap textures',
+                        lastModified: new Date('2026-05-10T09:37:42.660Z'),
+                        cloudHosted: true
+                    },
+                    {
+                        name: 'Vehicle.img.zip',
+                        size: 138258916,
+                        category: category,
+                        description: 'Vehicle models and textures',
+                        lastModified: new Date('2026-05-10T09:37:52.628Z'),
+                        cloudHosted: true
+                    },
+                    {
+                        name: 'weapons.img.zip',
+                        size: 5366198,
+                        category: category,
+                        description: 'Weapon models and textures',
+                        lastModified: new Date('2026-05-10T09:38:11.956Z'),
+                        cloudHosted: true
+                    },
+                    {
+                        name: 'weapons_e1.img.zip',
+                        size: 10854730,
+                        category: category,
+                        description: 'Enhanced weapons pack 1',
+                        lastModified: new Date('2026-05-10T09:37:59.451Z'),
+                        cloudHosted: true
+                    },
+                    {
+                        name: 'weapons_e2.img.zip',
+                        size: 3766619,
+                        category: category,
+                        description: 'Enhanced weapons pack 2',
+                        lastModified: new Date('2026-05-10T09:38:05.270Z'),
+                        cloudHosted: true
+                    }
+                ];
+            } else if (category === 'misc') {
+                return [];
+            }
+            return [];
+        }
 
         function ensureBackgroundMusicStarted() {
             if (!audioManager.isPlaying) {
