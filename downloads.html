@@ -961,12 +961,12 @@
                 
                 let files;
                 
-if (runtime.mode === 'static') {
-    // Static hosting: use bundled file list and release asset URLs
+if (runtime.mode === 'static' || runtime.mode === 'netlify') {
+    // Static hosting or Netlify: use bundled file list and release asset URLs
     console.log('Using static production data');
     files = getProductionFiles(category);
 } else {
-    // Local or Netlify functions: fetch live metadata
+    // Local development: fetch live metadata
     console.log(`Using API backend: ${runtime.mode}`);
     const apiUrl = buildApiUrl(runtime, `downloads/${category}`);
     try {
