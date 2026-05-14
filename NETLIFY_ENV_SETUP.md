@@ -12,12 +12,6 @@ Your Netlify functions are returning 502 because they can't connect to Supabase 
 3. Go to **Site settings** → **Build & deploy** → **Environment**
 4. Add these environment variables:
 
-```
-SUPABASE_URL=https://yfsgmytvwnfotgymskxz.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlmc2dteXR2d25mb3RneW1za3h6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjYyODY0MCwiZXhwIjoyMDkyMjA0NjQwfQ.OHD6cYtUwQSrJQW83IFOmJIQFk3XA7bCqJb1p5kWLJM
-API_SECRET_KEY=sb_publishable_9nAuaVh0IrlP-PMVqpfCoQ_VWMfTvcS
-NODE_ENV=production
-```
 
 ### 2. Deploy Changes
 After adding environment variables:
