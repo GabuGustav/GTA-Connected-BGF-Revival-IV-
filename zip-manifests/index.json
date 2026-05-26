@@ -1,0 +1,12 @@
+﻿{
+    "generatedAt":  "2026-05-26T23:27:49",
+    "manifests":  {
+                      "Vehicle.img.zip":  "Vehicle.img.zip.json",
+                      "weapons_e1.img.zip":  "weapons_e1.img.zip.json",
+                      "radar.img.zip":  "radar.img.zip.json",
+                      "componentpeds.img.zip":  "componentpeds.img.zip.json",
+                      "pedprops.img.zip":  "pedprops.img.zip.json",
+                      "weapons.img.zip":  "weapons.img.zip.json",
+                      "weapons_e2.img.zip":  "weapons_e2.img.zip.json"
+                  }
+}

@@ -1,0 +1,32 @@
+﻿{
+    "filename":  "pedprops.img.zip",
+    "totalFiles":  3,
+    "totalSize":  49610752,
+    "generatedAt":  "2026-05-26T23:27:49",
+    "files":  [
+                  {
+                      "name":  "pedprops.img/GTA IV/pedprops.img",
+                      "size":  37378048,
+                      "compressedSize":  36484499,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:34:52",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "pedprops.img/TBoGT/pedprops.img",
+                      "size":  6252544,
+                      "compressedSize":  6053696,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:29:04",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "pedprops.img/TLAD/pedprops.img",
+                      "size":  5980160,
+                      "compressedSize":  5799723,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:32:48",
+                      "formattedSize":  ""
+                  }
+              ]
+}

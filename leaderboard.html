@@ -448,10 +448,27 @@
     </div>
 
     <script>
-        // Detect environment: use local API server when running locally,
-        // otherwise use Netlify Functions (no trailing slash, job passed as query param)
-        const IS_LOCAL = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        const API_BASE = IS_LOCAL ? 'http://127.0.0.1:3001/api' : '/.netlify/functions';
+        // Detect environment:
+        // - force via ?source=local|netlify|static
+        // - localhost defaults to static unless this page is served from :3001
+        const query = new URLSearchParams(window.location.search);
+        const forcedSource = query.get('source');
+        const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        const isNetlifyHost = location.hostname.includes('netlify.app');
+        const isApiServerPort = location.port === '3001';
+
+        const RUNTIME_MODE = (() => {
+            if (forcedSource === 'local') return 'local';
+            if (forcedSource === 'netlify') return 'netlify';
+            if (forcedSource === 'static') return 'static';
+            if (isLocalHost && isApiServerPort) return 'local';
+            if (isNetlifyHost) return 'netlify';
+            return 'static';
+        })();
+
+        const API_BASE = RUNTIME_MODE === 'local'
+            ? 'http://127.0.0.1:3001/api'
+            : (RUNTIME_MODE === 'netlify' ? '/.netlify/functions' : null);
         
         let currentJob = 'civilian';
         let currentPage = 1;
@@ -478,7 +495,11 @@
                 // Local dev uses path-based routing (/api/leaderboard/:job)
                 // Netlify uses query-param routing (/.netlify/functions/leaderboard?job=:job)
                 const offset = (currentPage - 1) * currentLimit;
-                const url = IS_LOCAL
+                if (!API_BASE) {
+                    throw new Error('Leaderboard API is unavailable in static mode. Use ?source=netlify or run local API on :3001 with ?source=local.');
+                }
+
+                const url = RUNTIME_MODE === 'local'
                     ? `${API_BASE}/leaderboard/${currentJob}?limit=${currentLimit}&offset=${offset}`
                     : `${API_BASE}/leaderboard?job=${currentJob}&limit=${currentLimit}&offset=${offset}`;
 

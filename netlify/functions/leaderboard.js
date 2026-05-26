@@ -1,5 +1,4 @@
 const crypto = require('crypto');
-const { getLeaderboard } = require('../../supabase-client');
 
 exports.handler = async (event) => {
     // Add CORS headers
@@ -19,6 +18,15 @@ exports.handler = async (event) => {
         };
     }
 
+    // Validate HTTP method
+    if (event.httpMethod !== 'GET') {
+        return {
+            statusCode: 405,
+            headers: headers,
+            body: JSON.stringify({ error: 'Method not allowed' })
+        };
+    }
+
     // Extract jobType: prefer ?job= query param (Netlify), fall back to last path segment (local dev)
     const queryParams = event.queryStringParameters || {};
     const pathParts = (event.path || '').split('/');
@@ -35,6 +43,21 @@ exports.handler = async (event) => {
     }
 
     try {
+        let getLeaderboard;
+        try {
+            ({ getLeaderboard } = require('../../supabase-client'));
+        } catch (initError) {
+            return {
+                statusCode: 500,
+                headers: headers,
+                body: JSON.stringify({
+                    error: 'Leaderboard backend misconfigured',
+                    message: 'Supabase environment variables are missing or invalid on the server',
+                    details: initError.message
+                })
+            };
+        }
+
         // Verify HMAC signature if provided
         const providedSignature = event.headers['x-bgf-signature'];
         if (providedSignature) {

@@ -808,7 +808,7 @@
                     <span id="selectedSize">0 MB</span>
                 </div>
                 <div class="modal-actions">
-                    <button class="download-selected-btn" onclick="downloadSelected()" disabled>
+                    <button id="downloadSelectedBtn" class="download-selected-btn" onclick="downloadSelected()" disabled>
                         <i class="fas fa-download"></i> Download Selected
                     </button>
                     <button class="download-full-btn" onclick="downloadFullArchive()">
@@ -859,10 +859,18 @@
                 };
             }
 
-            if (isLocalHost) {
+            if (isLocalHost && window.location.port === '3001') {
                 return {
                     mode: 'local',
                     apiBase: LOCAL_API_BASE_URL,
+                    releaseBase: RELEASE_BASE_URL
+                };
+            }
+
+            if (isLocalHost) {
+                return {
+                    mode: 'static',
+                    apiBase: null,
                     releaseBase: RELEASE_BASE_URL
                 };
             }
@@ -1209,21 +1217,19 @@ if (runtime.mode === 'static' || runtime.mode === 'netlify') {
                 this.stopAll();
                 const audio = this[trackName + 'Music'];
                 if (audio) {
-                    setTimeout(() => {
-                        audio.volume = this.volume;
-                        audio.currentTime = currentTime; // Set saved time
-                        audio.play().catch(e => {
-                            if (!silent) console.log(`${trackName} music play failed:`, e);
-                        });
-                        this.currentTrack = trackName;
-                        this.isPlaying = true;
-                        this.saveSyncState();
-                        
-                        // Set up track end listener
-                        audio.onended = () => {
-                            this.playNextRandomTrack();
-                        };
-                    }, 50);
+                    audio.volume = this.volume;
+                    audio.currentTime = currentTime; // Set saved time
+                    audio.play().catch(e => {
+                        if (!silent) console.log(`${trackName} music play failed:`, e);
+                    });
+                    this.currentTrack = trackName;
+                    this.isPlaying = true;
+                    this.saveSyncState();
+                    
+                    // Set up track end listener
+                    audio.onended = () => {
+                        this.playNextRandomTrack();
+                    };
                 }
             }
             
@@ -1378,6 +1384,72 @@ if (runtime.mode === 'static' || runtime.mode === 'netlify') {
         // ZIP Preview Functions
         let currentZipData = null;
         let selectedFiles = new Set();
+        const ZIP_MANIFEST_BASE_PATH = 'zip-manifests';
+        let zipManifestIndexPromise = null;
+        const EMBEDDED_ZIP_MANIFESTS = {"Vehicle.img.zip":{"filename":"Vehicle.img.zip","totalFiles":3,"totalSize":140527616,"generatedAt":"2026-05-26T23:27:49","files":[{"name":"Vehicle.img/GTA IV/vehicles.img","size":85622784,"compressedSize":84240581,"type":"data","date":"2026-05-10 11:50:16","formattedSize":""},{"name":"Vehicle.img/TBoGT/vehicles.img","size":30183424,"compressedSize":29671224,"type":"data","date":"2026-05-10 12:27:56","formattedSize":""},{"name":"Vehicle.img/TLAD/vehicles.img","size":24721408,"compressedSize":24345805,"type":"data","date":"2026-05-10 12:33:06","formattedSize":""}]},"weapons_e1.img.zip":{"filename":"weapons_e1.img.zip","totalFiles":3,"totalSize":11120640,"generatedAt":"2026-05-26T23:27:49","files":[{"name":"weapons_e1.img/weapons_e1.img","size":1757184,"compressedSize":1721567,"type":"data","date":"2026-05-10 12:33:32","formattedSize":""},{"name":"weapons_e2.img/weapons_e2.img","size":3807232,"compressedSize":3766229,"type":"data","date":"2026-05-10 12:29:04","formattedSize":""},{"name":"weapons.img/weapons.img","size":5556224,"compressedSize":5365826,"type":"data","date":"2026-05-10 12:35:42","formattedSize":""}]},"radar.img.zip":{"filename":"radar.img.zip","totalFiles":1,"totalSize":1452032,"generatedAt":"2026-05-26T23:27:49","files":[{"name":"radar.img/radar.img","size":1452032,"compressedSize":1309447,"type":"data","date":"2026-05-10 12:35:16","formattedSize":""}]},"componentpeds.img.zip":{"filename":"componentpeds.img.zip","totalFiles":13,"totalSize":1099923456,"generatedAt":"2026-05-26T23:27:49","files":[{"name":"componentpeds.img/GTA IV/componentpeds.img","size":640057344,"compressedSize":636556826,"type":"data","date":"2026-05-10 12:34:16","formattedSize":""},{"name":"componentpeds.img/TBoGT/componentpeds.img","size":96786432,"compressedSize":95969860,"type":"data","date":"2026-05-10 12:29:02","formattedSize":""},{"name":"componentpeds.img/TLAD/componentpeds.img","size":160368640,"compressedSize":159438510,"type":"data","date":"2026-05-10 12:32:30","formattedSize":""},{"name":"weapons.img/weapons.img","size":5556224,"compressedSize":5365826,"type":"data","date":"2026-05-10 12:35:42","formattedSize":""},{"name":"pedprops.img/GTA IV/pedprops.img","size":37378048,"compressedSize":36484499,"type":"data","date":"2026-05-10 12:34:52","formattedSize":""},{"name":"pedprops.img/TBoGT/pedprops.img","size":6252544,"compressedSize":6053696,"type":"data","date":"2026-05-10 12:29:04","formattedSize":""},{"name":"pedprops.img/TLAD/pedprops.img","size":5980160,"compressedSize":5799723,"type":"data","date":"2026-05-10 12:32:48","formattedSize":""},{"name":"radar.img/radar.img","size":1452032,"compressedSize":1309447,"type":"data","date":"2026-05-10 12:35:16","formattedSize":""},{"name":"Vehicle.img/GTA IV/vehicles.img","size":85622784,"compressedSize":84240581,"type":"data","date":"2026-05-10 11:50:16","formattedSize":""},{"name":"Vehicle.img/TBoGT/vehicles.img","size":30183424,"compressedSize":29671224,"type":"data","date":"2026-05-10 12:27:56","formattedSize":""},{"name":"Vehicle.img/TLAD/vehicles.img","size":24721408,"compressedSize":24345805,"type":"data","date":"2026-05-10 12:33:06","formattedSize":""},{"name":"weapons_e1.img/weapons_e1.img","size":1757184,"compressedSize":1721567,"type":"data","date":"2026-05-10 12:33:32","formattedSize":""},{"name":"weapons_e2.img/weapons_e2.img","size":3807232,"compressedSize":3766229,"type":"data","date":"2026-05-10 12:29:04","formattedSize":""}]},"pedprops.img.zip":{"filename":"pedprops.img.zip","totalFiles":3,"totalSize":49610752,"generatedAt":"2026-05-26T23:27:49","files":[{"name":"pedprops.img/GTA IV/pedprops.img","size":37378048,"compressedSize":36484499,"type":"data","date":"2026-05-10 12:34:52","formattedSize":""},{"name":"pedprops.img/TBoGT/pedprops.img","size":6252544,"compressedSize":6053696,"type":"data","date":"2026-05-10 12:29:04","formattedSize":""},{"name":"pedprops.img/TLAD/pedprops.img","size":5980160,"compressedSize":5799723,"type":"data","date":"2026-05-10 12:32:48","formattedSize":""}]},"weapons.img.zip":{"filename":"weapons.img.zip","totalFiles":1,"totalSize":5556224,"generatedAt":"2026-05-26T23:27:49","files":[{"name":"weapons.img/weapons.img","size":5556224,"compressedSize":5365826,"type":"data","date":"2026-05-10 12:35:42","formattedSize":""}]},"weapons_e2.img.zip":{"filename":"weapons_e2.img.zip","totalFiles":1,"totalSize":3807232,"generatedAt":"2026-05-26T23:27:49","files":[{"name":"weapons_e2.img/weapons_e2.img","size":3807232,"compressedSize":3766229,"type":"data","date":"2026-05-10 12:29:04","formattedSize":""}]}}
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        async function getZipManifestIndex() {
+            if (window.location.protocol === 'file:') {
+                return { manifests: Object.fromEntries(Object.keys(EMBEDDED_ZIP_MANIFESTS).map((k) => [k, `${k}.json`])) };
+            }
+            if (!zipManifestIndexPromise) {
+                zipManifestIndexPromise = fetch(`${ZIP_MANIFEST_BASE_PATH}/index.json`)
+                    .then((response) => {
+                        if (!response.ok) return null;
+                        return response.json();
+                    })
+                    .catch(() => null);
+            }
+            return zipManifestIndexPromise;
+        }
+
+        async function loadStaticZipManifest(filename) {
+            if (EMBEDDED_ZIP_MANIFESTS[filename]) {
+                return EMBEDDED_ZIP_MANIFESTS[filename];
+            }
+            const index = await getZipManifestIndex();
+            const mappedName = index?.manifests?.[filename];
+            const manifestFile = mappedName || `${filename}.json`;
+            const manifestUrl = `${ZIP_MANIFEST_BASE_PATH}/${encodeURIComponent(manifestFile)}`;
+
+            try {
+                const response = await fetch(manifestUrl);
+                if (!response.ok) return null;
+                return response.json();
+            } catch (_err) {
+                return null;
+            }
+        }
+
+        function buildStaticZipPreview(category, filename) {
+            const file = getProductionFiles(category).find(f => f.name === filename);
+            if (!file) return null;
+            return {
+                filename: file.name,
+                totalFiles: 1,
+                totalSize: file.size || 0,
+                files: []
+            };
+        }
+
+        function filterManifestFilesForArchive(files, archiveFilename) {
+            if (!Array.isArray(files)) return [];
+            const archiveRoot = archiveFilename.replace(/\.zip$/i, '').toLowerCase();
+            const filtered = files.filter((file) => {
+                const path = String(file?.name || '').toLowerCase();
+                return path === archiveRoot || path.startsWith(`${archiveRoot}/`);
+            });
+            return filtered.length > 0 ? filtered : files;
+        }
 
         async function showZipPreview(category, filename) {
             const modal = document.getElementById('zipPreviewModal');
@@ -1391,23 +1463,49 @@ if (runtime.mode === 'static' || runtime.mode === 'netlify') {
             fileList.innerHTML = '<div class="loading">Loading archive contents...</div>';
 
             try {
-                const encodedFilename = encodeURIComponent(filename);
                 const runtime = getRuntimeConfig();
-                const previewUrl = buildApiUrl(runtime, `downloads/${category}/${encodedFilename}/preview`);
-                if (!previewUrl) {
-                    throw new Error('Archive preview is unavailable in static mode');
-                }
-                const response = await fetch(previewUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
+                let data;
 
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('Invalid response format from server');
-                }
+                if (runtime.mode === 'static' || runtime.mode === 'netlify') {
+                    const manifestData = await loadStaticZipManifest(filename);
+                    if (manifestData && Array.isArray(manifestData.files)) {
+                        data = manifestData;
+                    } else {
+                        data = buildStaticZipPreview(category, filename);
+                        if (!data) {
+                            throw new Error('Archive metadata not found');
+                        }
+                    }
+                } else {
+                    const encodedFilename = encodeURIComponent(filename);
+                    const previewUrl = buildApiUrl(runtime, `downloads/${category}/${encodedFilename}/preview`);
+                    if (!previewUrl) {
+                        throw new Error('Archive preview is unavailable in static mode');
+                    }
+                    const response = await fetch(previewUrl);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
 
-                const data = await response.json();
+                    const contentType = response.headers.get('content-type') || '';
+                    if (contentType.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        const responseText = await response.text();
+                        try {
+                            data = JSON.parse(responseText);
+                        } catch (_parseErr) {
+                            throw new Error('Invalid response format from server');
+                        }
+                    }
+                }
+                data.category = category;
+                data.filename = data.filename || filename;
+                if (Array.isArray(data.files)) {
+                    data.files = filterManifestFilesForArchive(data.files, data.filename);
+                    data.totalFiles = data.files.length;
+                    data.totalSize = data.files.reduce((sum, file) => sum + (file.size || 0), 0);
+                }
                 const previewSize = data.totalSize || data.size || 0;
 
                 currentZipData = data;
@@ -1417,18 +1515,22 @@ if (runtime.mode === 'static' || runtime.mode === 'netlify') {
                     <strong>Total Files:</strong> ${data.totalFiles || 1}<br>
                     <strong>Total Size:</strong> ${formatFileSize(previewSize)}<br>
                     <strong>Archive:</strong> ${data.filename}<br>
-                    <em style="color: #ffaa00;">Note: Basic preview - ZIP extraction not available</em>
+                    <em style="color: #ffaa00;">Note: Preview is based on generated manifest data</em>
                 `;
 
-                fileList.innerHTML = `
-                    <div style="color: #888888; text-align: center; padding: 20px;">
-                        <i class="fas fa-file-archive" style="font-size: 3rem; margin-bottom: 10px;"></i><br>
-                        <span>File information only available</span><br>
-                        <button class="download-full-btn" onclick="downloadFullArchive()" style="margin-top: 15px;">
-                            <i class="fas fa-download"></i> Download Full Archive
-                        </button>
-                    </div>
-                `;
+                if (Array.isArray(data.files) && data.files.length > 0) {
+                    renderZipFileList(data.files, true);
+                } else {
+                    fileList.innerHTML = `
+                        <div style="color: #888888; text-align: center; padding: 20px;">
+                            <i class="fas fa-file-archive" style="font-size: 3rem; margin-bottom: 10px;"></i><br>
+                            <span>File information only available</span><br>
+                            <button class="download-full-btn" onclick="downloadFullArchive()" style="margin-top: 15px;">
+                                <i class="fas fa-download"></i> Download Full Archive
+                            </button>
+                        </div>
+                    `;
+                }
 
                 updateSelectionInfo();
             } catch (error) {
@@ -1446,31 +1548,44 @@ if (runtime.mode === 'static' || runtime.mode === 'netlify') {
                 return;
             }
 
-            fileList.innerHTML = files.map((file, index) => `
+            const sortedFiles = [...files].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+            fileList.innerHTML = sortedFiles.map((file, index) => {
+                const fileName = file.name || `file-${index}`;
+                const pathParts = fileName.split('/').filter(Boolean);
+                const depth = Math.max(pathParts.length - 1, 0);
+                const leafName = pathParts[pathParts.length - 1] || fileName;
+                const indent = '&nbsp;&nbsp;&nbsp;&nbsp;'.repeat(depth);
+                const treePrefix = depth > 0 ? '&#9492;&#9472; ' : '';
+                const encodedName = encodeURIComponent(fileName);
+
+                return `
                 <div class="file-list-item" data-index="${index}">
                     ${allowSelection ? `
                         <input type="checkbox" class="file-checkbox"
                                id="file-${index}"
-                               value="${file.name}"
-                               onchange="toggleFileSelection('${file.name}', this.checked)">
+                               value="${encodedName}"
+                               onchange="toggleFileSelection('${encodedName}', this.checked)">
                     ` : ''}
                     <div class="file-info">
                         <div class="file-type-icon">
                             <i class="fas ${getFileTypeIcon(file.type)}"></i>
                         </div>
                         <div class="file-details">
-                            <div class="file-list-name">${file.name}</div>
+                            <div class="file-list-name" title="${escapeHtml(fileName)}">${indent}${treePrefix}${escapeHtml(leafName)}</div>
+                            <div class="file-list-date" style="font-family: monospace; color: #9aa0a6;">${escapeHtml(fileName)}</div>
                             <div class="file-list-size">${file.formattedSize || formatFileSize(file.size || 0)}</div>
                             <div class="file-list-date">${file.date || '-'}</div>
                             ${allowSelection ? `
-                                <button class="download-selected-btn" onclick="downloadSelectedFile('${file.name}')" style="margin-left: auto;">
+                                <button class="download-selected-btn" onclick="downloadSelectedFile('${encodedName}')" style="margin-left: auto;">
                                     <i class="fas fa-download"></i> Download
                                 </button>
                             ` : ''}
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function getFileTypeIcon(type) {
@@ -1489,7 +1604,8 @@ if (runtime.mode === 'static' || runtime.mode === 'netlify') {
             return iconMap[type] || 'fa-file';
         }
 
-        function toggleFileSelection(filename, isSelected) {
+        function toggleFileSelection(encodedFilename, isSelected) {
+            const filename = decodeURIComponent(encodedFilename);
             if (isSelected) {
                 selectedFiles.add(filename);
             } else {
@@ -1502,10 +1618,11 @@ if (runtime.mode === 'static' || runtime.mode === 'netlify') {
             const checkboxes = document.querySelectorAll('.file-checkbox');
             checkboxes.forEach((checkbox) => {
                 checkbox.checked = select;
+                const decodedName = decodeURIComponent(checkbox.value);
                 if (select) {
-                    selectedFiles.add(checkbox.value);
+                    selectedFiles.add(decodedName);
                 } else {
-                    selectedFiles.delete(checkbox.value);
+                    selectedFiles.delete(decodedName);
                 }
             });
             updateSelectionInfo();
@@ -1567,7 +1684,8 @@ if (runtime.mode === 'static' || runtime.mode === 'netlify') {
             }
         });
 
-        async function downloadSelectedFile(filename) {
+        async function downloadSelectedFile(encodedFilename) {
+            const filename = decodeURIComponent(encodedFilename);
             console.log('Individual file download is not yet implemented for:', filename);
         }
 

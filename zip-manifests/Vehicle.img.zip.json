@@ -1,0 +1,32 @@
+﻿{
+    "filename":  "Vehicle.img.zip",
+    "totalFiles":  3,
+    "totalSize":  140527616,
+    "generatedAt":  "2026-05-26T23:27:49",
+    "files":  [
+                  {
+                      "name":  "Vehicle.img/GTA IV/vehicles.img",
+                      "size":  85622784,
+                      "compressedSize":  84240581,
+                      "type":  "data",
+                      "date":  "2026-05-10 11:50:16",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "Vehicle.img/TBoGT/vehicles.img",
+                      "size":  30183424,
+                      "compressedSize":  29671224,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:27:56",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "Vehicle.img/TLAD/vehicles.img",
+                      "size":  24721408,
+                      "compressedSize":  24345805,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:33:06",
+                      "formattedSize":  ""
+                  }
+              ]
+}

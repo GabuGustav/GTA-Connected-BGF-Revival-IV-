@@ -1,0 +1,112 @@
+﻿{
+    "filename":  "componentpeds.img.zip",
+    "totalFiles":  13,
+    "totalSize":  1099923456,
+    "generatedAt":  "2026-05-26T23:27:49",
+    "files":  [
+                  {
+                      "name":  "componentpeds.img/GTA IV/componentpeds.img",
+                      "size":  640057344,
+                      "compressedSize":  636556826,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:34:16",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "componentpeds.img/TBoGT/componentpeds.img",
+                      "size":  96786432,
+                      "compressedSize":  95969860,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:29:02",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "componentpeds.img/TLAD/componentpeds.img",
+                      "size":  160368640,
+                      "compressedSize":  159438510,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:32:30",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "weapons.img/weapons.img",
+                      "size":  5556224,
+                      "compressedSize":  5365826,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:35:42",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "pedprops.img/GTA IV/pedprops.img",
+                      "size":  37378048,
+                      "compressedSize":  36484499,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:34:52",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "pedprops.img/TBoGT/pedprops.img",
+                      "size":  6252544,
+                      "compressedSize":  6053696,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:29:04",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "pedprops.img/TLAD/pedprops.img",
+                      "size":  5980160,
+                      "compressedSize":  5799723,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:32:48",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "radar.img/radar.img",
+                      "size":  1452032,
+                      "compressedSize":  1309447,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:35:16",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "Vehicle.img/GTA IV/vehicles.img",
+                      "size":  85622784,
+                      "compressedSize":  84240581,
+                      "type":  "data",
+                      "date":  "2026-05-10 11:50:16",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "Vehicle.img/TBoGT/vehicles.img",
+                      "size":  30183424,
+                      "compressedSize":  29671224,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:27:56",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "Vehicle.img/TLAD/vehicles.img",
+                      "size":  24721408,
+                      "compressedSize":  24345805,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:33:06",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "weapons_e1.img/weapons_e1.img",
+                      "size":  1757184,
+                      "compressedSize":  1721567,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:33:32",
+                      "formattedSize":  ""
+                  },
+                  {
+                      "name":  "weapons_e2.img/weapons_e2.img",
+                      "size":  3807232,
+                      "compressedSize":  3766229,
+                      "type":  "data",
+                      "date":  "2026-05-10 12:29:04",
+                      "formattedSize":  ""
+                  }
+              ]
+}
