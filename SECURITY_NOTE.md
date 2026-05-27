@@ -1,48 +1,31 @@
 # Security Note for BGF Revival IV Integration
 
-## Current Status: ✅ SECURE FOR PRODUCTION USE
+## Current Status: Low Exposure in This Repository
 
-### Vulnerability Assessment
-The npm audit shows 2 high-severity vulnerabilities in the `tar` package, which is a **transitive dependency** (not directly used by our code). 
+### Reported Upstream Issue
+A race condition has been reported in `node-tar` path reservations on case-insensitive / normalization-insensitive filesystems (notably macOS APFS), where Unicode-colliding names such as `ss` and `ß` may bypass reservation locking and be processed in parallel.
 
-### Impact Analysis
-- **Risk Level**: LOW for our integration
-- **Affected Package**: `tar` (dependency of `@mapbox/node-pre-gyp`)
-- **Our Code**: Does NOT use the vulnerable functionality
-- **API Server**: Fully secure with proper authentication and validation
+This can enable symlink-poisoning style overwrite races during archive extraction when untrusted tar input is processed.
 
-### Why It's Safe
-1. **Our API endpoints** use proper authentication (HMAC signatures)
-2. **Input validation** on all endpoints prevents injection attacks
-3. **Rate limiting** prevents abuse
-4. **No file extraction** functionality in our code
-5. **Vulnerable code path** not accessible through our API
+### Relevance to This Project
+- `tar` appears in dependency metadata as a transitive package (via `@mapbox/node-pre-gyp` in lockfile data).
+- This codebase does **not** currently implement tar extraction flows for user-provided archives.
+- No active call sites were found for `tar` extraction APIs in repository source.
 
-### Security Features Implemented ✅
-- **HMAC Authentication**: Prevents unauthorized API calls
-- **Rate Limiting**: 100 requests/minute per IP
-- **Input Validation**: All user inputs validated and sanitized
-- **Password Hashing**: bcrypt for secure password storage
-- **Timestamp Validation**: Prevents replay attacks
+### Risk Assessment for This App
+- **Direct exploitability here**: low (no archive extraction path in app logic).
+- **Potential future risk**: medium-high if tar extraction of untrusted input is introduced without safeguards.
 
-### Recommended Actions
-1. **Short-term**: Safe to deploy as-is
-2. **Long-term**: Update Node.js to v18+ when possible (includes native fetch)
-3. **Optional**: Migrate to MySQL/PostgreSQL for production database
+### Required Guardrails (If Extraction Is Added Later)
+1. Reject symlink and hardlink entries from untrusted archives.
+2. Enforce strict extraction destination checks (no traversal, no link-follow overwrite behavior).
+3. Use a patched `tar` release once upstream publishes a fix for this collision class.
+4. Add regression tests for Unicode-colliding names (`ss`, `ß`, composed/decomposed forms) on macOS runners.
 
-### Production Deployment Checklist ✅
-- [x] API authentication secured
-- [x] Rate limiting enabled
-- [x] Input validation implemented
-- [x] Error handling in place
-- [x] Environment variables configured
-- [x] HTTPS ready (use reverse proxy)
-
-### Monitoring
-- Monitor API logs for suspicious activity
-- Check sync success rates
-- Watch for unusual request patterns
+### Operational Guidance
+- Keep dependency updates current and monitor `tar` advisories.
+- Treat any future archive extraction feature as security-sensitive and require review.
 
 ---
 
-**Conclusion**: The integration is **production-ready** and secure. The npm vulnerabilities are in unused dependency paths and don't affect our API security.
+Conclusion: this repository is not currently exposing the vulnerable tar extraction path, but the reported Unicode-collision issue is valid to track and must be treated as a blocker for any future untrusted tar extraction feature.
