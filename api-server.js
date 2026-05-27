@@ -53,7 +53,13 @@ function isSafeStaticRequestPath(requestPath) {
     return true;
 }
 
-app.get('*', (req, res, next) => {
+const staticLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 120,
+  message: { error: 'Too many static resource requests, please try again later.' }
+});
+
+app.get('*', staticLimiter, (req, res, next) => {
     const rawPath = req.path === '/' ? '/index.html' : req.path;
     if (!isSafeStaticRequestPath(rawPath)) {
         return res.status(400).json({ error: 'Invalid path' });
@@ -558,10 +564,11 @@ app.post('/api/send-email', (req, res) => {
     }
 
     const recipientUsername = recipientMatch.username;
+    const recipientUser = recipientMatch.user;
     const senderUsername = normalizeUsername(from);
 
-    users[recipientUsername].inbox = users[recipientUsername].inbox || [];
-    users[recipientUsername].sent = users[recipientUsername].sent || [];
+    recipientUser.inbox = recipientUser.inbox || [];
+    recipientUser.sent = recipientUser.sent || [];
 
     if (senderUsername && Object.prototype.hasOwnProperty.call(users, senderUsername)) {
         users[senderUsername].inbox = users[senderUsername].inbox || [];
@@ -578,8 +585,8 @@ app.post('/api/send-email', (req, res) => {
         id: crypto.randomUUID()
     };
 
-    users[recipientUsername].inbox.unshift(messageData);
-    users[recipientUsername].inbox = trimMailbox(users[recipientUsername].inbox, MAX_MESSAGES_PER_MAILBOX);
+    recipientUser.inbox.unshift(messageData);
+    recipientUser.inbox = trimMailbox(recipientUser.inbox, MAX_MESSAGES_PER_MAILBOX);
 
     if (senderUsername && Object.prototype.hasOwnProperty.call(users, senderUsername)) {
         users[senderUsername].sent.unshift({
@@ -662,9 +669,12 @@ app.all('/api/create-account-from-game', authenticateGTA, (req, res) => {
     }
     
     const users = loadData();
-    const normalizedUsername = username.toLowerCase();
-    
-    if (users[normalizedUsername]) {
+    const normalizedUsername = normalizeUsername(username);
+    if (!normalizedUsername) {
+        return res.status(400).json({ error: 'Invalid username' });
+    }
+
+    if (Object.prototype.hasOwnProperty.call(users, normalizedUsername)) {
         return res.status(409).json({ error: 'Account already exists' });
     }
     
