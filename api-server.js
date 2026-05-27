@@ -23,7 +23,7 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '256kb' }));
 
 // Serve static files
 app.use(express.static(__dirname));
@@ -35,6 +35,28 @@ const limiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' }
 });
 app.use('/api/', limiter);
+
+// Rate limiter for file-serving endpoints.
+const downloadLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30, // stricter limit for filesystem-backed download endpoints
+  message: { error: 'Too many download requests, please try again later.' }
+});
+
+// Stricter auth limiter to reduce brute-force attempts.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  skipSuccessfulRequests: true,
+  message: { error: 'Too many failed authentication attempts. Please try again later.' }
+});
+
+const MAX_STORED_OTPS = 1000;
+const MAX_MESSAGES_PER_MAILBOX = 500;
+const MAX_BATCH_UPDATES = 500;
+const MAX_ACHIEVEMENTS_PER_REQUEST = 100;
+const MAX_MESSAGE_LENGTH = 4000;
+const MAX_SUBJECT_LENGTH = 200;
 
 // API Configuration
 const API_SECRET = process.env.API_SECRET_KEY || 'default-secret-key-change-in-production';
@@ -64,6 +86,26 @@ function loadOTPs() {
 
 function saveOTPs(otps) {
     fs.writeFileSync(otpFile, JSON.stringify(otps, null, 2));
+}
+
+function trimOldestEntries(mapObject, maxSize, byField) {
+    const entries = Object.entries(mapObject);
+    if (entries.length <= maxSize) return mapObject;
+
+    entries.sort((a, b) => {
+        const aTime = new Date(a[1]?.[byField] || 0).getTime();
+        const bTime = new Date(b[1]?.[byField] || 0).getTime();
+        return aTime - bTime;
+    });
+
+    const keep = entries.slice(entries.length - maxSize);
+    return Object.fromEntries(keep);
+}
+
+function trimMailbox(messages, maxItems) {
+    if (!Array.isArray(messages)) return [];
+    if (messages.length <= maxItems) return messages;
+    return messages.slice(0, maxItems);
 }
 
 function findUserByIdentifier(users, identifier) {
@@ -160,7 +202,7 @@ function cleanExpiredOTPs() {
 // API Routes
 
 // Generate OTP for password recovery
-app.post('/api/forgot-password', (req, res) => {
+app.post('/api/forgot-password', authLimiter, (req, res) => {
     const { username } = req.body;
     
     if (!username) {
@@ -187,7 +229,8 @@ app.post('/api/forgot-password', (req, res) => {
         expiresAt: expiresAt.toISOString(),
         createdAt: new Date().toISOString()
     };
-    saveOTPs(otps);
+    const boundedOtps = trimOldestEntries(otps, MAX_STORED_OTPS, 'createdAt');
+    saveOTPs(boundedOtps);
     
     // Send OTP via BGF Mail (you'll implement this)
     console.log(`OTP for ${username}: ${otp} (ID: ${otpId})`);
@@ -201,7 +244,7 @@ app.post('/api/forgot-password', (req, res) => {
 });
 
 // Verify OTP
-app.post('/api/verify-otp', (req, res) => {
+app.post('/api/verify-otp', authLimiter, (req, res) => {
     const { otp_id, otp } = req.body;
     
     if (!otp_id || !otp) {
@@ -283,7 +326,7 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-app.post('/api/auth-login', async (req, res) => {
+app.post('/api/auth-login', authLimiter, async (req, res) => {
     const { username, password } = req.body || {};
     const normalizedUsername = normalizeUsername(username);
 
@@ -321,7 +364,7 @@ app.post('/api/auth-login', async (req, res) => {
     });
 });
 
-app.post('/api/auth-register', async (req, res) => {
+app.post('/api/auth-register', authLimiter, async (req, res) => {
     const { username, email, password } = req.body || {};
     const normalizedUsername = normalizeUsername(username).replace(/[^a-z0-9_]/g, '');
 
@@ -395,6 +438,12 @@ app.post('/api/send-email', (req, res) => {
     if (!to || !subject || !message) {
         return res.status(400).json({ error: 'Missing required fields: to, subject, message' });
     }
+    if (String(subject).length > MAX_SUBJECT_LENGTH) {
+        return res.status(400).json({ error: `Subject too long (max ${MAX_SUBJECT_LENGTH} characters)` });
+    }
+    if (String(message).length > MAX_MESSAGE_LENGTH) {
+        return res.status(400).json({ error: `Message too long (max ${MAX_MESSAGE_LENGTH} characters)` });
+    }
 
     const sanitizeHtml = (str) => {
         return String(str || '')
@@ -439,12 +488,14 @@ app.post('/api/send-email', (req, res) => {
     };
 
     users[recipientUsername].inbox.unshift(messageData);
+    users[recipientUsername].inbox = trimMailbox(users[recipientUsername].inbox, MAX_MESSAGES_PER_MAILBOX);
 
     if (senderUsername && users[senderUsername]) {
         users[senderUsername].sent.unshift({
             ...messageData,
             to: recipientUsername
         });
+        users[senderUsername].sent = trimMailbox(users[senderUsername].sent, MAX_MESSAGES_PER_MAILBOX);
     }
 
     saveData(users);
@@ -630,6 +681,9 @@ app.all('/api/batch-sync-stats', authenticateGTA, (req, res) => {
     if (!Array.isArray(playerUpdates)) {
         return res.status(400).json({ error: 'playerUpdates must be an array' });
     }
+    if (playerUpdates.length > MAX_BATCH_UPDATES) {
+        return res.status(400).json({ error: `Too many updates in one request (max ${MAX_BATCH_UPDATES})` });
+    }
     
     const users = loadData();
     let updatedCount = 0;
@@ -811,6 +865,9 @@ app.all('/api/update-achievements', authenticateGTA, (req, res) => {
     if (!username || !Array.isArray(newAchievements)) {
         return res.status(400).json({ error: 'Username and achievements array required' });
     }
+    if (newAchievements.length > MAX_ACHIEVEMENTS_PER_REQUEST) {
+        return res.status(400).json({ error: `Too many achievements in one request (max ${MAX_ACHIEVEMENTS_PER_REQUEST})` });
+    }
     
     const users = loadData();
     const normalizedUsername = username.toLowerCase();
@@ -939,7 +996,7 @@ app.get('/api/downloads/:category', async (req, res) => {
 });
 
 // Serve download files
-app.get('/downloads/:category/:filename', (req, res) => {
+app.get('/downloads/:category/:filename', downloadLimiter, (req, res) => {
     const { category, filename } = req.params;
     
     // Validate category
@@ -1011,7 +1068,7 @@ function formatFileSize(bytes) {
 }
 
 // ZIP preview endpoint
-app.get('/api/downloads/:category/:filename([^/]+)/preview', async (req, res) => {
+app.get('/api/downloads/:category/:filename([^/]+)/preview', downloadLimiter, async (req, res) => {
     const { category, filename } = req.params;
     
     // Validate category

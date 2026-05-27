@@ -3449,11 +3449,20 @@
             // Create notification element
             const notification = document.createElement('div');
             notification.className = `mail-notification ${type}`;
-            notification.innerHTML = `
-                <i class="fas fa-envelope"></i>
-                <span>${message}</span>
-                <button onclick="this.parentElement.remove()">&times;</button>
-            `;
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-envelope';
+
+            const text = document.createElement('span');
+            text.textContent = String(message || '');
+
+            const closeButton = document.createElement('button');
+            closeButton.type = 'button';
+            closeButton.textContent = '\u00D7';
+            closeButton.addEventListener('click', () => notification.remove());
+
+            notification.appendChild(icon);
+            notification.appendChild(text);
+            notification.appendChild(closeButton);
             
             // Add to page
             document.body.appendChild(notification);
@@ -3534,11 +3543,20 @@ function showNotification(message, type = 'info') {
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `mail-notification ${type}`;
-    notification.innerHTML = `
-        <i class="fas fa-envelope"></i>
-        <span>${message}</span>
-        <button onclick="this.parentElement.remove()">&times;</button>
-    `;
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-envelope';
+
+    const text = document.createElement('span');
+    text.textContent = String(message || '');
+
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.textContent = '\u00D7';
+    closeButton.addEventListener('click', () => notification.remove());
+
+    notification.appendChild(icon);
+    notification.appendChild(text);
+    notification.appendChild(closeButton);
     
     // Add to page
     document.body.appendChild(notification);
