@@ -26,7 +26,63 @@ app.use(cors({
 app.use(express.json({ limit: '256kb' }));
 
 // Serve static files
-app.use(express.static(__dirname));
+const STATIC_ROOT = path.resolve(__dirname);
+const PUBLIC_ASSET_EXTENSIONS = new Set([
+    '.html', '.css', '.js', '.ico', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp',
+    '.mp3', '.ogg', '.wav', '.mp4', '.glb', '.json', '.txt'
+]);
+const BLOCKED_STATIC_FILENAMES = new Set([
+    '.env',
+    'package.json',
+    'package-lock.json',
+    'api-server.js',
+    'data.json',
+    'otps.json',
+    'supabase-client.js',
+    'supabase-schema.sql',
+    'supabase-reset-schema.sql',
+    'supabase-alter-schema.sql',
+    'netlify.toml'
+]);
+
+function isSafeStaticRequestPath(requestPath) {
+    if (!requestPath) return false;
+    const normalized = path.posix.normalize(requestPath);
+    if (normalized.includes('..')) return false;
+    if (path.isAbsolute(normalized)) return false;
+    return true;
+}
+
+app.get('*', (req, res, next) => {
+    const rawPath = req.path === '/' ? '/index.html' : req.path;
+    if (!isSafeStaticRequestPath(rawPath)) {
+        return res.status(400).json({ error: 'Invalid path' });
+    }
+
+    const relativePath = decodeURIComponent(rawPath).replace(/^\/+/, '');
+    const absolutePath = path.resolve(STATIC_ROOT, relativePath);
+    const relativeToRoot = path.relative(STATIC_ROOT, absolutePath);
+    if (relativeToRoot.startsWith('..') || path.isAbsolute(relativeToRoot)) {
+        return res.status(404).end();
+    }
+
+    const baseName = path.basename(absolutePath).toLowerCase();
+    const extension = path.extname(absolutePath).toLowerCase();
+
+    if (BLOCKED_STATIC_FILENAMES.has(baseName)) {
+        return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (!PUBLIC_ASSET_EXTENSIONS.has(extension)) {
+        return next();
+    }
+
+    if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
+        return next();
+    }
+
+    return res.sendFile(absolutePath);
+});
 
 // Rate limiting
 const limiter = rateLimit({
@@ -57,6 +113,7 @@ const MAX_BATCH_UPDATES = 500;
 const MAX_ACHIEVEMENTS_PER_REQUEST = 100;
 const MAX_MESSAGE_LENGTH = 4000;
 const MAX_SUBJECT_LENGTH = 200;
+const FORBIDDEN_OBJECT_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 
 // API Configuration
 const API_SECRET = process.env.API_SECRET_KEY || 'default-secret-key-change-in-production';
@@ -108,13 +165,38 @@ function trimMailbox(messages, maxItems) {
     return messages.slice(0, maxItems);
 }
 
+function resolveSafeCategoryFilePath(category, filename) {
+    const allowedCategories = new Set(['downloadable-files', 'misc']);
+    if (!allowedCategories.has(category)) return null;
+
+    // Restrict to plain filenames only (no path separators).
+    if (!/^[A-Za-z0-9._-]+$/.test(filename)) return null;
+
+    const baseDir = path.resolve(__dirname, category);
+    const candidatePath = path.resolve(baseDir, filename);
+
+    // Ensure resolved path remains under the intended category directory.
+    const relativePath = path.relative(baseDir, candidatePath);
+    if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) return null;
+
+    if (!fs.existsSync(candidatePath)) return null;
+
+    // Resolve symlinks/junctions before final containment check.
+    const realBaseDir = fs.realpathSync(baseDir);
+    const realCandidatePath = fs.realpathSync(candidatePath);
+    const realRelativePath = path.relative(realBaseDir, realCandidatePath);
+    if (realRelativePath.startsWith('..') || path.isAbsolute(realRelativePath)) return null;
+
+    return realCandidatePath;
+}
+
 function findUserByIdentifier(users, identifier) {
     if (!identifier) {
         return null;
     }
 
     const normalized = identifier.toLowerCase();
-    if (users[normalized]) {
+    if (isSafeObjectKey(normalized) && Object.prototype.hasOwnProperty.call(users, normalized)) {
         return {
             username: normalized,
             user: users[normalized]
@@ -135,7 +217,15 @@ function findUserByIdentifier(users, identifier) {
 }
 
 function normalizeUsername(value) {
-    return String(value || '').toLowerCase().trim();
+    const normalized = String(value || '').toLowerCase().trim();
+    if (!isSafeObjectKey(normalized)) {
+        return '';
+    }
+    return normalized;
+}
+
+function isSafeObjectKey(value) {
+    return typeof value === 'string' && value.length > 0 && !FORBIDDEN_OBJECT_KEYS.has(value);
 }
 
 function buildUserProfile(username, user) {
@@ -211,7 +301,8 @@ app.post('/api/forgot-password', authLimiter, (req, res) => {
     
     const users = loadData();
     
-    if (!users[username.toLowerCase()]) {
+    const lookupUsername = normalizeUsername(username);
+    if (!lookupUsername || !Object.prototype.hasOwnProperty.call(users, lookupUsername)) {
         return res.status(404).json({ error: 'User not found' });
     }
     
@@ -225,7 +316,7 @@ app.post('/api/forgot-password', authLimiter, (req, res) => {
     otps[otpId] = {
         id: otpId,
         code: otp,
-        username: username.toLowerCase(),
+        username: lookupUsername,
         expiresAt: expiresAt.toISOString(),
         createdAt: new Date().toISOString()
     };
@@ -377,7 +468,7 @@ app.post('/api/auth-register', authLimiter, async (req, res) => {
     }
 
     const users = loadData();
-    if (users[normalizedUsername]) {
+    if (Object.prototype.hasOwnProperty.call(users, normalizedUsername)) {
         return res.status(409).json({ error: 'Username already exists' });
     }
 
@@ -472,7 +563,7 @@ app.post('/api/send-email', (req, res) => {
     users[recipientUsername].inbox = users[recipientUsername].inbox || [];
     users[recipientUsername].sent = users[recipientUsername].sent || [];
 
-    if (senderUsername && users[senderUsername]) {
+    if (senderUsername && Object.prototype.hasOwnProperty.call(users, senderUsername)) {
         users[senderUsername].inbox = users[senderUsername].inbox || [];
         users[senderUsername].sent = users[senderUsername].sent || [];
     }
@@ -490,7 +581,7 @@ app.post('/api/send-email', (req, res) => {
     users[recipientUsername].inbox.unshift(messageData);
     users[recipientUsername].inbox = trimMailbox(users[recipientUsername].inbox, MAX_MESSAGES_PER_MAILBOX);
 
-    if (senderUsername && users[senderUsername]) {
+    if (senderUsername && Object.prototype.hasOwnProperty.call(users, senderUsername)) {
         users[senderUsername].sent.unshift({
             ...messageData,
             to: recipientUsername
@@ -998,16 +1089,9 @@ app.get('/api/downloads/:category', async (req, res) => {
 // Serve download files
 app.get('/downloads/:category/:filename', downloadLimiter, (req, res) => {
     const { category, filename } = req.params;
-    
-    // Validate category
-    if (!['downloadable-files', 'misc'].includes(category)) {
-        return res.status(400).json({ error: 'Invalid category' });
-    }
-    
-    const filePath = path.join(__dirname, category, filename);
-    
-    // Security check: ensure file exists and is within the expected directory
-    if (!fs.existsSync(filePath) || !filePath.startsWith(path.join(__dirname, category))) {
+
+    const filePath = resolveSafeCategoryFilePath(category, filename);
+    if (!filePath) {
         return res.status(404).json({ error: 'File not found' });
     }
     
@@ -1070,16 +1154,9 @@ function formatFileSize(bytes) {
 // ZIP preview endpoint
 app.get('/api/downloads/:category/:filename([^/]+)/preview', downloadLimiter, async (req, res) => {
     const { category, filename } = req.params;
-    
-    // Validate category
-    if (!['downloadable-files', 'misc'].includes(category)) {
-        return res.status(400).json({ error: 'Invalid category' });
-    }
-    
-    const filePath = path.join(__dirname, category, filename);
-    
-    // Security check: ensure file exists and is within expected directory
-    if (!fs.existsSync(filePath) || !filePath.startsWith(path.join(__dirname, category))) {
+
+    const filePath = resolveSafeCategoryFilePath(category, filename);
+    if (!filePath) {
         return res.status(404).json({ error: 'File not found' });
     }
     
