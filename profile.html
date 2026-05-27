@@ -429,7 +429,7 @@
 
     <script>
         const RELEASE_BASE_URL = 'https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/download/OG_files';
-        const LOCAL_API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:3001`;
+        const LOCAL_API_BASE_URL = `http://${window.location.hostname}:3001`;
 
         function getRuntimeConfig() {
             const query = new URLSearchParams(window.location.search);
@@ -440,10 +440,15 @@
             const isApiServerPort = window.location.port === '3001';
 
             // Only permit local mode when browsing from localhost/127.0.0.1 to avoid HTTPS mixed-content issues.
-            if (forcedMode === 'local' && isLocalHost) return { mode: 'local', apiBase: LOCAL_API_BASE_URL, releaseBase: RELEASE_BASE_URL };
+            // Only allow local API mode on non-HTTPS localhost to avoid mixed-content failures.
+            if (forcedMode === 'local' && isLocalHost && window.location.protocol === 'http:') {
+                return { mode: 'local', apiBase: LOCAL_API_BASE_URL, releaseBase: RELEASE_BASE_URL };
+            }
             if (forcedMode === 'netlify') return { mode: 'netlify', apiBase: `${window.location.origin}/.netlify/functions`, releaseBase: RELEASE_BASE_URL };
             if (forcedMode === 'static') return { mode: 'static', apiBase: null, releaseBase: RELEASE_BASE_URL };
-            if (isLocalHost && isApiServerPort) return { mode: 'local', apiBase: LOCAL_API_BASE_URL, releaseBase: RELEASE_BASE_URL };
+            if (isLocalHost && isApiServerPort && window.location.protocol === 'http:') {
+                return { mode: 'local', apiBase: LOCAL_API_BASE_URL, releaseBase: RELEASE_BASE_URL };
+            }
             if (isNetlifyHost) return { mode: 'netlify', apiBase: `${window.location.origin}/.netlify/functions`, releaseBase: RELEASE_BASE_URL };
             return { mode: 'static', apiBase: null, releaseBase: RELEASE_BASE_URL };
         }
