@@ -131,9 +131,14 @@ const otpFile = path.join(__dirname, 'otps.json');
 
 function loadData() {
     if (fs.existsSync(dataFile)) {
-        return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+        const parsed = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+        const users = Object.create(null);
+        for (const [key, value] of Object.entries(parsed || {})) {
+            users[key] = value;
+        }
+        return users;
     }
-    return {};
+    return Object.create(null);
 }
 
 function saveData(data) {
@@ -566,17 +571,20 @@ app.post('/api/send-email', (req, res) => {
     const recipientUsername = recipientMatch.username;
     const recipientUser = recipientMatch.user;
     const senderUsername = normalizeUsername(from);
+    const senderMatch = senderUsername ? findUserByIdentifier(users, senderUsername) : null;
+    const senderUser = senderMatch ? senderMatch.user : null;
+    const senderResolvedUsername = senderMatch ? senderMatch.username : '';
 
     recipientUser.inbox = recipientUser.inbox || [];
     recipientUser.sent = recipientUser.sent || [];
 
-    if (senderUsername && Object.prototype.hasOwnProperty.call(users, senderUsername)) {
-        users[senderUsername].inbox = users[senderUsername].inbox || [];
-        users[senderUsername].sent = users[senderUsername].sent || [];
+    if (senderUser) {
+        senderUser.inbox = senderUser.inbox || [];
+        senderUser.sent = senderUser.sent || [];
     }
 
     const messageData = {
-        from: senderUsername || 'system',
+        from: senderResolvedUsername || 'system',
         to: recipientUsername,
         subject: sanitizeHtml(subject),
         message: sanitizeHtml(message),
@@ -588,12 +596,12 @@ app.post('/api/send-email', (req, res) => {
     recipientUser.inbox.unshift(messageData);
     recipientUser.inbox = trimMailbox(recipientUser.inbox, MAX_MESSAGES_PER_MAILBOX);
 
-    if (senderUsername && Object.prototype.hasOwnProperty.call(users, senderUsername)) {
-        users[senderUsername].sent.unshift({
+    if (senderUser) {
+        senderUser.sent.unshift({
             ...messageData,
             to: recipientUsername
         });
-        users[senderUsername].sent = trimMailbox(users[senderUsername].sent, MAX_MESSAGES_PER_MAILBOX);
+        senderUser.sent = trimMailbox(senderUser.sent, MAX_MESSAGES_PER_MAILBOX);
     }
 
     saveData(users);
