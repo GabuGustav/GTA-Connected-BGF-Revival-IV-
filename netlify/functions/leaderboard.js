@@ -78,7 +78,9 @@ exports.handler = async (event) => {
         }
 
         // Get leaderboard from Supabase
-        const leaderboardData = await getLeaderboard(jobType, parseInt(limit), parseInt(offset));
+        const safeLimit = Number.isFinite(parseInt(limit, 10)) ? parseInt(limit, 10) : 50;
+        const safeOffset = Number.isFinite(parseInt(offset, 10)) ? parseInt(offset, 10) : 0;
+        const leaderboardData = await getLeaderboard(jobType, safeLimit, safeOffset);
 
         return {
             statusCode: 200,
@@ -86,18 +88,18 @@ exports.handler = async (event) => {
             body: JSON.stringify({
                 success: true,
                 jobType: jobType,
-                limit: parseInt(limit),
-                offset: parseInt(offset),
+                limit: safeLimit,
+                offset: safeOffset,
                 total: leaderboardData.length,
                 players: leaderboardData.map(player => ({
-                    username: player.users.username,
-                    playerName: player.users.player_name,
-                    gtaAccountId: player.users.gta_account_id,
+                    username: player.users?.username || 'unknown',
+                    playerName: player.users?.player_name || player.users?.username || 'Unknown',
+                    gtaAccountId: player.users?.gta_account_id || null,
                     rank: {
-                        level: player.level,
-                        experience: player.experience,
-                        nextLevelXp: player.next_level_xp,
-                        title: player.title,
+                        level: player.level || 0,
+                        experience: player.experience || 0,
+                        nextLevelXp: player.next_level_xp || 0,
+                        title: player.title || '',
                         stats: {
                             arrests_made: player.arrests_made,
                             tickets_issued: player.tickets_issued,

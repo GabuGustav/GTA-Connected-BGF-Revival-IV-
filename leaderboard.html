@@ -458,7 +458,8 @@
         const isApiServerPort = location.port === '3001';
 
         const RUNTIME_MODE = (() => {
-            if (forcedSource === 'local') return 'local';
+            // Only permit local mode when browsing from localhost/127.0.0.1 to avoid HTTPS mixed-content issues.
+            if (forcedSource === 'local' && isLocalHost) return 'local';
             if (forcedSource === 'netlify') return 'netlify';
             if (forcedSource === 'static') return 'static';
             if (isLocalHost && isApiServerPort) return 'local';
@@ -467,7 +468,7 @@
         })();
 
         const API_BASE = RUNTIME_MODE === 'local'
-            ? 'http://127.0.0.1:3001/api'
+            ? `${location.protocol}//${location.hostname}:3001/api`
             : (RUNTIME_MODE === 'netlify' ? '/.netlify/functions' : null);
         
         let currentJob = 'civilian';
