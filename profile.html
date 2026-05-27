@@ -460,6 +460,11 @@
 
         function setAudioUrls() {
             const runtime = getRuntimeConfig();
+            const host = window.location.hostname;
+            const allowLocalAudio =
+                window.location.protocol === 'http:' &&
+                (host === 'localhost' || host === '127.0.0.1') &&
+                window.location.port === '3001';
             const audioFiles = {
                 generalMusic: ['rahulbhardwaj603-dark-tales-147852.mp3', 'rahulbhardwaj603-dark-tales-147852.ogg'],
                 easyMusic: ['joelfazhari-dark-mysterious-true-crime-music-loopable-235870.mp3', 'joelfazhari-dark-mysterious-true-crime-music-loopable-235870.ogg'],
@@ -471,13 +476,14 @@
                 const audio = document.getElementById(audioId);
                 if (!audio) continue;
                 const sources = audio.querySelectorAll('source');
-                if (runtime.mode === 'local') {
+                if (runtime.mode === 'local' && allowLocalAudio) {
                     sources[0].src = `${runtime.apiBase}/${encodeURIComponent(files[0])}`;
                     sources[1].src = `${runtime.apiBase}/${encodeURIComponent(files[1])}`;
                 } else {
                     sources[0].src = `${runtime.releaseBase}/${encodeURIComponent(files[0])}`;
                     sources[1].src = `${runtime.releaseBase}/${encodeURIComponent(files[1])}`;
                 }
+                audio.load();
             }
         }
 
