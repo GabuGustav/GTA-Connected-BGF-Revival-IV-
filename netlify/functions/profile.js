@@ -1,15 +1,22 @@
 const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
+const {
+    findUserByIdentifier,
+    getUserMail,
+    getUserRanks,
+    getUserAchievements
+} = require('../../supabase-client');
 
-// Data storage (in production, use a real database)
-const dataFile = path.join(__dirname, '..', '..', 'data.json');
-
-function loadData() {
-    if (fs.existsSync(dataFile)) {
-        return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-    }
-    return {};
+function response(statusCode, body) {
+    return {
+        statusCode,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    };
 }
 
 // HMAC verification function
@@ -43,11 +50,7 @@ exports.handler = async (event, context) => {
     const username = pathParts[pathParts.length - 1];
     
     if (!username || username === 'profile') {
-        return {
-            statusCode: 400,
-            headers: headers,
-            body: JSON.stringify({ error: 'Username required' })
-        };
+        return response(400, { error: 'Username required' });
     }
     
     // Verify HMAC signature if provided
@@ -57,54 +60,72 @@ exports.handler = async (event, context) => {
         const API_SECRET = process.env.API_SECRET_KEY || 'default-secret-key-change-in-production';
         
         if (!verifySignature(payload, providedSignature, API_SECRET)) {
-            return {
-                statusCode: 401,
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ error: 'Invalid signature' })
-            };
+            return response(401, { error: 'Invalid signature' });
         }
     }
     
-    const users = loadData();
-    const user = users[username];
-    
-    if (!user) {
-        return {
-            statusCode: 404,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ error: 'User not found' })
-        };
+    let match;
+    try {
+        match = await findUserByIdentifier(username);
+    } catch (error) {
+        return response(500, { error: 'Profile backend misconfigured', message: error.message });
     }
     
-    return {
-        statusCode: 200,
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Content-Type': 'application/json'
+    if (!match) {
+        return response(404, { error: 'User not found' });
+    }
+
+    const user = match.user;
+    const userRanks = await getUserRanks(user.id).catch(() => []);
+    const userAchievements = await getUserAchievements(user.id).catch(() => []);
+    const mailInbox = await getUserMail(match.username, 'inbox').catch(() => []);
+    const mailSent = await getUserMail(match.username, 'sent').catch(() => []);
+
+    const ranks = {};
+    for (const rank of userRanks) {
+        if (rank?.job_type) {
+            ranks[rank.job_type] = {
+                level: rank.level,
+                experience: rank.experience,
+                next_level_xp: rank.next_level_xp,
+                title: rank.title,
+                stats: {
+                    arrests_made: rank.arrests_made,
+                    tickets_issued: rank.tickets_issued,
+                    pursuits_completed: rank.pursuits_completed,
+                    patients_treated: rank.patients_treated,
+                    lives_saved: rank.lives_saved,
+                    response_time_avg: rank.response_time_avg,
+                    vehicles_repaired: rank.vehicles_repaired,
+                    custom_jobs: rank.custom_jobs,
+                    avg_repair_time: rank.avg_repair_time,
+                    missions_completed: rank.missions_completed,
+                    properties_owned: rank.properties_owned,
+                    wealth_earned: rank.wealth_earned,
+                    time_played: rank.time_played,
+                    time_in_service: rank.time_in_service
+                }
+            };
+        }
+    }
+
+    const achievements = userAchievements.map((entry) => entry.achievements || entry).filter(Boolean);
+
+    return response(200, {
+        username: match.username,
+        player_name: user.player_name || match.username,
+        gta_linked: !!user.gta_linked,
+        created_from_game: !!user.created_from_game,
+        created_at: user.created_at || null,
+        global_stats: {
+            total_playtime: user.total_playtime || 0,
+            last_active: user.last_active || null,
+            achievements_unlocked: user.achievements_unlocked || 0,
+            total_achievements: user.total_achievements || 25
         },
-        body: JSON.stringify({
-            username,
-            player_name: user.player_name || username,
-            gta_linked: user.gta_linked,
-            created_from_game: user.created_from_game,
-            created_at: user.created_at,
-            global_stats: user.global_stats,
-            ranks: user.ranks,
-            achievements: user.achievements || [],
-            inbox: user.inbox || [],
-            sent: user.sent || []
-        })
-    };
+        ranks,
+        achievements,
+        inbox: mailInbox,
+        sent: mailSent
+    });
 };

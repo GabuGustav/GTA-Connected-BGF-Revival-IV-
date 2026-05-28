@@ -92,6 +92,17 @@ CREATE TABLE mail_messages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE password_resets (
+  id UUID PRIMARY KEY,
+  username VARCHAR(255) NOT NULL,
+  otp_code VARCHAR(255) NOT NULL,
+  reset_token VARCHAR(255),
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  verified_at TIMESTAMP WITH TIME ZONE,
+  consumed_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Indexes for performance
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_gta_account_id ON users(gta_account_id);
@@ -102,12 +113,15 @@ CREATE INDEX idx_mail_messages_to_username ON mail_messages(to_username);
 CREATE INDEX idx_mail_messages_from_username ON mail_messages(from_username);
 CREATE INDEX idx_mail_messages_type ON mail_messages(message_type);
 CREATE INDEX idx_user_achievements_user_id ON user_achievements(user_id);
+CREATE INDEX idx_password_resets_username ON password_resets(username);
+CREATE INDEX idx_password_resets_token ON password_resets(reset_token);
 
 -- Row Level Security (RLS) policies
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_ranks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mail_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE password_resets ENABLE ROW LEVEL SECURITY;
 
 -- Allow anonymous access for public data (leaderboards, profiles)
 CREATE POLICY "Public read access for users" ON users FOR SELECT USING (true);

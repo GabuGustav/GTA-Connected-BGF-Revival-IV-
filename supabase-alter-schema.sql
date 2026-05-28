@@ -64,6 +64,17 @@ CREATE TABLE IF NOT EXISTS mail_messages (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS password_resets (
+  id UUID PRIMARY KEY,
+  username VARCHAR(255) NOT NULL,
+  otp_code VARCHAR(255) NOT NULL,
+  reset_token VARCHAR(255),
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  verified_at TIMESTAMP WITH TIME ZONE,
+  consumed_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Add missing columns to users table if they don't exist
 DO $$
 BEGIN
@@ -108,6 +119,8 @@ CREATE INDEX IF NOT EXISTS idx_mail_messages_to_username ON mail_messages(to_use
 CREATE INDEX IF NOT EXISTS idx_mail_messages_from_username ON mail_messages(from_username);
 CREATE INDEX IF NOT EXISTS idx_mail_messages_type ON mail_messages(message_type);
 CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON user_achievements(user_id);
+CREATE INDEX IF NOT EXISTS idx_password_resets_username ON password_resets(username);
+CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(reset_token);
 
 -- Enable RLS if not already enabled
 DO $$
@@ -126,6 +139,10 @@ BEGIN
     
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='mail_messages' AND table_schema='public') THEN
         ALTER TABLE mail_messages ENABLE ROW LEVEL SECURITY;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='password_resets' AND table_schema='public') THEN
+        ALTER TABLE password_resets ENABLE ROW LEVEL SECURITY;
     END IF;
 END $$;
 

@@ -1,5 +1,21 @@
 const bcrypt = require('bcrypt');
-const { loadData, findUserByIdentifier, response } = require('./_jobs_data');
+const {
+    findUserByIdentifier,
+    getUserMail
+} = require('../../supabase-client');
+
+function response(statusCode, body) {
+    return {
+        statusCode,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    };
+}
 
 exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
@@ -14,14 +30,13 @@ exports.handler = async (event) => {
             return response(400, { error: 'Username and password required' });
         }
 
-        const users = loadData();
-        const match = findUserByIdentifier(users, normalizedUsername);
+        const match = await findUserByIdentifier(normalizedUsername);
         if (!match) {
             return response(404, { error: 'User not found' });
         }
 
         const storedUser = match.user;
-        const storedPassword = storedUser.password || '';
+        const storedPassword = storedUser.password_hash || storedUser.password || '';
         let passwordMatches = false;
 
         if (typeof storedPassword === 'string' && storedPassword.startsWith('$2')) {
@@ -34,13 +49,16 @@ exports.handler = async (event) => {
             return response(401, { error: 'Incorrect password' });
         }
 
+        const inbox = await getUserMail(match.username, 'inbox').catch(() => []);
+        const sent = await getUserMail(match.username, 'sent').catch(() => []);
+
         return response(200, {
             success: true,
             user: {
                 username: match.username,
                 playerName: storedUser.player_name || match.username,
-                inbox: storedUser.inbox || [],
-                sent: storedUser.sent || [],
+                inbox,
+                sent,
                 achievements: storedUser.achievements || [],
                 global_stats: storedUser.global_stats || null,
                 ranks: storedUser.ranks || null

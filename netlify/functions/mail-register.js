@@ -1,101 +1,79 @@
-const crypto = require('crypto');
-const fs = require('fs');
-const path = require('path');
+const {
+    findUserByIdentifier,
+    getUserMail
+} = require('../../supabase-client');
 
-// Data storage (in production, use a real database)
-const dataFile = path.join(__dirname, '..', '..', 'data.json');
-
-function loadData() {
-    if (fs.existsSync(dataFile)) {
-        return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-    }
-    return {};
-}
-
-function saveData(data) {
-    fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+function response(statusCode, body) {
+    return {
+        statusCode,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    };
 }
 
 exports.handler = async (event) => {
-    // Only allow POST requests
+    if (event.httpMethod === 'OPTIONS') {
+        return response(200, {});
+    }
+
     if (event.httpMethod !== 'POST') {
-        return {
-            statusCode: 405,
-            body: JSON.stringify({ error: 'Method not allowed' })
-        };
+        return response(405, { error: 'Method not allowed' });
     }
 
     try {
-        const { username, action } = JSON.parse(event.body);
-        
-        // Validate required fields
-        if (!username) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({ error: 'Username required' })
-            };
-        }
-        
-        const users = loadData();
-        const usernameLower = username.toLowerCase().trim();
-        
-        if (action === 'register') {
-            // Register user for mail system
-            if (!users[usernameLower]) {
-                users[usernameLower] = {
-                    username: usernameLower,
-                    inbox: [],
-                    sent: [],
-                    created_at: new Date().toISOString()
-                };
-                saveData(users);
-                
-                return {
-                    statusCode: 200,
-                    body: JSON.stringify({ 
-                        success: true,
-                        message: 'User registered for mail system',
-                        username: usernameLower
-                    })
-                };
-            } else {
-                return {
-                    statusCode: 409,
-                    body: JSON.stringify({ 
-                        success: false,
-                        error: 'User already registered',
-                        username: usernameLower
-                    })
-                };
-            }
-        } else if (action === 'check') {
-            // Check if user exists
-            const exists = !!users[usernameLower];
-            
-            return {
-                statusCode: 200,
-                body: JSON.stringify({ 
-                    exists: exists,
-                    username: usernameLower,
-                    hasInbox: exists ? (users[usernameLower].inbox || []).length : 0,
-                    hasSent: exists ? (users[usernameLower].sent || []).length : 0
-                })
-            };
-        } else {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({ error: 'Invalid action. Use "register" or "check"' })
-            };
+        const { username, action } = JSON.parse(event.body || '{}');
+        const normalizedUsername = String(username || '').toLowerCase().trim();
+
+        if (!normalizedUsername) {
+            return response(400, { error: 'Username required' });
         }
 
+        const match = await findUserByIdentifier(normalizedUsername);
+
+        if (action === 'register') {
+            if (!match) {
+                return response(404, {
+                    success: false,
+                    error: 'User not found',
+                    username: normalizedUsername
+                });
+            }
+
+            const inbox = await getUserMail(match.username, 'inbox').catch(() => []);
+            const sent = await getUserMail(match.username, 'sent').catch(() => []);
+
+            return response(200, {
+                success: true,
+                message: 'User is registered for the mail system',
+                username: match.username,
+                hasInbox: inbox.length,
+                hasSent: sent.length
+            });
+        }
+
+        if (action === 'check') {
+            const inbox = match ? await getUserMail(match.username, 'inbox').catch(() => []) : [];
+            const sent = match ? await getUserMail(match.username, 'sent').catch(() => []) : [];
+
+            return response(200, {
+                exists: !!match,
+                username: normalizedUsername,
+                hasInbox: inbox.length,
+                hasSent: sent.length
+            });
+        }
+
+        return response(400, { error: 'Invalid action. Use "register" or "check"' });
     } catch (error) {
         console.error('Function error:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ 
-                error: 'Internal server error',
-                message: error.message 
-            })
-        };
+        return response(500, {
+            error: 'Internal server error',
+            message: error.message
+        });
     }
 };

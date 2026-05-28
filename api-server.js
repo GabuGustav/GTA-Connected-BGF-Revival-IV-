@@ -318,15 +318,14 @@ app.post('/api/forgot-password', authLimiter, (req, res) => {
     }
     
     // Generate OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpId = crypto.randomBytes(16).toString('hex');
+    const otpId = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
     
     // Store OTP
     const otps = loadOTPs();
     otps[otpId] = {
         id: otpId,
-        code: otp,
+        code: otpId,
         username: lookupUsername,
         expiresAt: expiresAt.toISOString(),
         createdAt: new Date().toISOString()
@@ -335,7 +334,7 @@ app.post('/api/forgot-password', authLimiter, (req, res) => {
     saveOTPs(boundedOtps);
     
     // Send OTP via BGF Mail (you'll implement this)
-    console.log(`OTP for ${username}: ${otp} (ID: ${otpId})`);
+    console.log(`OTP for ${username}: ${otpId}`);
     
     res.json({
         success: true,
@@ -368,8 +367,11 @@ app.post('/api/verify-otp', authLimiter, (req, res) => {
         return res.status(400).json({ error: 'OTP expired' });
     }
     
-    // Generate reset token
+    // Generate reset token and persist it with the OTP record
     const resetToken = crypto.randomBytes(32).toString('hex');
+    otps[otp_id].resetToken = resetToken;
+    otps[otp_id].verifiedAt = new Date().toISOString();
+    saveOTPs(otps);
     
     res.json({
         valid: true,
@@ -391,9 +393,29 @@ app.post('/api/reset-password', (req, res) => {
         return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
     
-    // In production, verify the reset token
-    // For now, we'll assume it's valid
-    
+    const otps = loadOTPs();
+    const resetEntry = Object.values(otps).find((otp) => otp.resetToken === token);
+    if (!resetEntry) {
+        return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    if (new Date() > new Date(resetEntry.expiresAt)) {
+        return res.status(400).json({ error: 'Reset token expired' });
+    }
+
+    const users = loadData();
+    const user = users[resetEntry.username];
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+
+    const hashedPassword = bcrypt.hashSync(new_password, 10);
+    user.password = hashedPassword;
+    saveData(users);
+
+    resetEntry.consumedAt = new Date().toISOString();
+    saveOTPs(otps);
+
     res.json({
         success: true,
         message: 'Password reset successfully'

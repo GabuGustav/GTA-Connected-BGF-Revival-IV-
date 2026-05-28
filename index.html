@@ -1854,6 +1854,12 @@
         <source src="4379051-hacker-alarm-124960.mp3" type="audio/mpeg">
         <source src="4379051-hacker-alarm-124960.ogg" type="audio/ogg">
     </audio>
+    <audio id="mailDingAudio" preload="auto">
+        <source src="Ding.mp3" type="audio/mpeg">
+        <source src="Ding.ogg" type="audio/ogg">
+        <source src="Ding.wav" type="audio/wav">
+        <source src="Ding.m4a" type="audio/mp4">
+    </audio>
     
     <!-- Secure Key Manager -->
     <script src="js/secure-key-manager.js"></script>
@@ -2580,7 +2586,7 @@
             if (notificationData) {
                 try {
                     const notification = JSON.parse(notificationData);
-                    showNotification(`New message from ${notification.from}: ${notification.subject}`, 'info');
+                    showNotification(`New message from ${notification.from}: ${notification.subject}`, 'new-message');
                     // Clear the notification after showing
                     localStorage.removeItem(notificationKey);
                 } catch (error) {
@@ -2598,7 +2604,7 @@
                 if (latestNotification) {
                     try {
                         const notification = JSON.parse(latestNotification);
-                        showNotification(`New message from ${notification.from}: ${notification.subject}`, 'info');
+                        showNotification(`New message from ${notification.from}: ${notification.subject}`, 'new-message');
                         localStorage.removeItem(notificationKey);
                     } catch (error) {
                         console.error('Error parsing notification:', error);
@@ -3466,6 +3472,10 @@
             
             // Add to page
             document.body.appendChild(notification);
+
+            if (type === 'new-message') {
+                playMailDingSound();
+            }
             
             // Auto remove after 5 seconds
             setTimeout(() => {
@@ -3521,6 +3531,25 @@
             };
             localStorage.setItem(notificationKey, JSON.stringify(notification));
         }
+
+        function playMailDingSound() {
+            const audio = document.getElementById('mailDingAudio');
+            if (!audio) {
+                return;
+            }
+
+            try {
+                audio.currentTime = 0;
+                const playResult = audio.play();
+                if (playResult && typeof playResult.catch === 'function') {
+                    playResult.catch((error) => {
+                        console.log('Mail ding blocked by browser:', error);
+                    });
+                }
+            } catch (error) {
+                console.log('Mail ding playback failed:', error);
+            }
+        }
         
 // Finish registration and enter mail
 function finishRegistration() {
@@ -3560,6 +3589,10 @@ function showNotification(message, type = 'info') {
     
     // Add to page
     document.body.appendChild(notification);
+
+    if (type === 'new-message') {
+        playMailDingSound();
+    }
     
     // Auto remove after 5 seconds
     setTimeout(() => {
@@ -3815,6 +3848,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Password Recovery System
         let currentOTP = null;
+        let currentResetToken = null;
         let otpTimer = null;
         let otpExpiry = null;
         let recoveryUsername = null;
@@ -3870,7 +3904,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             
             // Reset password
-            resetPassword: async function(username, newPassword) {
+            resetPassword: async function(token, newPassword) {
                 try {
                     const response = await fetch(`${this.baseURL}/reset-password`, {
                         method: 'POST',
@@ -3878,7 +3912,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ 
-                            token: 'reset_token', // In production, use actual token
+                            token,
                             new_password: newPassword 
                         })
                     });
@@ -3927,6 +3961,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             currentOTP = null;
+            currentResetToken = null;
             recoveryUsername = null;
         }
         
@@ -3938,26 +3973,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            if (!mailData[username]) {
-                alert('User not found');
-                return;
-            }
-            
             try {
                 // Generate OTP via API
                 const otpData = await API.generateOTP(username);
                 currentOTP = otpData;
                 recoveryUsername = username;
                 
-                // Send OTP via BGF Mail
-                mailData[username].inbox.unshift({
-                    from: 'system',
-                    subject: 'Password Recovery Code',
-                    message: `Your password recovery code is: ${otpData.otp_id}\n\nGo to https://bgfr-gta-connected.netlify.app/recovery?otp_id=${otpData.otp_id}\n\nThis code will expire in 15 minutes.\n\nIf you didn't request this, please ignore this message.`,
-                    date: new Date().toISOString(),
-                    read: false
-                });
-                saveMailData();
+                // Mirror the recovery mail locally when the inbox is already loaded.
+                if (mailData[username]) {
+                    mailData[username].inbox.unshift({
+                        from: 'system',
+                        subject: 'Password Recovery Code',
+                        message: `Your password recovery code is: ${otpData.otp_id}\n\nGo to https://bgfr-gta-connected.netlify.app/recovery?otp_id=${otpData.otp_id}\n\nThis code will expire in 15 minutes.\n\nIf you didn't request this, please ignore this message.`,
+                        date: new Date().toISOString(),
+                        read: false
+                    });
+                    saveMailData();
+                }
                 
                 // Show OTP step
                 document.getElementById('recoveryStep1').style.display = 'none';
@@ -4035,6 +4067,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await API.verifyOTP(currentOTP.otp_id, otpValue);
                 
                 if (result.valid) {
+                    currentResetToken = result.reset_token;
                     // Show password reset step
                     const recoveryStep2 = document.getElementById('recoveryStep2');
                     const recoveryStep3 = document.getElementById('recoveryStep3');
@@ -4054,7 +4087,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        function resetPassword() {
+        async function resetPassword() {
             const newPasswordElement = document.getElementById('newPassword');
             const confirmPasswordElement = document.getElementById('confirmPassword');
             
@@ -4081,8 +4114,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            const result = API.resetPassword(recoveryUsername, newPassword);
-            
+            if (!currentResetToken) {
+                alert('Recovery session expired. Please request a new code.');
+                resetRecoveryForm();
+                return;
+            }
+
+            let result;
+            try {
+                result = await API.resetPassword(currentResetToken, newPassword);
+            } catch (error) {
+                alert(error.message || 'Password reset failed');
+                return;
+            }
+
             if (result.success) {
                 alert('Password reset successfully! You can now login with your new password.');
                 showMailLogin();

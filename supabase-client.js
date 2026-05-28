@@ -9,16 +9,21 @@ const { createClient } = require('@supabase/supabase-js');
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const hasSupabaseConfig = Boolean(supabaseUrl && supabaseKey);
+const supabase = hasSupabaseConfig ? createClient(supabaseUrl, supabaseKey) : null;
 
-if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase environment variables. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+function assertSupabaseConfigured() {
+    if (!supabase) {
+        throw new Error('Missing Supabase environment variables. Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+    }
+
+    return supabase;
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 // User management functions
 async function createUser(userData) {
-    const { data, error } = await supabase
+    const client = assertSupabaseConfigured();
+    const { data, error } = await client
         .from('users')
         .insert([{
             username: userData.username,
@@ -39,10 +44,14 @@ async function createUser(userData) {
 }
 
 async function findUserByIdentifier(identifier) {
-    const normalized = identifier.toLowerCase();
+    const client = assertSupabaseConfigured();
+    const normalized = String(identifier || '').toLowerCase().trim();
+    if (!normalized) {
+        return null;
+    }
     
     // Try username first
-    let { data, error } = await supabase
+    let { data, error } = await client
         .from('users')
         .select('*')
         .eq('username', normalized)
@@ -51,7 +60,7 @@ async function findUserByIdentifier(identifier) {
     if (!error && data) return data;
     
     // Try player_name
-    ({ data, error } = await supabase
+    ({ data, error } = await client
         .from('users')
         .select('*')
         .eq('player_name', identifier)
@@ -60,7 +69,7 @@ async function findUserByIdentifier(identifier) {
     if (!error && data) return data;
     
     // Try gta_account_id
-    ({ data, error } = await supabase
+    ({ data, error } = await client
         .from('users')
         .select('*')
         .eq('gta_account_id', identifier)
@@ -71,8 +80,23 @@ async function findUserByIdentifier(identifier) {
     return null;
 }
 
+async function updateUserPassword(username, passwordHash) {
+    const client = assertSupabaseConfigured();
+    const normalized = String(username || '').toLowerCase().trim();
+    const { data, error } = await client
+        .from('users')
+        .update({ password_hash: passwordHash })
+        .eq('username', normalized)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
 async function updateUserRank(userId, jobType, rankData) {
-    const { data, error } = await supabase
+    const client = assertSupabaseConfigured();
+    const { data, error } = await client
         .from('user_ranks')
         .upsert([{
             user_id: userId,
@@ -105,7 +129,8 @@ async function updateUserRank(userId, jobType, rankData) {
 }
 
 async function getUserRanks(userId) {
-    const { data, error } = await supabase
+    const client = assertSupabaseConfigured();
+    const { data, error } = await client
         .from('user_ranks')
         .select('*')
         .eq('user_id', userId);
@@ -115,7 +140,8 @@ async function getUserRanks(userId) {
 }
 
 async function getUserAchievements(userId) {
-    const { data, error } = await supabase
+    const client = assertSupabaseConfigured();
+    const { data, error } = await client
         .from('user_achievements')
         .select(`
             *,
@@ -128,6 +154,7 @@ async function getUserAchievements(userId) {
 }
 
 async function sendMailMessage(mailData) {
+    const client = assertSupabaseConfigured();
     const message = {
         from_username: mailData.from,
         to_username: mailData.to,
@@ -138,7 +165,7 @@ async function sendMailMessage(mailData) {
     };
     
     // Add to recipient's inbox
-    const { data: inboxData, error: inboxError } = await supabase
+    const { data: inboxData, error: inboxError } = await client
         .from('mail_messages')
         .insert([message])
         .select()
@@ -147,7 +174,7 @@ async function sendMailMessage(mailData) {
     if (inboxError) throw inboxError;
     
     // Add to sender's sent items
-    const { data: sentData, error: sentError } = await supabase
+    const { data: sentData, error: sentError } = await client
         .from('mail_messages')
         .insert([{
             ...message,
@@ -163,7 +190,8 @@ async function sendMailMessage(mailData) {
 }
 
 async function getUserMail(username, messageType = 'inbox') {
-    const { data, error } = await supabase
+    const client = assertSupabaseConfigured();
+    const { data, error } = await client
         .from('mail_messages')
         .select('*')
         .eq(messageType === 'inbox' ? 'to_username' : 'from_username', username)
@@ -175,7 +203,8 @@ async function getUserMail(username, messageType = 'inbox') {
 }
 
 async function markMailAsRead(messageId) {
-    const { data, error } = await supabase
+    const client = assertSupabaseConfigured();
+    const { data, error } = await client
         .from('mail_messages')
         .update({ read_status: true })
         .eq('id', messageId)
@@ -187,7 +216,8 @@ async function markMailAsRead(messageId) {
 }
 
 async function getLeaderboard(jobType, limit = 50, offset = 0) {
-    const { data, error } = await supabase
+    const client = assertSupabaseConfigured();
+    const { data, error } = await client
         .from('user_ranks')
         .select(`
             *,
@@ -206,7 +236,8 @@ async function getLeaderboard(jobType, limit = 50, offset = 0) {
 }
 
 async function updateUserGlobalStats(userId, stats) {
-    const { data, error } = await supabase
+    const client = assertSupabaseConfigured();
+    const { data, error } = await client
         .from('users')
         .update({
             total_playtime: stats.total_playtime,
@@ -221,10 +252,103 @@ async function updateUserGlobalStats(userId, stats) {
     return data;
 }
 
+async function createPasswordResetRequest({ id, username, otpCode, expiresAt }) {
+    const client = assertSupabaseConfigured();
+    const { data, error } = await client
+        .from('password_resets')
+        .insert([{
+            id,
+            username,
+            otp_code: otpCode,
+            expires_at: expiresAt.toISOString(),
+            created_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+async function getPasswordResetRequest(otpId) {
+    const client = assertSupabaseConfigured();
+    const { data, error } = await client
+        .from('password_resets')
+        .select('*')
+        .eq('id', otpId)
+        .single();
+
+    if (error) {
+        if (error.code === 'PGRST116') {
+            return null;
+        }
+        throw error;
+    }
+
+    return data;
+}
+
+async function markPasswordResetVerified(otpId, resetToken) {
+    const client = assertSupabaseConfigured();
+    const { data, error } = await client
+        .from('password_resets')
+        .update({
+            reset_token: resetToken,
+            verified_at: new Date().toISOString()
+        })
+        .eq('id', otpId)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+async function consumePasswordResetToken(resetToken, newPasswordHash) {
+    const client = assertSupabaseConfigured();
+    const { data: resetRequest, error: resetError } = await client
+        .from('password_resets')
+        .select('*')
+        .eq('reset_token', resetToken)
+        .is('consumed_at', null)
+        .single();
+
+    if (resetError) {
+        if (resetError.code === 'PGRST116') {
+            return null;
+        }
+        throw resetError;
+    }
+
+    if (!resetRequest) {
+        return null;
+    }
+
+    const expiresAt = new Date(resetRequest.expires_at);
+    if (Number.isNaN(expiresAt.getTime()) || new Date() > expiresAt) {
+        return null;
+    }
+
+    const updatedUser = await updateUserPassword(resetRequest.username, newPasswordHash);
+
+    const { error: consumeError } = await client
+        .from('password_resets')
+        .update({
+            consumed_at: new Date().toISOString()
+        })
+        .eq('id', resetRequest.id);
+
+    if (consumeError) throw consumeError;
+    return updatedUser;
+}
+
 module.exports = {
     supabase,
+    hasSupabaseConfig,
+    assertSupabaseConfigured,
     createUser,
     findUserByIdentifier,
+    updateUserPassword,
     updateUserRank,
     getUserRanks,
     getUserAchievements,
@@ -232,5 +356,9 @@ module.exports = {
     getUserMail,
     markMailAsRead,
     getLeaderboard,
-    updateUserGlobalStats
+    updateUserGlobalStats,
+    createPasswordResetRequest,
+    getPasswordResetRequest,
+    markPasswordResetVerified,
+    consumePasswordResetToken
 };
