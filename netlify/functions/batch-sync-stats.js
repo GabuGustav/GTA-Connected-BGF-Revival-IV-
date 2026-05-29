@@ -1,228 +1,121 @@
-const fs = require('fs');
-const path = require('path');
+const {
+    response,
+    corsPreflight,
+    parseBridgePayload,
+    authenticateGtaBridge,
+    normalizeUsername,
+    calculateLevel,
+    calculateNextLevelXP,
+    getTitleForLevel,
+    mapStatsToRankColumns
+} = require('./_gta_bridge');
+const {
+    hasSupabaseConfig,
+    ensureUserForGameSync,
+    updateUserRank,
+    updateUserGlobalStats
+} = require('../../supabase-client');
 
-// Data storage (in production, use a real database)
-const dataFile = path.join(__dirname, '..', '..', 'data.json');
-
-function loadData() {
-    if (fs.existsSync(dataFile)) {
-        return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-    }
-    return {};
-}
-
-function saveData(data) {
-    // Note: fs.writeFileSync doesn't work on Netlify (read-only environment)
-    // In production, this should connect to a database like MongoDB or Supabase
-    console.log('Data received:', JSON.stringify(data, null, 2));
-    return true; // Return success for now
-}
-
-function normalizeUsername(value) {
-    return String(value || '').toLowerCase().trim();
-}
-
-function calculateLevel(experience) {
-    if (experience < 100) {
-        return 1;
-    }
-    
-    const level = Math.floor(Math.log2(experience / 100)) + 2;
-    return level;
-}
-
-function calculateNextLevelXP(level) {
-    if (level <= 1) {
-        return 100;
-    }
-    return 100 * Math.pow(2, level - 1);
-}
-
-function getTitleForLevel(level, jobType) {
-    const titles = {
-        police: ['Recruit', 'Officer', 'Sergeant', 'Lieutenant', 'Captain', 'Chief'],
-        medic: ['Trainee Medic', 'Medic', 'Senior Medic', 'Paramedic', 'Emergency Coordinator', 'Chief Medic'],
-        mechanic: ['Apprentice Mechanic', 'Mechanic', 'Senior Mechanic', 'Master Mechanic', 'Shop Foreman', 'Chief Engineer'],
-        civilian: ['Newcomer', 'Resident', 'Citizen', 'Community Leader', 'Local Hero', 'Civilian Legend']
-    };
-    
-    const jobTitles = titles[jobType] || titles.civilian;
-    const index = Math.min(level - 1, jobTitles.length - 1);
-    return jobTitles[index];
-}
+const VALID_JOB_TYPES = new Set(['police', 'medic', 'mechanic', 'civilian']);
+const MAX_BATCH_UPDATES = 100;
 
 exports.handler = async function(event) {
-    // Add CORS headers
-    const headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Content-Type': 'application/json'
-    };
-    
-    // Handle preflight OPTIONS request
     if (event.httpMethod === 'OPTIONS') {
-        return {
-            statusCode: 200,
-            headers: headers,
-            body: ''
-        };
+        return corsPreflight();
     }
-    
-    // Change the method check to allow both GET and POST
-    if (event.httpMethod !== 'POST' && event.httpMethod !== 'GET') {
-        return {
-            statusCode: 405,
-            headers: headers,
-            body: JSON.stringify({ error: 'Method not allowed' })
-        };
-    }
-    
-    try {
-        let payload;
-        
-        // 1. Try to get data from the URL query string (common in GTA bridges)
-        if (event.queryStringParameters && event.queryStringParameters.payload) {
-            payload = JSON.parse(event.queryStringParameters.payload);
-        } 
-        // 2. Fallback to checking the request body
-        else if (event.body) {
-            payload = JSON.parse(event.body);
-        }
 
+    if (event.httpMethod !== 'POST' && event.httpMethod !== 'GET') {
+        return response(405, { error: 'Method not allowed' });
+    }
+
+    const auth = authenticateGtaBridge(event);
+    if (!auth.ok) {
+        return response(401, { error: auth.error });
+    }
+
+    if (!hasSupabaseConfig) {
+        return response(503, { error: 'Supabase is not configured on this deployment' });
+    }
+
+    try {
+        const payload = parseBridgePayload(event);
         if (!payload || !Array.isArray(payload.playerUpdates)) {
-            return {
-                statusCode: 400,
-                headers: headers,
-                body: JSON.stringify({ error: 'playerUpdates must be an array' })
-            };
+            return response(400, { error: 'playerUpdates must be an array' });
         }
 
         const { playerUpdates } = payload;
-        
-        if (!Array.isArray(playerUpdates)) {
-            return {
-                statusCode: 400,
-                headers: headers,
-                body: JSON.stringify({ error: 'playerUpdates must be an array' })
-            };
+        if (playerUpdates.length > MAX_BATCH_UPDATES) {
+            return response(400, { error: `Too many updates in one request (max ${MAX_BATCH_UPDATES})` });
         }
-        
-        const data = loadData();
+
         let updatedCount = 0;
-        
-        // Process each player update
+        const errors = [];
+
         for (const update of playerUpdates) {
-            const { username, jobType, experience, stats, newLevel } = update;
-            
-            if (!username || !jobType || experience === undefined) {
-                console.log('Skipping invalid update:', update);
+            const { username, jobType, stats, experience, newLevel } = update;
+
+            if (!username || !jobType) {
+                errors.push({ username, error: 'Missing username or jobType' });
                 continue;
             }
-            
+
+            const normalizedJob = String(jobType).toLowerCase();
+            if (!VALID_JOB_TYPES.has(normalizedJob)) {
+                errors.push({ username, error: `Invalid job type: ${jobType}` });
+                continue;
+            }
+
             const normalizedUsername = normalizeUsername(username);
-            
-            // Create user if doesn't exist
-            if (!data[normalizedUsername]) {
-                data[normalizedUsername] = {
-                    created_at: new Date().toISOString(),
-                    gta_linked: true,
-                    created_from_game: true,
-                    inbox: [],
-                    sent: [],
-                    achievements: [],
-                    ranks: {},
-                    global_stats: {
-                        total_playtime: 0,
-                        last_active: new Date().toISOString(),
-                        achievements_unlocked: 0,
-                        total_achievements: 25
-                    }
-                };
-                
-                // Add welcome message
-                data[normalizedUsername].inbox.push({
-                    from: 'system',
-                    subject: 'Welcome to BGF Revival IV!',
-                    message: `Welcome ${username}! Your account has been created from the GTA server. Start playing to build your rank and unlock achievements!`,
-                    date: new Date().toISOString(),
-                    read: false
+            if (!normalizedUsername) {
+                errors.push({ username, error: 'Invalid username' });
+                continue;
+            }
+
+            try {
+                const user = await ensureUserForGameSync(
+                    normalizedUsername,
+                    update.playerName || normalizedUsername
+                );
+
+                const xp = experience !== undefined ? Number(experience) : 0;
+                const level = newLevel !== undefined ? Number(newLevel) : calculateLevel(xp);
+                const statColumns = mapStatsToRankColumns(stats);
+
+                await updateUserRank(user.id, normalizedJob, {
+                    level,
+                    experience: xp,
+                    next_level_xp: calculateNextLevelXP(level),
+                    title: getTitleForLevel(level, normalizedJob),
+                    stats: statColumns
                 });
-            }
-            
-            const user = data[normalizedUsername];
-            
-            // Initialize ranks if needed
-            if (!user.ranks) {
-                user.ranks = {};
-            }
-            
-            // Initialize global_stats if needed
-            if (!user.global_stats) {
-                user.global_stats = {
-                    total_playtime: 0,
-                    last_active: new Date().toISOString(),
-                    achievements_unlocked: 0,
-                    total_achievements: 25
-                };
-            }
-            
-            // Update rank data
-            if (!user.ranks[jobType]) {
-                user.ranks[jobType] = {
-                    level: 1,
-                    experience: 0,
-                    next_level_xp: 100,
-                    title: getTitleForLevel(1, jobType),
-                    stats: {}
-                };
-            }
-            
-            // Update experience and level
-            user.ranks[jobType].experience = experience;
-            user.ranks[jobType].level = newLevel || calculateLevel(experience);
-            user.ranks[jobType].next_level_xp = calculateNextLevelXP(user.ranks[jobType].level);
-            user.ranks[jobType].title = getTitleForLevel(user.ranks[jobType].level, jobType);
-            
-            // Update stats
-            if (stats && typeof stats === 'object') {
-                user.ranks[jobType].stats = { ...user.ranks[jobType].stats, ...stats };
-                
-                // Update global playtime if time_played is provided
-                if (stats.time_played) {
-                    user.global_stats.total_playtime = Math.max(user.global_stats.total_playtime, stats.time_played);
+
+                const playtime = statColumns.time_played || statColumns.time_in_service || 0;
+                if (playtime > 0) {
+                    await updateUserGlobalStats(user.id, {
+                        total_playtime: Math.max(user.total_playtime || 0, playtime),
+                        achievements_unlocked: user.achievements_unlocked || 0
+                    });
                 }
+
+                updatedCount += 1;
+            } catch (syncError) {
+                errors.push({ username: normalizedUsername, error: syncError.message });
             }
-            
-            // Update last active
-            user.global_stats.last_active = new Date().toISOString();
-            
-            updatedCount++;
         }
-        
-        // Save updated data
-        saveData(data);
-        
-        return {
-            statusCode: 200,
-            headers: headers,
-            body: JSON.stringify({
-                success: true,
-                updated: updatedCount,
-                total: playerUpdates.length,
-                message: `Successfully updated ${updatedCount} players`
-            })
-        };
-        
+
+        return response(200, {
+            success: true,
+            updated: updatedCount,
+            updatedCount,
+            total: playerUpdates.length,
+            errors,
+            message: `Successfully updated ${updatedCount} players in Supabase`
+        });
     } catch (error) {
         console.error('Batch sync error:', error);
-        return {
-            statusCode: 500,
-            headers: headers,
-            body: JSON.stringify({ 
-                error: 'Internal server error',
-                message: error.message 
-            })
-        };
+        return response(500, {
+            error: 'Internal server error',
+            message: error.message
+        });
     }
 };

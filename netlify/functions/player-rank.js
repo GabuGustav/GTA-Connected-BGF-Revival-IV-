@@ -46,14 +46,13 @@ exports.handler = async (event) => {
         };
     }
 
-    const match = await findUserByIdentifier(accountId);
+    const user = await findUserByIdentifier(accountId);
 
-    if (!match) {
+    if (!user) {
         return response(404, { error: 'User not found' });
     }
 
-    const normalizedUsername = match.username;
-    const user = match.user;
+    const normalizedUsername = user.username;
     const userRanks = await getUserRanks(user.id).catch(() => []);
     const rankEntry = userRanks.find((entry) => entry.job_type === jobType);
     const rankData = rankEntry ? {

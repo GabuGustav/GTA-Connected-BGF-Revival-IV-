@@ -107,7 +107,15 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='total_achievements') THEN
         ALTER TABLE users ADD COLUMN total_achievements INTEGER DEFAULT 25;
     END IF;
+
+    -- Dual password: website (password_hash) vs in-game (game_password_hash)
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='game_password_hash') THEN
+        ALTER TABLE users ADD COLUMN game_password_hash VARCHAR(255);
+    END IF;
 END $$;
+
+-- Website-only or game-only accounts allowed while linking
+ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
 
 -- Create indexes if they don't exist
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);

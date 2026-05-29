@@ -65,13 +65,34 @@ function assertSupabaseConfigured() {
 }
 
 // User management functions
+const DEFAULT_JOB_TYPES = ['police', 'medic', 'mechanic', 'civilian'];
+
+async function ensureDefaultUserRanks(userId) {
+    const client = assertSupabaseConfigured();
+    const rows = DEFAULT_JOB_TYPES.map((jobType) => ({
+        user_id: userId,
+        job_type: jobType,
+        level: 1,
+        experience: 0,
+        next_level_xp: 100,
+        title: 'Newcomer'
+    }));
+
+    const { error } = await client
+        .from('user_ranks')
+        .upsert(rows, { onConflict: 'user_id,job_type' });
+
+    if (error) throw error;
+}
+
 async function createUser(userData) {
     const client = assertSupabaseConfigured();
     const { data, error } = await client
         .from('users')
         .insert([{
             username: userData.username,
-            password_hash: userData.password_hash,
+            password_hash: userData.password_hash ?? null,
+            game_password_hash: userData.game_password_hash ?? null,
             player_name: userData.player_name,
             gta_account_id: userData.gta_account_id,
             gta_linked: userData.gta_linked || false,
@@ -84,6 +105,84 @@ async function createUser(userData) {
         .single();
     
     if (error) throw error;
+    await ensureDefaultUserRanks(data.id);
+    return data;
+}
+
+async function createGameLinkedUser(userData) {
+    const user = await createUser({
+        username: userData.username,
+        password_hash: userData.password_hash ?? null,
+        game_password_hash: userData.game_password_hash,
+        player_name: userData.player_name || userData.username,
+        gta_account_id: userData.gta_account_id || userData.username,
+        gta_linked: true,
+        created_from_game: true
+    });
+
+    return user;
+}
+
+async function linkGamePasswordToUser(username, fields) {
+    const client = assertSupabaseConfigured();
+    const normalized = String(username || '').toLowerCase().trim();
+    const { data, error } = await client
+        .from('users')
+        .update({
+            game_password_hash: fields.game_password_hash,
+            gta_linked: true,
+            gta_account_id: fields.gta_account_id || normalized,
+            player_name: fields.player_name,
+            last_active: new Date().toISOString()
+        })
+        .eq('username', normalized)
+        .select()
+        .single();
+
+    if (error) throw error;
+    await ensureDefaultUserRanks(data.id);
+    return data;
+}
+
+async function ensureUserForGameSync(username, playerName) {
+    const existing = await findUserByIdentifier(username);
+    if (existing) {
+        return existing;
+    }
+
+    const client = assertSupabaseConfigured();
+    const normalized = String(username || '').toLowerCase().trim();
+    const { data, error } = await client
+        .from('users')
+        .insert([{
+            username: normalized,
+            password_hash: null,
+            game_password_hash: null,
+            player_name: playerName || normalized,
+            gta_account_id: normalized,
+            gta_linked: true,
+            created_from_game: true,
+            total_playtime: 0,
+            achievements_unlocked: 0,
+            total_achievements: 25
+        }])
+        .select()
+        .single();
+
+    if (error) throw error;
+    await ensureDefaultUserRanks(data.id);
+
+    try {
+        await sendMailMessage({
+            from: 'system',
+            to: normalized,
+            subject: 'Welcome to BGF Revival IV!',
+            message: `Welcome ${normalized}! Your profile was created from GTA server stats. Register on the website to set a mail password.`
+        });
+    } catch (mailError) {
+        console.warn('ensureUserForGameSync welcome mail:', mailError.message);
+    }
+
     return data;
 }
 
@@ -392,6 +491,10 @@ module.exports = {
     hasSupabaseConfig,
     assertSupabaseConfigured,
     createUser,
+    createGameLinkedUser,
+    linkGamePasswordToUser,
+    ensureUserForGameSync,
+    ensureDefaultUserRanks,
     findUserByIdentifier,
     updateUserPassword,
     updateUserRank,
