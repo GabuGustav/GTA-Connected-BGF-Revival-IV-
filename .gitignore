@@ -77,3 +77,6 @@ jspm_packages/
 *.zip
 downloadable-files/
 misc/
+
+# Local Netlify folder
+.netlify
