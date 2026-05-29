@@ -9,6 +9,7 @@
 const path = require('path');
 const fs = require('fs');
 const dotenv = require('dotenv');
+const { loadBcrypt } = require('./_bcrypt');
 
 // Load .env from project root (safe to call even in production)
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -65,19 +66,14 @@ exports.handler = async (event) => {
         return response(405, { error: 'Method not allowed' });
     }
 
-    // ── Lazy-load bcrypt (avoids native-binding crash at module level) ──
     let bcrypt;
     try {
-        bcrypt = require('bcrypt');
+        bcrypt = loadBcrypt();
     } catch (_) {
-        try {
-            bcrypt = require('bcryptjs');
-        } catch (_2) {
-            return response(500, {
-                error: 'Password hashing library unavailable on this platform',
-                message: 'Neither bcrypt nor bcryptjs could be loaded'
-            });
-        }
+        return response(500, {
+            error: 'Password hashing library unavailable on this platform',
+            message: 'bcryptjs could not be loaded'
+        });
     }
 
     try {
@@ -139,7 +135,10 @@ exports.handler = async (event) => {
                 });
             }
         } catch (supabaseError) {
-            console.log('Supabase not available:', supabaseError.message);
+            if (supabaseError.code === '23505' || String(supabaseError.message || '').toLowerCase().includes('duplicate')) {
+                return response(409, { error: 'Username already exists' });
+            }
+            console.log('Supabase registration fallback:', supabaseError.message);
         }
 
         // ── Fallback: file-based storage ──

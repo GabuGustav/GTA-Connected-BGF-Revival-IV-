@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+const { loadBcrypt } = require('./_bcrypt');
 const {
     findUserByIdentifier,
     getUserMail
@@ -36,14 +36,15 @@ exports.handler = async (event) => {
             return response(400, { error: 'Username and password required' });
         }
 
-        const match = await findUserByIdentifier(normalizedUsername);
-        if (!match) {
+        const user = await findUserByIdentifier(normalizedUsername);
+        if (!user) {
             return response(404, { error: 'User not found' });
         }
 
-        const storedUser = match.user;
-        const storedPassword = storedUser.password_hash || storedUser.password || '';
+        const username = user.username;
+        const storedPassword = user.password_hash || user.password || '';
         let passwordMatches = false;
+        const bcrypt = loadBcrypt();
 
         if (typeof storedPassword === 'string' && storedPassword.startsWith('$2')) {
             passwordMatches = await bcrypt.compare(password, storedPassword);
@@ -55,21 +56,21 @@ exports.handler = async (event) => {
             return response(401, { error: 'Incorrect password' });
         }
 
-        const sessionToken = createSessionToken(match.username, !!remember);
+        const sessionToken = createSessionToken(username, !!remember);
         const cookieHeader = buildSessionCookie(sessionToken, !!remember, isSecureRequest(event));
-        const inbox = await getUserMail(match.username, 'inbox').catch(() => []);
-        const sent = await getUserMail(match.username, 'sent').catch(() => []);
+        const inbox = await getUserMail(username, 'inbox').catch(() => []);
+        const sent = await getUserMail(username, 'sent').catch(() => []);
 
         return response(200, {
             success: true,
             user: {
-                username: match.username,
-                playerName: storedUser.player_name || match.username,
+                username,
+                playerName: user.player_name || username,
                 inbox,
                 sent,
-                achievements: storedUser.achievements || [],
-                global_stats: storedUser.global_stats || null,
-                ranks: storedUser.ranks || null
+                achievements: user.achievements || [],
+                global_stats: user.global_stats || null,
+                ranks: user.ranks || null
             }
         }, {
             'Set-Cookie': cookieHeader

@@ -2373,9 +2373,22 @@
                 const username = document.getElementById('username').value;
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
-                const apiBase = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-                    ? 'http://127.0.0.1:3001/api'
-                    : '/.netlify/functions';
+                // Smart API base switching: local dev / Netlify / GitHub Pages
+                const hostname = window.location.hostname;
+                const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+                const isNetlifyHost = hostname.includes('netlify.app');
+                const isGitHubPages = hostname.includes('github.io');
+                const NETLIFY_FUNCTIONS_URL = 'https://bgfr-gta-connected.netlify.app/.netlify/functions';
+
+                let apiBase;
+                if (isLocalHost) {
+                    apiBase = 'http://127.0.0.1:3001/api';
+                } else if (isNetlifyHost) {
+                    apiBase = '/.netlify/functions';
+                } else {
+                    // GitHub Pages or any other static host — use the actual Netlify Functions URL
+                    apiBase = NETLIFY_FUNCTIONS_URL;
+                }
                 
                 // Disable form
                 document.getElementById('submitBtn').disabled = true;
@@ -2443,7 +2456,7 @@
 
                     const result = await response.json();
                     if (!response.ok || !result.success) {
-                        throw new Error(result.error || 'Registration failed');
+                        throw new Error(result.error || result.message || 'Registration failed');
                     }
                 } catch (error) {
                     loadingOverlay.classList.remove('active');

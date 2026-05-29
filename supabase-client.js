@@ -6,8 +6,52 @@ require('dotenv').config();
 
 const { createClient } = require('@supabase/supabase-js');
 
+// Netlify's Supabase integration often sets SUPABASE_DATABASE_URL + keys but not SUPABASE_URL.
+function resolveSupabaseUrl() {
+    if (process.env.SUPABASE_URL) {
+        return process.env.SUPABASE_URL.trim();
+    }
+
+    const databaseUrl = process.env.SUPABASE_DATABASE_URL || '';
+    const poolerMatch = databaseUrl.match(/@db\.([a-z0-9]+)\.supabase\.co/i);
+    if (poolerMatch) {
+        return `https://${poolerMatch[1]}.supabase.co`;
+    }
+
+    const directMatch = databaseUrl.match(/postgres\.([a-z0-9]+):/i);
+    if (directMatch) {
+        return `https://${directMatch[1]}.supabase.co`;
+    }
+
+    for (const envKey of ['SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ANON_KEY']) {
+        const token = process.env[envKey];
+        if (!token) continue;
+
+        const parts = token.split('.');
+        if (parts.length < 2) continue;
+
+        try {
+            let payloadJson;
+            try {
+                payloadJson = Buffer.from(parts[1], 'base64url').toString('utf8');
+            } catch (_) {
+                const normalized = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+                payloadJson = Buffer.from(normalized, 'base64').toString('utf8');
+            }
+            const payload = JSON.parse(payloadJson);
+            if (payload.ref) {
+                return `https://${payload.ref}.supabase.co`;
+            }
+        } catch (_) {
+            // ignore JWT decode errors
+        }
+    }
+
+    return null;
+}
+
 // Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseUrl = resolveSupabaseUrl();
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const hasSupabaseConfig = Boolean(supabaseUrl && supabaseKey);
 const supabase = hasSupabaseConfig ? createClient(supabaseUrl, supabaseKey) : null;
@@ -344,6 +388,7 @@ async function consumePasswordResetToken(resetToken, newPasswordHash) {
 
 module.exports = {
     supabase,
+    supabaseUrl,
     hasSupabaseConfig,
     assertSupabaseConfigured,
     createUser,

@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
+const { loadBcrypt } = require('./_bcrypt');
 const {
     findUserByIdentifier,
     createPasswordResetRequest,
@@ -136,7 +136,7 @@ async function handleResetPassword(data) {
         return response(400, { error: 'Password must be at least 6 characters' });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await loadBcrypt().hash(newPassword, 10);
     const updatedUser = await consumePasswordResetToken(token, hashedPassword);
 
     if (!updatedUser) {

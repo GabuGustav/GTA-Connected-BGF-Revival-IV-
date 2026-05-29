@@ -21,8 +21,17 @@ exports.handler = async (event) => {
     
     try {
         // Check all environment variables
+        let resolvedSupabaseUrl = process.env.SUPABASE_URL || null;
+        try {
+            const client = require('../../supabase-client');
+            resolvedSupabaseUrl = client.supabaseUrl || resolvedSupabaseUrl;
+        } catch (_) {
+            // ignore
+        }
+
         const envVars = {
-            SUPABASE_URL: process.env.SUPABASE_URL,
+            SUPABASE_URL: process.env.SUPABASE_URL || null,
+            SUPABASE_URL_RESOLVED: resolvedSupabaseUrl,
             SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'NOT SET',
             SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ? 'SET' : 'NOT SET',
             SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET ? 'SET' : 'NOT SET',

@@ -2418,11 +2418,30 @@
         }
 
         function getMailApiBase() {
-            // Smart switching: local development vs Netlify production
-            if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            // Smart switching: local development vs Netlify production vs GitHub Pages
+            const hostname = window.location.hostname;
+            const query = new URLSearchParams(window.location.search);
+            const forcedMode = query.get('source'); // local | netlify | static
+            const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+            const isNetlifyHost = hostname.includes('netlify.app');
+            const isGitHubPages = hostname.includes('github.io');
+            const NETLIFY_FUNCTIONS_URL = 'https://bgfr-gta-connected.netlify.app/.netlify/functions';
+
+            // Forced local mode
+            if (forcedMode === 'local' && isLocalHost && window.location.protocol === 'http:') {
                 return 'http://127.0.0.1:3001/api';
             }
-            return '/.netlify/functions';
+            // Forced Netlify mode
+            if (forcedMode === 'netlify') {
+                return NETLIFY_FUNCTIONS_URL;
+            }
+
+            // Auto-detect
+            if (isLocalHost) return 'http://127.0.0.1:3001/api';
+            if (isNetlifyHost) return '/.netlify/functions';
+
+            // GitHub Pages or any other static host -> use the actual Netlify Functions URL
+            return NETLIFY_FUNCTIONS_URL;
         }
 
         async function loginViaBackend(username, password) {
