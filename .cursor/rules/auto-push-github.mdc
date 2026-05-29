@@ -1,0 +1,26 @@
+---
+description: Commit and push code changes to GitHub after making edits
+alwaysApply: true
+---
+
+# Auto commit and push to GitHub
+
+When you change files in this repository during a task (not for question-only or review-only chats):
+
+1. After the work is done and verified, **commit** all relevant changes with a clear message focused on *why*.
+2. **Push** to `origin main` on GitHub without asking the user to do it manually.
+3. Briefly confirm the commit hash and that the push succeeded.
+
+## Git safety (still required)
+
+- Never update git config.
+- Never force-push to `main` unless the user explicitly asks.
+- Never commit `.env`, credentials, or other secret files; warn if asked.
+- If push is rejected, run `git pull origin main` (merge), resolve conflicts if any, then push again.
+- If commit hooks fail, fix the issue and create a **new** commit (do not amend unless the user asked and HEAD was yours unpushed).
+
+## When not to push
+
+- No file changes were made.
+- The user explicitly says not to commit/push for this task.
+- Only exploratory/read-only work was requested.
