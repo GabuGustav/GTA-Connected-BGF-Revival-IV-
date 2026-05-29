@@ -1616,8 +1616,16 @@
                 this.changeTimers = {};
                 this.audioManager = new AudioManager();
                 
-                // Start general music on load
-                this.audioManager.playGeneral();
+                // Volume control - play general music on first user interaction
+                const startAudioOnInteraction = () => {
+                    this.audioManager.playGeneral();
+                    document.removeEventListener('click', startAudioOnInteraction);
+                    document.removeEventListener('keydown', startAudioOnInteraction);
+                    document.removeEventListener('touchstart', startAudioOnInteraction);
+                };
+                document.addEventListener('click', startAudioOnInteraction);
+                document.addEventListener('keydown', startAudioOnInteraction);
+                document.addEventListener('touchstart', startAudioOnInteraction);
                 
                 // Volume control
                 const volumeSlider = document.getElementById('volumeSlider');
