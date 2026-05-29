@@ -1,14 +1,20 @@
 const bcrypt = require('bcrypt');
 const { createUser, sendMailMessage } = require('../../supabase-client');
+const {
+    createSessionToken,
+    buildSessionCookie,
+    isSecureRequest
+} = require('../../session-auth');
 
-function response(statusCode, body) {
+function response(statusCode, body, extraHeaders = {}) {
     return {
         statusCode,
         headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...extraHeaders
         },
         body: JSON.stringify(body)
     };
@@ -20,7 +26,7 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { username, email, password } = JSON.parse(event.body || '{}');
+        const { username, email, password, remember } = JSON.parse(event.body || '{}');
         const normalizedUsername = String(username || '').toLowerCase().trim().replace(/[^a-z0-9_]/g, '');
 
         if (!normalizedUsername || normalizedUsername.length < 3) {
@@ -32,6 +38,8 @@ exports.handler = async (event) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const sessionToken = createSessionToken(normalizedUsername, !!remember);
+        const cookieHeader = buildSessionCookie(sessionToken, !!remember, isSecureRequest(event));
         const user = await createUser({
             username: normalizedUsername,
             password_hash: hashedPassword,
@@ -71,6 +79,8 @@ exports.handler = async (event) => {
                 sent: [],
                 achievements: []
             }
+        }, {
+            'Set-Cookie': cookieHeader
         });
     } catch (error) {
         if (error.code === '23505' || String(error.message || '').toLowerCase().includes('duplicate')) {

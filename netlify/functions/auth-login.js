@@ -3,15 +3,21 @@ const {
     findUserByIdentifier,
     getUserMail
 } = require('../../supabase-client');
+const {
+    createSessionToken,
+    buildSessionCookie,
+    isSecureRequest
+} = require('../../session-auth');
 
-function response(statusCode, body) {
+function response(statusCode, body, extraHeaders = {}) {
     return {
         statusCode,
         headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...extraHeaders
         },
         body: JSON.stringify(body)
     };
@@ -23,7 +29,7 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { username, password } = JSON.parse(event.body || '{}');
+        const { username, password, remember } = JSON.parse(event.body || '{}');
         const normalizedUsername = String(username || '').toLowerCase().trim();
 
         if (!normalizedUsername || !password) {
@@ -49,6 +55,8 @@ exports.handler = async (event) => {
             return response(401, { error: 'Incorrect password' });
         }
 
+        const sessionToken = createSessionToken(match.username, !!remember);
+        const cookieHeader = buildSessionCookie(sessionToken, !!remember, isSecureRequest(event));
         const inbox = await getUserMail(match.username, 'inbox').catch(() => []);
         const sent = await getUserMail(match.username, 'sent').catch(() => []);
 
@@ -63,6 +71,8 @@ exports.handler = async (event) => {
                 global_stats: storedUser.global_stats || null,
                 ranks: storedUser.ranks || null
             }
+        }, {
+            'Set-Cookie': cookieHeader
         });
     } catch (error) {
         return response(500, { error: 'Internal server error', message: error.message });

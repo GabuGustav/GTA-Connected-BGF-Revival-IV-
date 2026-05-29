@@ -5,6 +5,13 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
+const {
+    createSessionToken,
+    buildSessionCookie,
+    buildClearedSessionCookie,
+    extractSessionFromRequest,
+    isSecureRequest
+} = require('./session-auth');
 
 const app = express();
 const port = process.env.PORT || 3001;
