@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node api-server.js",
     "dev": "nodemon api-server.js",
-    "netlify": "netlify dev"
+    "netlify": "netlify dev",
+    "build:cf-pages": "node scripts/prepare-pages-site.js",
+    "pages:dev": "npm run build:cf-pages && npx wrangler pages dev _site"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.3",

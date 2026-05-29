@@ -2,4 +2,4 @@
 name = "bgf-revival"
 compatibility_date = "2024-09-01"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = ".netlify-publish-placeholder"
+pages_build_output_dir = "_site"

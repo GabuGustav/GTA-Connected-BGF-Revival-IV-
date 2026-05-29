@@ -80,3 +80,6 @@ misc/
 
 # Local Netlify folder
 .netlify
+
+# Cloudflare / GitHub Pages build output
+_site/
