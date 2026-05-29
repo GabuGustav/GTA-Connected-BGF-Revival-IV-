@@ -29,8 +29,8 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { username, password, remember } = JSON.parse(event.body || '{}');
-        const normalizedUsername = String(username || '').toLowerCase().trim();
+        const { username: loginName, password, remember } = JSON.parse(event.body || '{}');
+        const normalizedUsername = String(loginName || '').toLowerCase().trim();
 
         if (!normalizedUsername || !password) {
             return response(400, { error: 'Username and password required' });
