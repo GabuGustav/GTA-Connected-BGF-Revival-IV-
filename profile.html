@@ -427,35 +427,16 @@
         </div>
     </div>
 
+    <script src="js/site-config.js"></script>
     <script>
         const RELEASE_BASE_URL = 'https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/download/OG_files';
-        const LOCAL_API_BASE_URL = `http://${window.location.hostname}:3001`;
 
         function getRuntimeConfig() {
-            const query = new URLSearchParams(window.location.search);
-            const forcedMode = query.get('source'); // local | netlify | static
-            const hostname = window.location.hostname;
-            const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
-            const isNetlifyHost = hostname.includes('netlify.app');
-            const isApiServerPort = window.location.port === '3001';
-
-            // Only permit local mode when browsing from localhost/127.0.0.1 to avoid HTTPS mixed-content issues.
-            // Only allow local API mode on non-HTTPS localhost to avoid mixed-content failures.
-            if (forcedMode === 'local' && isLocalHost && window.location.protocol === 'http:') {
-                return { mode: 'local', apiBase: LOCAL_API_BASE_URL, releaseBase: RELEASE_BASE_URL };
-            }
-            if (forcedMode === 'netlify') return { mode: 'netlify', apiBase: `${window.location.origin}/.netlify/functions`, releaseBase: RELEASE_BASE_URL };
-            if (forcedMode === 'static') return { mode: 'static', apiBase: null, releaseBase: RELEASE_BASE_URL };
-            if (isLocalHost && isApiServerPort && window.location.protocol === 'http:') {
-                return { mode: 'local', apiBase: LOCAL_API_BASE_URL, releaseBase: RELEASE_BASE_URL };
-            }
-            if (isNetlifyHost) return { mode: 'netlify', apiBase: `${window.location.origin}/.netlify/functions`, releaseBase: RELEASE_BASE_URL };
-            return { mode: 'static', apiBase: null, releaseBase: RELEASE_BASE_URL };
+            return window.BGF_SITE.getRuntimeConfig(RELEASE_BASE_URL);
         }
 
         function buildApiUrl(config, path) {
-            if (!config.apiBase) return null;
-            return config.mode === 'netlify' ? `${config.apiBase}/${path}` : `${config.apiBase}/api/${path}`;
+            return window.BGF_SITE.buildApiUrl(config, path);
         }
 
         function setAudioUrls() {

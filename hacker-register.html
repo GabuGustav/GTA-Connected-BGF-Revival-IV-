@@ -1422,6 +1422,7 @@
         </div>
     </div>
 
+    <script src="js/site-config.js"></script>
     <script>
         // Binary Rain Canvas Effect
         class BinaryRain {
@@ -2374,21 +2375,7 @@
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 // Smart API base switching: local dev / Netlify / GitHub Pages
-                const hostname = window.location.hostname;
-                const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
-                const isNetlifyHost = hostname.includes('netlify.app');
-                const isGitHubPages = hostname.includes('github.io');
-                const NETLIFY_FUNCTIONS_URL = 'https://bgfr-gta-connected.netlify.app/.netlify/functions';
-
-                let apiBase;
-                if (isLocalHost) {
-                    apiBase = 'http://127.0.0.1:3001/api';
-                } else if (isNetlifyHost) {
-                    apiBase = '/.netlify/functions';
-                } else {
-                    // GitHub Pages or any other static host — use the actual Netlify Functions URL
-                    apiBase = NETLIFY_FUNCTIONS_URL;
-                }
+                const apiBase = window.BGF_SITE.getMailApiBase();
                 
                 // Disable form
                 document.getElementById('submitBtn').disabled = true;

@@ -1,10 +1,15 @@
 [build]
-  command = "echo 'No build needed'"
+  command = "echo 'Functions-only deploy; static site is on GitHub Pages'"
   functions = "netlify/functions"
+  publish = ".netlify-publish-placeholder"
 
-# SPA fallback: serve index.html for client-side routes.
-# Netlify Functions at /.netlify/functions/* are served automatically (no redirect needed).
+# Optional: send visitors on the Netlify hostname to GitHub Pages (functions URL unchanged).
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  from = "/"
+  to = "https://gabugustav.github.io/GTA-Connected-BGF-Revival-IV-/"
+  status = 302
+
+[[redirects]]
+  from = "/index.html"
+  to = "https://gabugustav.github.io/GTA-Connected-BGF-Revival-IV-/"
+  status = 302

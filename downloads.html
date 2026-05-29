@@ -822,84 +822,20 @@
         </div>
     </div>
 
+    <script src="js/site-config.js"></script>
     <script>
         const RELEASE_BASE_URL = 'https://github.com/GabuGustav/GTA-Connected-BGF-Revival-IV-/releases/download/OG_files';
-        const LOCAL_API_BASE_URL = 'http://localhost:3001';
 
         function getRuntimeConfig() {
-            const hostname = window.location.hostname;
-            const query = new URLSearchParams(window.location.search);
-            const forcedMode = query.get('source'); // local | netlify | static
-
-            const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
-            const isNetlifyHost = hostname.includes('netlify.app');
-            const netlifyFunctionsBase = `${window.location.origin}/.netlify/functions`;
-
-            if (forcedMode === 'local') {
-                return {
-                    mode: 'local',
-                    apiBase: LOCAL_API_BASE_URL,
-                    releaseBase: RELEASE_BASE_URL
-                };
-            }
-
-            if (forcedMode === 'netlify') {
-                return {
-                    mode: 'netlify',
-                    apiBase: netlifyFunctionsBase,
-                    releaseBase: RELEASE_BASE_URL
-                };
-            }
-
-            if (forcedMode === 'static') {
-                return {
-                    mode: 'static',
-                    apiBase: null,
-                    releaseBase: RELEASE_BASE_URL
-                };
-            }
-
-            if (isLocalHost && window.location.port === '3001') {
-                return {
-                    mode: 'local',
-                    apiBase: LOCAL_API_BASE_URL,
-                    releaseBase: RELEASE_BASE_URL
-                };
-            }
-
-            if (isLocalHost) {
-                return {
-                    mode: 'static',
-                    apiBase: null,
-                    releaseBase: RELEASE_BASE_URL
-                };
-            }
-
-            if (isNetlifyHost) {
-                return {
-                    mode: 'netlify',
-                    apiBase: netlifyFunctionsBase,
-                    releaseBase: RELEASE_BASE_URL
-                };
-            }
-
-            return {
-                mode: 'static',
-                apiBase: null,
-                releaseBase: RELEASE_BASE_URL
-            };
+            return window.BGF_SITE.getRuntimeConfig(RELEASE_BASE_URL);
         }
 
         function buildApiUrl(config, path) {
-            if (!config.apiBase) return null;
-            if (config.mode === 'netlify') {
-                return `${config.apiBase}/${path}`;
-            }
-            return `${config.apiBase}/api/${path}`;
+            return window.BGF_SITE.buildApiUrl(config, path);
         }
 
         function buildDownloadUrl(config, category, filename) {
-            if (config.mode === 'static') {
+            if (config.mode === 'remote' || !config.apiBase) {
                 return `${config.releaseBase}/${encodeURIComponent(filename)}`;
             }
             return `${config.apiBase}/downloads/${category}/${encodeURIComponent(filename)}`;

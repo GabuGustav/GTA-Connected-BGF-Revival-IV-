@@ -1862,6 +1862,7 @@
     </audio>
     
     <!-- Secure Key Manager -->
+    <script src="js/site-config.js"></script>
     <script src="js/secure-key-manager.js"></script>
     
     <!-- Gamemodes Section -->
@@ -2418,30 +2419,7 @@
         }
 
         function getMailApiBase() {
-            // Smart switching: local development vs Netlify production vs GitHub Pages
-            const hostname = window.location.hostname;
-            const query = new URLSearchParams(window.location.search);
-            const forcedMode = query.get('source'); // local | netlify | static
-            const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
-            const isNetlifyHost = hostname.includes('netlify.app');
-            const isGitHubPages = hostname.includes('github.io');
-            const NETLIFY_FUNCTIONS_URL = 'https://bgfr-gta-connected.netlify.app/.netlify/functions';
-
-            // Forced local mode
-            if (forcedMode === 'local' && isLocalHost && window.location.protocol === 'http:') {
-                return 'http://127.0.0.1:3001/api';
-            }
-            // Forced Netlify mode
-            if (forcedMode === 'netlify') {
-                return NETLIFY_FUNCTIONS_URL;
-            }
-
-            // Auto-detect
-            if (isLocalHost) return 'http://127.0.0.1:3001/api';
-            if (isNetlifyHost) return '/.netlify/functions';
-
-            // GitHub Pages or any other static host -> use the actual Netlify Functions URL
-            return NETLIFY_FUNCTIONS_URL;
+            return window.BGF_SITE.getMailApiBase();
         }
 
         async function loginViaBackend(username, password) {

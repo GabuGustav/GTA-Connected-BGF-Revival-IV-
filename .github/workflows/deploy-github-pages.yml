@@ -1,0 +1,48 @@
+# Static site → GitHub Pages. API stays on Netlify Functions.
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare static site
+        run: |
+          mkdir -p _site
+          cp *.html _site/ 2>/dev/null || true
+          cp favicon.ico ads.txt _site/ 2>/dev/null || true
+          cp -r js _site/ 2>/dev/null || true
+          cp -r zip-manifests _site/ 2>/dev/null || true
+          touch _site/.nojekyll
+          # Do not publish server secrets, functions, or backend-only files
+          rm -f _site/.env _site/data.json 2>/dev/null || true
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
