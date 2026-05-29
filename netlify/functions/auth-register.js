@@ -60,7 +60,15 @@ function response(statusCode, body, extraHeaders = {}) {
 exports.handler = async (event) => {
     // Preflight
     if (event.httpMethod === 'OPTIONS') {
-        return response(200, {});
+        return {
+            statusCode: 204,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+            },
+            body: ''
+        };
     }
     if (event.httpMethod !== 'POST') {
         return response(405, { error: 'Method not allowed' });

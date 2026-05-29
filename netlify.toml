@@ -3,6 +3,15 @@
   functions = "netlify/functions"
   publish = ".netlify-publish-placeholder"
 
+# CORS for GitHub Pages (and any static host) calling Netlify Functions cross-origin.
+# Applied at the CDN even when a function errors, so preflight can still succeed.
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, X-Requested-With, X-Signature, X-Timestamp"
+
 # Optional: send visitors on the Netlify hostname to GitHub Pages (functions URL unchanged).
 [[redirects]]
   from = "/"

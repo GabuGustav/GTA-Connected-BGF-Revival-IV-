@@ -2449,7 +2449,12 @@
                     loadingOverlay.classList.remove('active');
                     document.getElementById('submitBtn').disabled = false;
                     document.querySelectorAll('.form-input').forEach(input => input.disabled = false);
-                    alert(error.message || 'Registration failed');
+                    const msg = String(error.message || 'Registration failed');
+                    if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+                        alert('Cannot reach the API server (Netlify). If you are on GitHub Pages, the site needs Netlify Functions online — check Netlify usage/billing or try again later.');
+                    } else {
+                        alert(msg);
+                    }
                     return;
                 }
 

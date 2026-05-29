@@ -24,6 +24,9 @@ function response(statusCode, body, extraHeaders = {}) {
 }
 
 exports.handler = async (event) => {
+    if (event.httpMethod === 'OPTIONS') {
+        return response(200, {});
+    }
     if (event.httpMethod !== 'POST') {
         return response(405, { error: 'Method not allowed' });
     }

@@ -1,5 +1,17 @@
 # GitHub Pages + Netlify (split hosting)
 
+## Can GitHub Pages run serverless functions?
+
+**No.** GitHub Pages only serves **static files** (HTML, CSS, JS). It cannot run `auth-register`, database code, or bcrypt on GitHub’s servers the way Netlify Functions do.
+
+| What you might want | Real option |
+|---------------------|-------------|
+| API on the **same URL** as the site (no CORS) | **Cloudflare Pages** (static + Workers/Functions on one `*.pages.dev` domain), or a custom domain with `/api` proxied |
+| Keep GitHub Pages for the site | **Netlify** (or Cloudflare) hosts the API; browser calls it cross-origin (CORS required) |
+| “Functions in the repo” | GitHub **Actions** only **build/deploy** static files — they don’t handle live signup/login requests |
+
+This project uses **GitHub Pages for the UI** + **Netlify for the API**.
+
 ## Architecture
 
 | Host | Serves |
@@ -7,7 +19,18 @@
 | **GitHub Pages** | HTML, CSS, JS (`index.html`, `profile.html`, etc.) |
 | **Netlify** | Serverless API only (`/.netlify/functions/*`) |
 
-The browser on `*.github.io` calls `https://bgfr-gta-connected.netlify.app/.netlify/functions/...` (configured in `js/site-config.js`).
+The browser on `*.github.io` calls `https://bgfr-gta-connected.netlify.app/.netlify/functions/...` (configured in `js/site-config.js`). That is a **cross-origin** request; Netlify must send CORS headers (see `netlify.toml` `[[headers]]`).
+
+## CORS errors on signup
+
+If you see:
+
+`blocked by CORS policy ... No 'Access-Control-Allow-Origin' header`
+
+Common causes:
+
+1. **Netlify free quota exceeded** (`usage_exceeded`) — the request never reaches your function, so no CORS headers are added. Fix: wait for reset, upgrade Netlify, or run `npx netlify-cli dev` locally.
+2. **Missing OPTIONS handler** — fixed on `auth-register` / `auth-login`; edge headers added in `netlify.toml`.
 
 ## One-time GitHub setup
 
