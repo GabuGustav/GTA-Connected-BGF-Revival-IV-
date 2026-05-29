@@ -2375,8 +2375,6 @@
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 // Smart API base switching: local dev / Netlify / GitHub Pages
-                const apiBase = window.BGF_SITE.getMailApiBase();
-                
                 // Disable form
                 document.getElementById('submitBtn').disabled = true;
                 document.querySelectorAll('.form-input').forEach(input => input.disabled = true);
@@ -2433,7 +2431,7 @@
                 }
                 
                 try {
-                    const response = await fetch(`${apiBase}/auth-register`, {
+                    const response = await window.BGF_SITE.apiFetch('auth-register', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

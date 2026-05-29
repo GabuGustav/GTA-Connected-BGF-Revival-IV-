@@ -2423,7 +2423,7 @@
         }
 
         async function loginViaBackend(username, password) {
-            const response = await fetch(`${getMailApiBase()}/auth-login`, {
+            const response = await window.BGF_SITE.apiFetch('auth-login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -2440,7 +2440,7 @@
         }
 
         async function registerViaBackend(username, email, password) {
-            const response = await fetch(`${getMailApiBase()}/auth-register`, {
+            const response = await window.BGF_SITE.apiFetch('auth-register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -2457,7 +2457,7 @@
         }
 
         async function fetchUserProfile(username) {
-            const response = await fetch(`${getMailApiBase()}/profile/${encodeURIComponent(username)}`);
+            const response = await window.BGF_SITE.apiFetch(`profile/${encodeURIComponent(username)}`);
             const result = await response.json();
 
             if (!response.ok) {
@@ -2718,7 +2718,7 @@
                 // Convert username to email format if needed
                 const emailAddress = to.includes('@') ? to : `${to}@bgf.connected`;
                 
-                const response = await fetch(`${getMailApiBase()}/send-email`, {
+                const response = await window.BGF_SITE.apiFetch('send-email', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

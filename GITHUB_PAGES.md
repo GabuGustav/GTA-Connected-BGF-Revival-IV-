@@ -60,6 +60,8 @@ npx serve .
 
 If you see `usage_exceeded`, functions are paused until the quota resets or you upgrade. GitHub Pages does **not** replace Netlify Functions — it only hosts the frontend.
 
+**Mitigation:** deploy API on **Cloudflare Pages** (see `CLOUDFLARE_PAGES.md`) and set `BGF_CLOUDFLARE_PAGES_API` in `js/site-config.js`. The site will try Cloudflare first, then Netlify.
+
 ## Change API URL
 
 Edit `BGF_NETLIFY_FUNCTIONS` in `js/site-config.js` if you add a custom Netlify domain.
