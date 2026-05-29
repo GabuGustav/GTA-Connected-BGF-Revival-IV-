@@ -20,18 +20,21 @@ In **Workers & Pages** → your project → **Settings** → **Build**:
 |-------|--------|
 | **Build command** | `npm run build:cf-pages` |
 | **Build output directory** | `_site` |
-| **Deploy command** | **Leave empty** (do not use `npx wrangler deploy`) |
+| **Deploy command** | `npm run deploy:cf-pages` |
 
-### Why the build failed
+If your project only has a single “deploy” step (no separate build field), use **`npm run deploy:cf-pages`** there instead — it builds `_site` and uploads in one step.
 
-If **Deploy command** is set to `npx wrangler deploy`, the build fails with:
+### Wrong vs right deploy command
 
-- `wrangler deploy` is for **Workers**, not **Pages**
-- `Missing entry-point to Worker script or to assets directory`
+| Command | Result |
+|---------|--------|
+| `npx wrangler deploy` | **Fails** — Workers deploy, not Pages |
+| `npx wrangler pages deploy` | **OK** — uses `wrangler.toml` (`name`, `pages_build_output_dir = "_site"`) |
+| `npm run deploy:cf-pages` | **OK** — build + `wrangler pages deploy` (recommended) |
 
-**Fix:** Clear the deploy command field entirely. Cloudflare Pages uploads `_site` and `/functions` automatically after the build command finishes.
+`wrangler.toml` sets `name = "bgf-revival"`. If your Cloudflare project name is different, either rename the project to match or change `name` in `wrangler.toml` and add `--project-name=YOUR-NAME` to the deploy script.
 
-`wrangler.toml` in this repo only sets `pages_build_output_dir = "_site"` and `nodejs_compat` — it is not meant for `wrangler deploy` in CI.
+Cloudflare CI provides API credentials automatically when the repo is connected; no extra flags needed unless you use a custom account.
 
 ## One-time Cloudflare setup
 

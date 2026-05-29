@@ -1,4 +1,4 @@
-# Cloudflare Pages — optional local dev: npx wrangler pages dev .
+# Cloudflare Pages — CI deploy: npm run deploy:cf-pages  (wrangler pages deploy, NOT wrangler deploy)
 name = "bgf-revival"
 compatibility_date = "2024-09-01"
 compatibility_flags = ["nodejs_compat"]

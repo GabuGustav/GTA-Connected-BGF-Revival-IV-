@@ -8,7 +8,8 @@
     "dev": "nodemon api-server.js",
     "netlify": "netlify dev",
     "build:cf-pages": "node scripts/prepare-pages-site.js",
-    "pages:dev": "npm run build:cf-pages && npx wrangler pages dev _site"
+    "deploy:cf-pages": "npm run build:cf-pages && wrangler pages deploy --commit-dirty=true",
+    "pages:dev": "npm run build:cf-pages && wrangler pages dev _site"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.3",
@@ -22,7 +23,8 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "wrangler": "^4.95.0"
   },
   "resolutions": {
     "tar": "^7.5.10"
