@@ -1,28 +1,21 @@
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
+// ═══════════════════════════════════════════════════════════
+// BGF Revival IV - Auth Register (Netlify Function)
+// ═══════════════════════════════════════════════════════════
+// NOTE: bcrypt has native bindings that often fail on Netlify
+// Lambda. We lazy-load it inside the handler so the module
+// can still register even if bcrypt fails at cold start.
+// ═══════════════════════════════════════════════════════════
+
 const path = require('path');
+const fs = require('fs');
 const dotenv = require('dotenv');
 
-// Load .env from project root if available (local dev only)
+// Load .env from project root (safe to call even in production)
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-// Try to load Supabase client, but don't crash if env vars are missing
-let createUser, sendMailMessage;
-let hasSupabase = false;
-try {
-    const supabase = require('../../supabase-client');
-    if (supabase.hasSupabaseConfig) {
-        createUser = supabase.createUser;
-        sendMailMessage = supabase.sendMailMessage;
-        hasSupabase = true;
-    }
-} catch (e) {
-    console.log('Supabase not available, falling back to file-based storage:', e.message);
-}
-
-// Fallback: use file-based storage when Supabase is unavailable
-const fs = require('fs');
 const DATA_FILE = path.resolve(__dirname, '../../data.json');
+
+// ── Helper: file-based user storage (fallback when Supabase is unavailable) ──
 
 function loadUsers() {
     try {
@@ -40,8 +33,12 @@ function saveUsers(users) {
         fs.writeFileSync(DATA_FILE, JSON.stringify(users, null, 2));
     } catch (e) {
         console.error('Error saving data.json:', e.message);
+        // On Netlify serverless, writes to /tmp may work; data.json in project root won't persist.
+        // Acceptable: Supabase should be used in production.
     }
 }
+
+// ── Response helper ──
 
 function response(statusCode, body, extraHeaders = {}) {
     return {
@@ -57,9 +54,30 @@ function response(statusCode, body, extraHeaders = {}) {
     };
 }
 
+// ── Handler ──
+
 exports.handler = async (event) => {
+    // Preflight
+    if (event.httpMethod === 'OPTIONS') {
+        return response(200, {});
+    }
     if (event.httpMethod !== 'POST') {
         return response(405, { error: 'Method not allowed' });
+    }
+
+    // ── Lazy-load bcrypt (avoids native-binding crash at module level) ──
+    let bcrypt;
+    try {
+        bcrypt = require('bcrypt');
+    } catch (_) {
+        try {
+            bcrypt = require('bcryptjs');
+        } catch (_2) {
+            return response(500, {
+                error: 'Password hashing library unavailable on this platform',
+                message: 'Neither bcrypt nor bcryptjs could be loaded'
+            });
+        }
     }
 
     try {
@@ -76,89 +94,93 @@ exports.handler = async (event) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        if (hasSupabase) {
-            // Use Supabase storage
-            const user = await createUser({
-                username: normalizedUsername,
-                password_hash: hashedPassword,
-                player_name: normalizedUsername,
-                gta_linked: false,
-                created_from_game: false,
-                total_playtime: 0,
-                achievements_unlocked: 0,
-                total_achievements: 25
-            });
-
-            // Send welcome mail (non-critical, can fail silently)
-            try {
-                await sendMailMessage({
-                    from: 'system',
-                    to: normalizedUsername,
-                    subject: 'Welcome to BGF Mail!',
-                    message: `Welcome ${normalizedUsername}@bgf.connected! Your account has been created successfully.`
+        // ── Try Supabase first ──
+        try {
+            const supabase = require('../../supabase-client');
+            if (supabase.hasSupabaseConfig) {
+                const user = await supabase.createUser({
+                    username: normalizedUsername,
+                    password_hash: hashedPassword,
+                    player_name: normalizedUsername,
+                    gta_linked: false,
+                    created_from_game: false,
+                    total_playtime: 0,
+                    achievements_unlocked: 0,
+                    total_achievements: 25
                 });
-            } catch (mailError) {
-                console.warn('Unable to create welcome mail:', mailError.message);
-            }
 
-            return response(201, {
-                success: true,
-                user: {
-                    username: user.username,
-                    playerName: user.player_name || normalizedUsername,
-                    inbox: [{
+                // Send welcome mail (non-critical)
+                try {
+                    await supabase.sendMailMessage({
                         from: 'system',
+                        to: normalizedUsername,
                         subject: 'Welcome to BGF Mail!',
-                        message: `Welcome ${normalizedUsername}@bgf.connected! Your account has been created successfully.`,
-                        date: new Date().toISOString(),
-                        read: false
-                    }],
-                    sent: [],
-                    achievements: []
+                        message: `Welcome ${normalizedUsername}@bgf.connected! Your account has been created successfully.`
+                    });
+                } catch (mailError) {
+                    console.warn('Unable to create welcome mail:', mailError.message);
                 }
-            });
-        } else {
-            // Fallback to file-based storage
-            const users = loadUsers();
 
-            if (users[normalizedUsername]) {
-                return response(409, { error: 'Username already exists' });
-            }
-
-            users[normalizedUsername] = {
-                password: hashedPassword,
-                email: email || '',
-                created_at: new Date().toISOString(),
-                created_from_game: false,
-                gta_linked: false,
-                player_name: normalizedUsername,
-                inbox: [
-                    {
-                        from: 'system',
-                        subject: 'Welcome to BGF Mail!',
-                        message: `Welcome ${normalizedUsername}@bgf.connected! Your account has been created successfully.`,
-                        date: new Date().toISOString(),
-                        read: false
+                return response(201, {
+                    success: true,
+                    user: {
+                        username: user.username,
+                        playerName: user.player_name || normalizedUsername,
+                        inbox: [{
+                            from: 'system',
+                            subject: 'Welcome to BGF Mail!',
+                            message: `Welcome ${normalizedUsername}@bgf.connected! Your account has been created successfully.`,
+                            date: new Date().toISOString(),
+                            read: false
+                        }],
+                        sent: [],
+                        achievements: []
                     }
-                ],
+                });
+            }
+        } catch (supabaseError) {
+            console.log('Supabase not available:', supabaseError.message);
+        }
+
+        // ── Fallback: file-based storage ──
+        const users = loadUsers();
+        if (users[normalizedUsername]) {
+            return response(409, { error: 'Username already exists' });
+        }
+
+        users[normalizedUsername] = {
+            password: hashedPassword,
+            email: email || '',
+            created_at: new Date().toISOString(),
+            created_from_game: false,
+            gta_linked: false,
+            player_name: normalizedUsername,
+            inbox: [{
+                from: 'system',
+                subject: 'Welcome to BGF Mail!',
+                message: `Welcome ${normalizedUsername}@bgf.connected! Your account has been created successfully.`,
+                date: new Date().toISOString(),
+                read: false
+            }],
+            sent: [],
+            achievements: []
+        };
+
+        saveUsers(users);
+
+        return response(201, {
+            success: true,
+            user: {
+                username: normalizedUsername,
+                playerName: normalizedUsername,
+                inbox: users[normalizedUsername].inbox,
                 sent: [],
                 achievements: []
-            };
+            }
+        });
 
-            saveUsers(users);
-
-            return response(201, {
-                success: true,
-                user: {
-                    username: normalizedUsername,
-                    playerName: normalizedUsername,
-                    inbox: users[normalizedUsername].inbox,
-                    sent: [],
-                    achievements: []
-                }
-            });
-        }
     } catch (error) {
+        console.error('auth-register error:', error);
         if (error.code === '23505' || String(error.message || '').toLowerCase().includes('duplicate')) {
             return response(409, { error: 'Username already exists' });
         }
