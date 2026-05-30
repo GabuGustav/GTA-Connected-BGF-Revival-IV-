@@ -50,15 +50,29 @@ export async function onRequest(context) {
         });
     }
 
-    const response = await context.next();
-    const headers = new Headers(response.headers);
-    for (const [key, value] of Object.entries(buildCorsHeaders(context.request))) {
-        headers.set(key, value);
-    }
+    try {
+        const response = await context.next();
+        const headers = new Headers(response.headers);
+        for (const [key, value] of Object.entries(buildCorsHeaders(context.request))) {
+            headers.set(key, value);
+        }
 
-    return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers
-    });
+        return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers
+        });
+    } catch (error) {
+        console.error('middleware:', error);
+        return new Response(JSON.stringify({
+            error: 'Internal server error',
+            message: error.message
+        }), {
+            status: 500,
+            headers: {
+                ...buildCorsHeaders(context.request),
+                'Content-Type': 'application/json'
+            }
+        });
+    }
 }
