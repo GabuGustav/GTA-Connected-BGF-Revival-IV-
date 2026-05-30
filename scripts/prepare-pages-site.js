@@ -38,4 +38,22 @@ for (const secret of ['.env', 'data.json']) {
   if (fs.existsSync(p)) fs.unlinkSync(p);
 }
 
+require('./sync-functions-lib');
+
+const headers = `# CORS fallback for API paths (Pages Functions handle live traffic)
+/auth-register
+  Access-Control-Allow-Origin: https://gabugustav.github.io
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Signature, X-Timestamp
+
+/auth-login
+  Access-Control-Allow-Origin: https://gabugustav.github.io
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Signature, X-Timestamp
+
+/health
+  Access-Control-Allow-Origin: *
+`;
+fs.writeFileSync(path.join(out, '_headers'), headers);
+
 console.log('Prepared _site for Cloudflare Pages');

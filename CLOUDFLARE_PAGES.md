@@ -64,7 +64,11 @@ More endpoints can be added under `/functions/` using the same pattern as `funct
 
 ## CORS
 
-Functions return `Access-Control-Allow-Origin: https://gabugustav.github.io` when the request comes from your GitHub Pages site (see `lib/cors.js`).
+`functions/_middleware.js` adds CORS headers on every route (including OPTIONS preflight).
+
+Shared handlers are copied into `functions/lib/` during `npm run build:cf-pages` — **root `lib/` is not deployed** to Cloudflare; importing `../lib/` caused worker error 1101 and “no CORS header” in the browser.
+
+Set `BGF_CLOUDFLARE_PAGES_API` in `js/site-config.js` to your `*.pages.dev` URL after deploy.
 
 ## Local test
 

@@ -83,3 +83,6 @@ misc/
 
 # Cloudflare / GitHub Pages build output
 _site/
+
+# Generated before Cloudflare deploy (source: lib/, supabase-client.js, etc.)
+functions/lib/

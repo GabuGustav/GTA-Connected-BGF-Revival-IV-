@@ -1,11 +1,7 @@
 export async function onRequest(context) {
     const { createRequire } = await import('node:module');
     const require = createRequire(import.meta.url);
-    const { corsPreflightFetchResponse, buildCorsHeaders } = require('../lib/cors');
-
-    if (context.request.method === 'OPTIONS') {
-        return corsPreflightFetchResponse(context.request);
-    }
+    const { buildCorsHeaders } = require('./lib/cors');
 
     return new Response(JSON.stringify({
         status: 'healthy',
