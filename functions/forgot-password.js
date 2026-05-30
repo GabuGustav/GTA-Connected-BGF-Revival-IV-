@@ -26,7 +26,7 @@ export async function onRequest(context) {
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
         await cfCreatePasswordResetRequest(env, {
-            id: otpId,
+            id: otpCode,
             username: user.username,
             otpCode: otpCode,
             expiresAt
