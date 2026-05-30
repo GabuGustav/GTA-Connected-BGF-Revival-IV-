@@ -7,7 +7,7 @@
 (function (global) {
     const BGF_NETLIFY_FUNCTIONS = 'https://bgfr-gta-connected.netlify.app/.netlify/functions';
     /** Set after you deploy Cloudflare Pages — e.g. https://bgf-revival.pages.dev */
-    const BGF_CLOUDFLARE_PAGES_API = '';
+    const BGF_CLOUDFLARE_PAGES_API = 'https://gta-connected-bgf-revival-iv.pages.dev';
     const BGF_GITHUB_PAGES_SITE = 'https://gabugustav.github.io/GTA-Connected-BGF-Revival-IV-';
     const LOCAL_API_BASE = 'http://127.0.0.1:3001';
 
