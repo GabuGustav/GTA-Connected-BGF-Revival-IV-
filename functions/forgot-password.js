@@ -26,7 +26,7 @@ export async function onRequest(context) {
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
         await cfCreatePasswordResetRequest(env, {
-            id: otpCode,
+            id: otpId,
             username: user.username,
             otpCode: otpCode,
             expiresAt
@@ -69,7 +69,7 @@ export async function onRequest(context) {
 
         return jsonResponse(request, 200, {
             success: true,
-            otp_id: otpCode,
+            otp_id: otpId,
             expires_in: 900,
             message: emailAddress
                 ? 'Recovery code sent to your email address'
