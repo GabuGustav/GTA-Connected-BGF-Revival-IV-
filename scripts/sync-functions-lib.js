@@ -29,6 +29,13 @@ fs.mkdirSync(path.join(libRoot, 'handlers'), { recursive: true });
 
 fs.copyFileSync(path.join(root, 'lib/cors.js'), path.join(libRoot, 'cors.js'));
 
+for (const file of ['cf-http.js', 'cf-session.js']) {
+    fs.copyFileSync(
+        path.join(root, 'lib/cloudflare', file),
+        path.join(libRoot, file)
+    );
+}
+
 writeFile('bcrypt.js', `// Bundled for Cloudflare Pages (always bcryptjs on Workers)
 function loadBcrypt() {
     const isWorkers = Boolean(
