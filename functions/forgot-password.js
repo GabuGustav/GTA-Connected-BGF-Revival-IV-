@@ -32,22 +32,48 @@ export async function onRequest(context) {
             expiresAt
         });
 
-        try {
+        const emailAddress = user.email || null;
+
+        if (emailAddress) {
+            try {
+                await fetch('https://api.brevo.com/v3/smtp/email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'api-key': env.BREVO_API_KEY
+                    },
+                    body: JSON.stringify({
+                        sender: { name: 'BGF Revival IV', email: 'noreply@bgfrevival.com' },
+                        to: [{ email: emailAddress }],
+                        subject: 'BGF Revival IV - Password Recovery Code',
+                        textContent: `Your 6-digit recovery code is: ${otpCode}\n\nThis code expires in 15 minutes.\n\nIf you did not request this, ignore this message.`
+                    })
+                });
+            } catch (emailError) {
+                console.warn('Brevo email failed, falling back to BGF Mail:', emailError.message);
+                await cfSendMailMessage(env, {
+                    from: 'system',
+                    to: user.username,
+                    subject: 'Password Recovery Code',
+                    message: `Your 6-digit recovery code is: ${otpCode}\n\nThis code expires in 15 minutes.`
+                });
+            }
+        } else {
             await cfSendMailMessage(env, {
                 from: 'system',
                 to: user.username,
                 subject: 'Password Recovery Code',
-                message: `Your 6-digit recovery code is: ${otpCode}\n\nThis code will expire in 15 minutes.\n\nIf you did not request this, ignore this message.`
+                message: `Your 6-digit recovery code is: ${otpCode}\n\nThis code expires in 15 minutes.`
             });
-        } catch (mailError) {
-            console.warn('recovery mail:', mailError.message);
         }
 
         return jsonResponse(request, 200, {
             success: true,
             otp_id: otpId,
             expires_in: 900,
-            message: 'Recovery code sent to BGF Mail'
+            message: emailAddress
+                ? 'Recovery code sent to your email address'
+                : 'Recovery code sent to BGF Mail'
         });
     } catch (error) {
         console.error('forgot-password:', error);

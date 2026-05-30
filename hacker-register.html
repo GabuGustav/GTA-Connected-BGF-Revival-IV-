@@ -2370,100 +2370,96 @@
                 }, 1000);
             }
             
-            async submitForm() {
-                const username = document.getElementById('username').value;
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                // Smart API base switching: local dev / Netlify / GitHub Pages
-                // Disable form
-                document.getElementById('submitBtn').disabled = true;
-                document.querySelectorAll('.form-input').forEach(input => input.disabled = true);
-                
-                // Show loading
-                const loadingOverlay = document.getElementById('loadingOverlay');
-                const loadingSequence = document.getElementById('loadingSequence');
-                const container = document.getElementById('registrationContainer');
-                
-                loadingOverlay.classList.add('active');
-                loadingSequence.className = `loading-sequence ${this.currentMode}`;
-                
-                // Mode-specific loading sequences
-                const loadingSteps = {
-                    easy: [
-                        "> processing request...",
-                        "> validating credentials...",
-                        "> creating account...",
-                        "> access granted!"
-                    ],
-                    hard: [
-                        "> decrypting request...",
-                        "> bypassing security...",
-                        "> validating credentials...",
-                        "> escalating privileges...",
-                        "> access granted!"
-                    ],
-                    hell: [
-                        "> decrypting...",
-                        "> rerouting...",
-                        "> bypassing locks...",
-                        "> injecting credentials...",
-                        "> escalating privileges...",
-                        "> FINALIZING CONNECTION...",
-                        "> ACCESS GRANTED!"
-                    ]
-                };
-                
-                loadingSequence.innerHTML = '';
-                
-                for (let i = 0; i < loadingSteps[this.currentMode].length; i++) {
-                    await new Promise(resolve => setTimeout(resolve, this.currentMode === 'easy' ? 600 : this.currentMode === 'hard' ? 400 : 300));
-                    
-                    const logDiv = document.createElement('div');
-                    logDiv.className = 'loading-log';
-                    logDiv.textContent = loadingSteps[this.currentMode][i];
-                    loadingSequence.appendChild(logDiv);
-                    
-                    // Add interference for hard/hell modes
-                    if ((this.currentMode === 'hard' || this.currentMode === 'hell') && Math.random() > 0.6) {
-                        container.classList.add('glitch');
-                        setTimeout(() => container.classList.remove('glitch'), 100);
-                    }
-                }
-                
-                try {
-                    const response = await window.BGF_SITE.apiFetch('auth-register', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ username, email, password })
-                    });
+async submitForm() {
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
 
-                    const result = await response.json();
-                    if (!response.ok || !result.success) {
-                        throw new Error(result.error || result.message || 'Registration failed');
-                    }
-                } catch (error) {
-                    loadingOverlay.classList.remove('active');
-                    document.getElementById('submitBtn').disabled = false;
-                    document.querySelectorAll('.form-input').forEach(input => input.disabled = false);
-                    const msg = String(error.message || 'Registration failed');
-                    if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-                        alert('Cannot reach the API server (Netlify). If you are on GitHub Pages, the site needs Netlify Functions online — check Netlify usage/billing or try again later.');
-                    } else {
-                        alert(msg);
-                    }
-                    return;
-                }
+    // Validate email
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert('A valid email address is required for account recovery.');
+        return;
+    }
 
-                // Success
-                this.showResult('ACCESS GRANTED', 'Welcome to the Network');
-                
-                // Redirect
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 4000);
-            }
+    // Disable form
+    document.getElementById('submitBtn').disabled = true;
+    document.querySelectorAll('.form-input').forEach(input => input.disabled = true);
+
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingSequence = document.getElementById('loadingSequence');
+    const container = document.getElementById('registrationContainer');
+
+    loadingOverlay.classList.add('active');
+    loadingSequence.className = `loading-sequence ${this.currentMode}`;
+
+    const loadingSteps = {
+        easy: [
+            '> processing request...',
+            '> validating credentials...',
+            '> creating account...',
+            '> access granted!'
+        ],
+        hard: [
+            '> decrypting request...',
+            '> bypassing security...',
+            '> validating credentials...',
+            '> escalating privileges...',
+            '> access granted!'
+        ],
+        hell: [
+            '> decrypting...',
+            '> rerouting...',
+            '> bypassing locks...',
+            '> injecting credentials...',
+            '> escalating privileges...',
+            '> FINALIZING CONNECTION...',
+            '> ACCESS GRANTED!'
+        ]
+    };
+
+    loadingSequence.innerHTML = '';
+
+    for (let i = 0; i < loadingSteps[this.currentMode].length; i++) {
+        await new Promise(resolve => setTimeout(resolve, this.currentMode === 'easy' ? 600 : this.currentMode === 'hard' ? 400 : 300));
+
+        const logDiv = document.createElement('div');
+        logDiv.className = 'loading-log';
+        logDiv.textContent = loadingSteps[this.currentMode][i];
+        loadingSequence.appendChild(logDiv);
+
+        if ((this.currentMode === 'hard' || this.currentMode === 'hell') && Math.random() > 0.6) {
+            container.classList.add('glitch');
+            setTimeout(() => container.classList.remove('glitch'), 100);
+        }
+    }
+
+    try {
+        const response = await window.BGF_SITE.apiFetch('auth-register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || result.message || 'Registration failed');
+        }
+    } catch (error) {
+        loadingOverlay.classList.remove('active');
+        document.getElementById('submitBtn').disabled = false;
+        document.querySelectorAll('.form-input').forEach(input => input.disabled = false);
+        const msg = String(error.message || 'Registration failed');
+        if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+            alert('Cannot reach the API server. Please try again later.');
+        } else {
+            alert(msg);
+        }
+        return;
+    }
+
+    this.showResult('ACCESS GRANTED', 'Welcome to the Network');
+    setTimeout(() => { window.location.href = 'index.html'; }, 4000);
+}
             
             traceTerminated() {
                 clearInterval(this.traceTimer);
