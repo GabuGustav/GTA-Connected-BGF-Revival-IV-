@@ -69,7 +69,7 @@ export async function onRequest(context) {
 
         return jsonResponse(request, 200, {
             success: true,
-            otp_id: otpId,
+            otp_id: otpCode,
             expires_in: 900,
             message: emailAddress
                 ? 'Recovery code sent to your email address'
