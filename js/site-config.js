@@ -88,7 +88,7 @@
                     lastError = new Error(`Network error calling ${url}`);
                     continue;
                 }
-                if (hasFallback && (response.status === 404 || response.status === 502 || response.status === 503)) {
+if (hasFallback && (response.status === 502 || response.status === 503)) {
                     console.warn('[BGF_SITE] Trying next API host after', response.status, url);
                     continue;
                 }
