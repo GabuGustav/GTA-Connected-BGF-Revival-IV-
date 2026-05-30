@@ -44,7 +44,7 @@ Cloudflare CI provides API credentials automatically when the repo is connected;
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `API_SECRET_KEY` (same as game server / Netlify)
-4. **Settings → Functions** → compatibility flags: enable **Node.js compatibility** (`nodejs_compat`), or rely on `compatibility_flags` in `wrangler.toml`.
+4. **Settings → Functions** → **Compatibility flags**: enable **`nodejs_compat_v2`** (required for auth/register — uses `require`, bcrypt, Supabase). `wrangler.toml` must use the same project name as the dashboard (`gta-connected-bgf-revival-iv`).
 5. After deploy, copy your `*.pages.dev` URL into `js/site-config.js`:
 
 ```javascript

@@ -1,17 +1,20 @@
-const path = require('path');
-const fs = require('fs');
-const dotenv = require('dotenv');
 const { jsonResponse } = require('../cors');
 const { loadBcrypt } = require('../bcrypt');
 
-try { require('dotenv').config(); } catch (_) {}
+try {
+    require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
+} catch (_) {}
 
-const DATA_FILE = path.resolve(__dirname, '../../../data.json');
+function getDataFile() {
+    return require('path').resolve(__dirname, '../../data.json');
+}
 
 function loadUsers() {
     try {
-        if (fs.existsSync(DATA_FILE)) {
-            return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+        const fs = require('fs');
+        const dataFile = getDataFile();
+        if (fs.existsSync(dataFile)) {
+            return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
         }
     } catch (e) {
         console.error('Error loading data.json:', e.message);
@@ -21,7 +24,8 @@ function loadUsers() {
 
 function saveUsers(users) {
     try {
-        fs.writeFileSync(DATA_FILE, JSON.stringify(users, null, 2));
+        const fs = require('fs');
+        fs.writeFileSync(getDataFile(), JSON.stringify(users, null, 2));
     } catch (e) {
         console.error('Error saving data.json:', e.message);
     }

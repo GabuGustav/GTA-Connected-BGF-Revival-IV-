@@ -1,17 +1,8 @@
-export async function onRequest(context) {
-    const { createRequire } = await import('node:module');
-    const require = createRequire(import.meta.url);
-    const { buildCorsHeaders } = require('./lib/cors');
-
-    return new Response(JSON.stringify({
+/** No Node imports — works even if nodejs_compat is misconfigured. CORS from _middleware.js */
+export async function onRequest() {
+    return Response.json({
         status: 'healthy',
         provider: 'cloudflare-pages',
         timestamp: new Date().toISOString()
-    }), {
-        status: 200,
-        headers: {
-            ...buildCorsHeaders(context.request),
-            'Content-Type': 'application/json'
-        }
     });
 }
