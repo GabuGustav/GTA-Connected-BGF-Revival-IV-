@@ -22,12 +22,13 @@ export async function onRequest(context) {
         }
 
         const otpId = crypto.randomUUID();
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-        const otpRecord = await cfCreatePasswordResetRequest(env, {
+        await cfCreatePasswordResetRequest(env, {
             id: otpId,
             username: user.username,
-            otpCode: otpId,
+            otpCode: otpCode,
             expiresAt
         });
 
@@ -36,7 +37,7 @@ export async function onRequest(context) {
                 from: 'system',
                 to: user.username,
                 subject: 'Password Recovery Code',
-                message: `Your password recovery code is: ${otpRecord.id}\n\nThis code will expire in 15 minutes.`
+                message: `Your 6-digit recovery code is: ${otpCode}\n\nThis code will expire in 15 minutes.\n\nIf you did not request this, ignore this message.`
             });
         } catch (mailError) {
             console.warn('recovery mail:', mailError.message);
@@ -44,7 +45,7 @@ export async function onRequest(context) {
 
         return jsonResponse(request, 200, {
             success: true,
-            otp_id: otpRecord.id,
+            otp_id: otpId,
             expires_in: 900,
             message: 'Recovery code sent to BGF Mail'
         });

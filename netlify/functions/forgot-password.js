@@ -23,27 +23,11 @@ function response(statusCode, body) {
 }
 
 exports.handler = async (event) => {
-    const path = event.path.replace('/.netlify/functions', '');
-
-    if (event.httpMethod === 'OPTIONS') {
-        return response(200, {});
-    }
-
+    if (event.httpMethod === 'OPTIONS') return response(200, {});
+    if (event.httpMethod !== 'POST') return response(405, { error: 'Method not allowed' });
     try {
         const data = JSON.parse(event.body || '{}');
-
-        switch (path) {
-            case '/api/forgot-password':
-                return await handleForgotPassword(data);
-            case '/api/verify-otp':
-                return await handleVerifyOTP(data);
-            case '/api/reset-password':
-                return await handleResetPassword(data);
-            case '/api/otp-status':
-                return await handleOTPStatus(event.pathParameters);
-            default:
-                return response(404, { error: 'Endpoint not found' });
-        }
+        return handleForgotPassword(data);
     } catch (error) {
         return response(500, { error: 'Internal server error', message: error.message });
     }
@@ -62,12 +46,13 @@ async function handleForgotPassword(data) {
     }
 
     const otpId = crypto.randomUUID();
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    const otpRecord = await createPasswordResetRequest({
+    await createPasswordResetRequest({
         id: otpId,
         username: match.username,
-        otpCode: otpId,
+        otpCode: otpCode,
         expiresAt
     });
 
@@ -76,17 +61,15 @@ async function handleForgotPassword(data) {
             from: 'system',
             to: match.username,
             subject: 'Password Recovery Code',
-            message: `Your password recovery code is: ${otpRecord.id}\n\nThis code will expire in 15 minutes.`
+            message: `Your 6-digit recovery code is: ${otpCode}\n\nThis code will expire in 15 minutes.`
         });
     } catch (mailError) {
         console.warn('Unable to deliver recovery mail:', mailError.message);
     }
 
-    console.log(`OTP for ${username}: ${otpRecord.id}`);
-
     return response(200, {
         success: true,
-        otp_id: otpRecord.id,
+        otp_id: otpId,
         expires_in: 900,
         message: 'Recovery code sent to BGF Mail'
     });
