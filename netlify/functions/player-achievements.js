@@ -51,8 +51,8 @@ exports.handler = async (event) => {
         return response(404, { error: 'User not found' });
     }
 
-    const normalizedUsername = match.username;
-    const user = match.user;
+    const user = match;
+    const normalizedUsername = user.username;
     const achievementsRows = await getUserAchievements(user.id).catch(() => []);
     const achievements = achievementsRows.map((entry) => entry.achievements || entry).filter(Boolean);
 

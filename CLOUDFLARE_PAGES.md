@@ -57,10 +57,16 @@ const BGF_CLOUDFLARE_PAGES_API = 'https://YOUR-PROJECT.pages.dev';
 
 | Cloudflare URL | Same as Netlify |
 |----------------|-----------------|
-| `https://xxx.pages.dev/auth-register` | `/.netlify/functions/auth-register` |
-| `https://xxx.pages.dev/auth-login` | `/.netlify/functions/auth-login` |
+| `/auth-register`, `/auth-login` | ✓ |
+| `/health` | ✓ |
+| `/leaderboard?job=…` | ✓ |
+| `/send-email` | ✓ |
+| `/profile/:username` | ✓ |
+| `/player-rank/:user/:job` | ✓ |
+| `/player-achievements/:user` | ✓ |
+| `/forgot-password`, `/verify-otp`, `/reset-password` | ✓ |
 
-More endpoints can be added under `/functions/` using the same pattern as `functions/auth-register.js`.
+**Still Netlify-only (game server / admin):** `batch-sync-stats`, `create-account-from-game`, `link-game-account`, `run-sync`, `debug-env`, `auth-session`, `auth-logout`, `mail-register`
 
 ## CORS
 

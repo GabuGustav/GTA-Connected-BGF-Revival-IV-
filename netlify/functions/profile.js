@@ -75,7 +75,7 @@ exports.handler = async (event, context) => {
         return response(404, { error: 'User not found' });
     }
 
-    const user = match.user;
+    const user = match;
     const userRanks = await getUserRanks(user.id).catch(() => []);
     const userAchievements = await getUserAchievements(user.id).catch(() => []);
     const mailInbox = await getUserMail(match.username, 'inbox').catch(() => []);

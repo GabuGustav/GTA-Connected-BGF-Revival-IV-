@@ -3850,14 +3850,12 @@ document.addEventListener('DOMContentLoaded', function() {
         let otpExpiry = null;
         let recoveryUsername = null;
         
-        // API System
+        // API System (Cloudflare first, then Netlify via BGF_SITE.apiFetch)
         const API = {
-            baseURL: 'https://bgfr-gta-connected.netlify.app/.netlify/functions',
-            
             // Generate OTP for password recovery
             generateOTP: async function(username) {
                 try {
-                    const response = await fetch(`${this.baseURL}/forgot-password`, {
+                    const response = await window.BGF_SITE.apiFetch('forgot-password', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -3880,7 +3878,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Verify OTP
             verifyOTP: async function(otpId, otp) {
                 try {
-                    const response = await fetch(`${this.baseURL}/verify-otp`, {
+                    const response = await window.BGF_SITE.apiFetch('verify-otp', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -3903,7 +3901,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Reset password
             resetPassword: async function(token, newPassword) {
                 try {
-                    const response = await fetch(`${this.baseURL}/reset-password`, {
+                    const response = await window.BGF_SITE.apiFetch('reset-password', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
