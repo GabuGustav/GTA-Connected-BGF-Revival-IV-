@@ -1,72 +1,31 @@
-// Obfuscated API Key Management System
-// Key is split and encoded for security
+/**
+ * secure-key-manager.js  — BGF Revival IV
+ *
+ * SECURITY FIX: The previous version of this file stored a Brevo/Sendinblue
+ * API key in client-side JavaScript using base64 "obfuscation", which provided
+ * zero real protection. Any visitor could recover the key in seconds via
+ * DevTools → Sources or simply running atob() in the console.
+ *
+ * The key has been removed from the client entirely.
+ * All email / mail operations are now handled exclusively by server-side
+ * functions (Netlify or Cloudflare Pages) that read the key from environment
+ * variables, which are never exposed to the browser.
+ *
+ * This stub is kept so that any existing <script src="js/secure-key-manager.js">
+ * tags do not produce 404 errors. It exports the same public API shape so
+ * that no call-sites in index.html need to change.
+ */
 
-class SecureKeyManager {
-    constructor() {
-        // Split and obfuscated key parts
-        this.keyParts = [
-            this.btoa('xkeysib-0b3ec99ad95fb9331dfc'),
-            this.btoa('ca58b00f072f97fda62aa10e2e8907'),
-            this.btoa('e7fbd98861ab43-Z0wGNeXFeqAMPPlw')
-        ];
-        
-        // Obfuscation patterns
-        this.patterns = {
-            prefix: 'xkeysib-',
-            separator: '-',
-            checksum: 'Z0wGNeXFeqAMPPlw'
-        };
+(function (global) {
+    'use strict';
+
+    /** No-op class — key management is now server-side only. */
+    class SecureKeyManager {
+        getKey()       { return null; }
+        validateKey()  { return false; }
+        getSecureKey() { return null; }
     }
 
-    // Browser-compatible base64 encoding
-    btoa(str) {
-        // Use browser's built-in btoa function
-        return window.btoa(str);
-    }
-
-    // Browser-compatible base64 decoding
-    atob(str) {
-        // Use browser's built-in atob function
-        return window.atob(str);
-    }
-
-    // Reconstruct the API key when needed
-    getKey() {
-        try {
-            // Decode and combine parts
-            const part1 = this.atob(this.keyParts[0]);
-            const part2 = this.atob(this.keyParts[1]);
-            const part3 = this.atob(this.keyParts[2]);
-            
-            return part1 + part2 + part3;
-        } catch (error) {
-            console.error('Key reconstruction failed:', error);
-            return null;
-        }
-    }
-
-    // Validate key integrity
-    validateKey(key) {
-        if (!key) return false;
-        
-        // Check if key has correct pattern
-        const hasPrefix = key.startsWith(this.patterns.prefix);
-        const hasChecksum = key.includes(this.patterns.checksum);
-        const hasCorrectLength = key.length > 50;
-        
-        return hasPrefix && hasChecksum && hasCorrectLength;
-    }
-
-    // Get key with validation
-    getSecureKey() {
-        const key = this.getKey();
-        return this.validateKey(key) ? key : null;
-    }
-}
-
-// Global key manager instance
-const keyManager = new SecureKeyManager();
-
-// Export for use in mail system
-window.SecureKeyManager = SecureKeyManager;
-window.keyManager = keyManager;
+    global.SecureKeyManager = SecureKeyManager;
+    global.keyManager       = new SecureKeyManager();
+})(typeof window !== 'undefined' ? window : globalThis);
